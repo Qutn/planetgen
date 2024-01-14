@@ -1,0 +1,71 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #000;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background-color: #333;
+    padding: 10px 0;
+    text-align: center;
+}
+
+.container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+.statistics, .generator-options {
+    /* Styles for the statistics panels */
+    background-color: #222;
+    padding: 20px;
+    border-radius: 10px;
+    word-wrap: break-word; /* Ensure text wraps inside the div */
+    /* Add any additional styling needed for the layout */
+}
+}
+
+#starProperties {
+    /* Styles for the star properties display area */
+}
+
+canvas {
+    border: 1px solid #555;
+}
+
+.map-canvas {
+    /* Styles to keep the canvas centered and maintain its size */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Set a fixed size or use responsive sizing as needed */
+}
+
+/* Ensure the canvas has a specific size */
+#planetCanvas {
+    width: 500px; /* Adjust as needed */
+    height: 500px; /* Adjust as needed */
+}
+
+
+button {
+    background-color: #ff9900;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 20px; /* Rounded corners */
+    transform: skew(-20deg); /* Trapezoidal shape */
+}
+
+button:hover {
+    background-color: #cc7a00;
+}

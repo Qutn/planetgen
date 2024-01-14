@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Defer three.js and generator scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+    <script src="/planetgen/generators/atmosphere.js" defer></script>
+    <script src="/planetgen/generators/biomes.js" defer></script>
+    <script src="/planetgen/generators/climate.js" defer></script>
+    <script src="/planetgen/generators/color.js" defer></script>
+    <script src="/planetgen/generators/crust.js" defer></script>
+    <script src="/planetgen/generators/culture.js" defer></script>
+    <script src="/planetgen/generators/fauna.js" defer></script>
+    <script src="/planetgen/generators/flora.js" defer></script>
+    <script src="/planetgen/generators/minerals.js" defer></script>
+    <script src="/planetgen/generators/oceans.js" defer></script>
+    <script src="/planetgen/generators/orbit.js" defer></script>
+    <script src="/planetgen/generators/rivers.js" defer></script>
+    <script src="/planetgen/generators/tectonics.js" defer></script>
+    <!-- Defer the main script -->
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header>
+        <h1>Planet Generator</h1>
+    </header>
+<div class="container">
+    <aside class="statistics">
+        <div id="starProperties">
+            <!-- Star properties will be displayed here -->
+        </div>
+    </aside>
+    <main class="map-canvas">
+        <canvas id="planetCanvas"></canvas>
+    </main>
+    <aside class="statistics">
+        <div id="solarSystemProperties">
+            <!-- Solar system properties will be displayed here -->
+        </div>
+    </aside>
+</div>
+        <div class="generator-options">
+                <button id="generateStarButton">Generate Star</button>
+            	<button id="generateSystemButton">Generate Solar System</button>
+
+            <!-- Generator options and controls will go here -->
+        </div>
+    </div>
+
+
+</body>
+</html>
