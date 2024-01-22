@@ -1,4 +1,7 @@
-import elementsData from './elements.json'; // Adjust the path as needed
+async function loadElementsData() {
+    const response = await fetch('path/to/elements.json');
+    return await response.json();
+}
 
 function generateGeologicalData(planetSize /*, other parameters */) {
     // Placeholder values for geological data
@@ -23,10 +26,11 @@ function generateGeologicalData(planetSize /*, other parameters */) {
     };
 }
 
-function determinePlanetaryComposition(planetSize, orbitalRadius, starSize, starMass) {
+async function determinePlanetaryComposition(planetSize, orbitalRadius, starSize, starMass) {
     let composition = {};
 
     // Load elements data
+    const elementsData = await loadElementsData();
     const elements = elementsData.elements;
 
     // Create a distribution curve based on parameters
