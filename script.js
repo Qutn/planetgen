@@ -96,6 +96,7 @@ function setupSolarSystemGeneration() {
 
 function displaySolarSystemProperties(solarSystem, div, habitableZone, parentStar) {
     let htmlContent = '<h3>Solar System Planets</h3>';
+    console.log("Parent Star:", parentStar); // Check if parentStar is defined and has necessary properties
     solarSystem.forEach((planet, index) => {
         const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
         htmlContent += `<p>${planetDetails}</p>`;
@@ -109,6 +110,10 @@ function displaySolarSystemProperties(solarSystem, div, habitableZone, parentSta
 }
 
 function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
+    if (!star) {
+        console.error("Star data is undefined.");
+        return; // Exit the function if star data is not available
+    }
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
     const atmosphereType = 'M'; // Placeholder for atmosphere type
     const geologicalActivity = 'Active'; // Placeholder for geological activity
