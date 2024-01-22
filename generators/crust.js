@@ -1,21 +1,21 @@
-function generateGeologicalActivity(planetRadius, starMass, starSize, distanceFromStar) {
-    const planetCoreSize = estimateCoreSize(planetRadius);
-    const planetMantleSize = estimateMantleSize(planetRadius);
-    const planetCrustSize = estimateCrustSize(planetRadius);
+function generateGeologicalData(planetSize /*, other parameters */) {
+    // Placeholder values for geological data
+    const coreSize = "Placeholder Core Size"; // Example placeholder
+    const mantleSize = "Placeholder Mantle Size"; // Example placeholder
+    const crustSize = "Placeholder Crust Size"; // Example placeholder
+    const tectonicActivity = "Placeholder Tectonic Activity"; // Example placeholder
 
-    const isCoreMolten = assessCoreState(planetRadius, starMass, distanceFromStar);
-    const tectonicActivity = isCoreMolten ? assessTectonicActivity(planetMantleSize) : 'Inactive';
-
+    // Return an object containing the geological data
     return {
         core: {
-            size: planetCoreSize,
-            state: isCoreMolten ? 'Molten' : 'Solid'
+            size: coreSize,
+            state: 'Molten' // Placeholder state
         },
         mantle: {
-            size: planetMantleSize
+            size: mantleSize
         },
         crust: {
-            size: planetCrustSize
+            size: crustSize
         },
         tectonics: tectonicActivity
     };
@@ -31,16 +31,5 @@ function estimateCrustSize(planetRadius) { /* ... */ }
 function assessCoreState(planetRadius, starMass, distanceFromStar) { /* ... */ }
 
 function assessTectonicActivity(planetMantleSize) { /* ... */ }
-
-function generateGeologicalData(planetSize /*, other parameters */) {
-    // Calculate and return geological data
-    // For example:
-    return {
-        core: { size: /* calculated value */ },
-        mantle: { size: /* calculated value */ },
-        crust: { size: /* calculated value */ },
-        tectonics: /* 'Active', 'Inactive', etc. */
-    };
-}
 
 export { generateGeologicalData };
