@@ -28,11 +28,8 @@
         <h1>Planet Generator</h1>
     </header>
     <div class="container">
-        <div class="generator-options">
-            <button id="generateStarButton">Generate Star</button>
-            <!-- Generator options and controls for star generation will go here -->
-        </div>
         <aside class="statistics">
+            <button id="generateStarButton">Generate Star</button>
             <div id="starProperties">
                 <!-- Star properties will be displayed here -->
             </div>
@@ -40,13 +37,14 @@
         <main class="map-canvas">
             <canvas id="planetCanvas"></canvas>
         </main>
-        <div class="generator-options">
-            <button id="generateSystemButton">Generate Solar System</button>
-            <!-- Generator options and controls for solar system generation will go here -->
-        </div>
         <aside class="statistics">
-            <div id="solarSystemProperties">
-                <!-- Solar system properties will be displayed here -->
+            <div class="fixed-button-container">
+                <button id="generateSystemButton">Generate Solar System</button>
+            </div>
+            <div class="scrollable-content">
+                <div id="solarSystemProperties">
+                    <!-- Solar system properties will be displayed here -->
+                </div>
             </div>
         </aside>
     </div>

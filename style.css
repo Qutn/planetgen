@@ -66,3 +66,16 @@ button {
 button:hover {
     background-color: #cc7a00;
 }
+
+.fixed-button-container {
+    position: sticky;
+    top: 0;
+    background-color: inherit; /* Match the background with the parent */
+    z-index: 10; /* Keep it above the scrollable content */
+    padding: 10px 20px; /* Adjust padding as needed */
+}
+
+.scrollable-content {
+    height: calc(500px - 40px); /* Adjust height considering button container height */
+    overflow-y: auto;
+}
