@@ -79,3 +79,12 @@ button {
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+.habitable-planet-container {
+    /* Add your styling here, for example: */
+    margin: 20px;
+    padding: 10px;
+    background-color: #333; /* Or any other color that fits your theme */
+    color: white;
+    border-radius: 10px;
+}
