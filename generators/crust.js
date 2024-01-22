@@ -3,12 +3,12 @@ async function loadElementsData() {
     return await response.json();
 }
 
-function generateGeologicalData(planetSize /*, other parameters */) {
+function generateGeologicalData(planetSize, orbitalRadius, starSize, starMass) {
     // Placeholder values for geological data
-    const coreSize = "Placeholder Core Size"; // Example placeholder
-    const mantleSize = "Placeholder Mantle Size"; // Example placeholder
-    const crustSize = "Placeholder Crust Size"; // Example placeholder
-    const tectonicActivity = "Placeholder Tectonic Activity"; // Example placeholder
+    const coreSize = estimateCoreSize(planetSize, starMass); // Updated
+    const mantleSize = estimateMantleSize(planetSize); // Updated
+    const crustSize = estimateCrustSize(planetSize); // Updated
+    const tectonicActivity = assessTectonicActivity(mantleSize, orbitalRadius, starMass); // Updated
 
     // Return an object containing the geological data
     return {

@@ -114,14 +114,19 @@ function displayHabitablePlanetDetails(planet, systemNumber, planetIndex) {
     const atmosphereType = 'M'; // Placeholder for atmosphere type
     const geologicalActivity = 'Active'; // Placeholder for geological activity
     const moonCount = 2; // Placeholder for moon count
-
     const planetName = generatePlanetName(systemNumber, planetIndex, atmosphereType, geologicalActivity, moonCount);
     const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
-    habitablePlanetDiv.innerHTML = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p>`;
+    
+habitablePlanetDiv.innerHTML = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p>`;
+
+    // Assuming star and orbit data are available here
+    const starSize = star.size;
+    const starMass = star.mass;
+    const orbitalRadius = planet.orbitRadius;
 
     // Get geological data
-    const geologicalData = generateGeologicalData(planet.size, /* other parameters as needed */);
-    
+    const geologicalData = generateGeologicalData(planet.size, orbitalRadius, starSize, starMass);
+      
     // Append geological data to planet details
     const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;
     habitablePlanetDiv.innerHTML += `<p>${geologicalDetails}</p>`;
