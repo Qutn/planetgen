@@ -1,8 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Set up the 3D scene
     setupThreeJS();
-
-    // Set up star generation
     setupStarGeneration();
     setupSolarSystemGeneration();
 });
@@ -84,24 +81,35 @@ function displayStarProperties(star, div) {
 function setupSolarSystemGeneration() {
     const generateSystemButton = document.getElementById('generateSystemButton');
     const solarSystemPropertiesDiv = document.getElementById('solarSystemProperties');
-    const starPropertiesDiv = document.getElementById('starProperties'); // Define this variable
-
+    const starPropertiesDiv = document.getElementById('starProperties');
 
     generateSystemButton.addEventListener('click', () => {
-        const orbitData = generateOrbit(); // Generate the entire orbit data
-        displayStarProperties(orbitData.parentStar, starPropertiesDiv); // Display star properties
-        displaySolarSystemProperties(orbitData.solarSystem, solarSystemPropertiesDiv); // Display solar system properties
+        const orbitData = generateOrbit();
+        displayStarProperties(orbitData.parentStar, starPropertiesDiv);
+        displaySolarSystemProperties(orbitData.solarSystem, solarSystemPropertiesDiv, orbitData.parentStar.habitableZone);
     });
 }
 
-function displaySolarSystemProperties(solarSystem, div) {
+function displaySolarSystemProperties(solarSystem, div, habitableZone) {
     let htmlContent = '<h3>Solar System Planets</h3>';
     solarSystem.forEach((planet, index) => {
         const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
         htmlContent += `<p>${planetDetails}</p>`;
 
-        // Log to console
-        console.log(planetDetails);
+        if (planet.orbitRadius >= habitableZone.innerBoundary && planet.orbitRadius <= habitableZone.outerBoundary) {
+            displayHabitablePlanetDetails(planet);
+        }
     });
+
     div.innerHTML = htmlContent;
 }
+
+function displayHabitablePlanetDetails(planet) {
+    const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
+    const planetDetails = `Habitable Planet: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
+    habitablePlanetDiv.innerHTML = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p>`;
+    // Additional procedural generation for geology, mineral content, atmosphere, etc., can be added here
+}
+
+// Additional functions for procedural generation of planet details
+// For example: generateGeology, generateMineralContent, generateAtmosphere, etc.
