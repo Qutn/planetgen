@@ -98,22 +98,26 @@ function displaySolarSystemProperties(solarSystem, div, habitableZone) {
         const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
         htmlContent += `<p>${planetDetails}</p>`;
 
-        if (planet.orbitRadius >= habitableZone.innerBoundary && planet.orbitRadius <= habitableZone.outerBoundary) {
-            displayHabitablePlanetDetails(planet);
+ 	if (planet.orbitRadius >= habitableZone.innerBoundary && planet.orbitRadius <= habitableZone.outerBoundary) {
+            // Using index as planetIndex and a random system number for now
+            displayHabitablePlanetDetails(planet, 1, index);
         }
     });
 
     div.innerHTML = htmlContent;
 }
 
-function displayHabitablePlanetDetails(planet) {
+function displayHabitablePlanetDetails(planet, systemNumber, planetIndex) {
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
-	const planetName = generatePlanetName(systemNumber, planetIndex, null, null, null);
-    const planetDetails = `Habitable Planet: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
-    habitablePlanetDiv.innerHTML = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p>`;
-    // Additional procedural generation for geology, mineral content, atmosphere, etc., can be added here
-}
+    const atmosphereType = 'M'; // Placeholder for atmosphere type
+    const geologicalActivity = 'Active'; // Placeholder for geological activity
+    const moonCount = 2; // Placeholder for moon count
 
+    const planetName = generatePlanetName(systemNumber, planetIndex, atmosphereType, geologicalActivity, moonCount);
+    const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
+    habitablePlanetDiv.innerHTML = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p>`;
+    // Additional procedural generation can be added here
+}
 
 // Additional functions for procedural generation of planet details
 // For example: generateGeology, generateMineralContent, generateAtmosphere, etc.
