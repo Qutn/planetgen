@@ -1,4 +1,6 @@
 import { generatePlanetName } from './generators/names.js';
+import { generateGeologicalData } from './generators/crust.js';
+
 
 document.addEventListener('DOMContentLoaded', () => {
     setupThreeJS();
@@ -116,7 +118,13 @@ function displayHabitablePlanetDetails(planet, systemNumber, planetIndex) {
     const planetName = generatePlanetName(systemNumber, planetIndex, atmosphereType, geologicalActivity, moonCount);
     const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
     habitablePlanetDiv.innerHTML = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p>`;
-    // Additional procedural generation can be added here
+
+    // Get geological data
+    const geologicalData = generateGeologicalData(planet.size, /* other parameters as needed */);
+    
+    // Append geological data to planet details
+    const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;
+    habitablePlanetDiv.innerHTML += `<p>${geologicalDetails}</p>`;
 }
 
 // Additional functions for procedural generation of planet details

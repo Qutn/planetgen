@@ -31,3 +31,16 @@ function estimateCrustSize(planetRadius) { /* ... */ }
 function assessCoreState(planetRadius, starMass, distanceFromStar) { /* ... */ }
 
 function assessTectonicActivity(planetMantleSize) { /* ... */ }
+
+function generateGeologicalData(planetSize /*, other parameters */) {
+    // Calculate and return geological data
+    // For example:
+    return {
+        core: { size: /* calculated value */ },
+        mantle: { size: /* calculated value */ },
+        crust: { size: /* calculated value */ },
+        tectonics: /* 'Active', 'Inactive', etc. */
+    };
+}
+
+export { generateGeologicalData };
