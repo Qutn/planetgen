@@ -33,8 +33,6 @@ async function determinePlanetaryComposition(planetSize, orbitalRadius, starSize
     const elementsData = await loadElementsData();
     const elements = elementsData.elements;
 
-    // Create a distribution curve based on parameters
-    // This is a simplified example. You'd create a more complex distribution logic
     elements.forEach(element => {
         let probability = calculateElementProbability(element, planetSize, orbitalRadius, starSize, starMass);
         composition[element.symbol] = probability;
@@ -44,9 +42,42 @@ async function determinePlanetaryComposition(planetSize, orbitalRadius, starSize
 }
 
 function calculateElementProbability(element, planetSize, orbitalRadius, starSize, starMass) {
-    // Implement logic to calculate the probability based on provided parameters
-    // Return a value representing the relative ratio or abundance of the element
-    return someCalculatedProbability; // Placeholder
+    // Initialize a base probability
+    let probability = baseProbability(element);
+
+    // Adjust probability based on star size and heat
+    probability *= adjustForStarSize(element, starSize);
+
+    // Adjust for orbital radius
+    probability *= adjustForOrbitalRadius(element, orbitalRadius);
+
+    // Adjust for planet size and gravitational differentiation
+    probability *= adjustForPlanetSize(element, planetSize);
+
+    return probability;
+}
+
+// probability functions
+// 
+function baseProbability(element) {
+    // Define a base probability for each element
+    // This can be a simple value or a complex function based on element properties
+    return 1; // Placeholder
+}
+
+function adjustForStarSize(element, starSize) {
+    // Logic to adjust probability based on star size
+    return 1; // Placeholder
+}
+
+function adjustForOrbitalRadius(element, orbitalRadius) {
+    // Logic to adjust probability based on orbital radius
+    return 1; // Placeholder
+}
+
+function adjustForPlanetSize(element, planetSize) {
+    // Logic to adjust probability based on planet size
+    return 1; // Placeholder
 }
 
 // Implement the estimation functions based on astrophysical and geological models
