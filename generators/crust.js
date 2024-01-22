@@ -60,10 +60,25 @@ function calculateElementProbability(element, planetSize, orbitalRadius, starSiz
 // probability functions
 // 
 function baseProbability(element) {
-    // Define a base probability for each element
-    // This can be a simple value or a complex function based on element properties
-    return 1; // Placeholder
+    const atomicMass = element.atomicMass;
+    let probability;
+
+    // Lighter elements generally more abundant
+    probability = 1 / atomicMass; 
+
+    // Adjust for the iron peak
+    if (atomicMass >= 55 && atomicMass <= 58) { // Around Iron's atomic mass
+        probability *= 2; // Increase probability for elements around iron
+    }
+
+    // Adjust for the rarity of heavier elements
+    if (atomicMass > 200) { // Very heavy elements
+        probability *= 0.1; // Significantly reduce probability
+    }
+
+    return probability;
 }
+
 
 function adjustForStarSize(element, starSize) {
     // Logic to adjust probability based on star size

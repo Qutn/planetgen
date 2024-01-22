@@ -94,22 +94,21 @@ function setupSolarSystemGeneration() {
     });
 }
 
-function displaySolarSystemProperties(solarSystem, div, habitableZone) {
+function displaySolarSystemProperties(solarSystem, div, habitableZone, parentStar) {
     let htmlContent = '<h3>Solar System Planets</h3>';
     solarSystem.forEach((planet, index) => {
         const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
         htmlContent += `<p>${planetDetails}</p>`;
 
- 	if (planet.orbitRadius >= habitableZone.innerBoundary && planet.orbitRadius <= habitableZone.outerBoundary) {
-            // Using index as planetIndex and a random system number for now
-            displayHabitablePlanetDetails(planet, 1, index);
+        if (planet.orbitRadius >= habitableZone.innerBoundary && planet.orbitRadius <= habitableZone.outerBoundary) {
+            displayHabitablePlanetDetails(planet, 1, index, parentStar);
         }
     });
 
     div.innerHTML = htmlContent;
 }
 
-function displayHabitablePlanetDetails(planet, systemNumber, planetIndex) {
+function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
     const atmosphereType = 'M'; // Placeholder for atmosphere type
     const geologicalActivity = 'Active'; // Placeholder for geological activity
