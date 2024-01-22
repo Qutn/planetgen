@@ -1,3 +1,5 @@
+import { generatePlanetName } from './generators/names.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     setupThreeJS();
     setupStarGeneration();
@@ -106,10 +108,12 @@ function displaySolarSystemProperties(solarSystem, div, habitableZone) {
 
 function displayHabitablePlanetDetails(planet) {
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
+	const planetName = generatePlanetName(systemNumber, planetIndex, null, null, null);
     const planetDetails = `Habitable Planet: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
     habitablePlanetDiv.innerHTML = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p>`;
     // Additional procedural generation for geology, mineral content, atmosphere, etc., can be added here
 }
+
 
 // Additional functions for procedural generation of planet details
 // For example: generateGeology, generateMineralContent, generateAtmosphere, etc.
