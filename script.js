@@ -110,50 +110,60 @@ function displaySolarSystemProperties(solarSystem, div, habitableZone, parentSta
 }
 
 function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
+    console.log("Displaying habitable planet details"); // Debugging log
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
-    const atmosphereType = 'M'; // Placeholder for atmosphere type
-    const geologicalActivity = 'Active'; // Placeholder for geological activity
-    const moonCount = 2; // Placeholder for moon count
-    const planetName = generatePlanetName(systemNumber, planetIndex, atmosphereType, geologicalActivity, moonCount);
-    const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
     
-    // Assuming star and orbit data are available here
+    // Assuming these are placeholders for now
+    const atmosphereType = 'M';
+    const geologicalActivity = 'Active';
+    const moonCount = 2;
+    const planetName = generatePlanetName(systemNumber, planetIndex, atmosphereType, geologicalActivity, moonCount);
+
+    const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
+    console.log("Planet Details:", planetDetails); // Debugging log
+
+    // Star and planet data
     const starSize = star.size;
     const starMass = star.mass;
     const orbitalRadius = planet.orbitRadius;
-	const planetSize = planet.size;
+    const planetSize = planet.size;
+    console.log("Star Size:", starSize, "Star Mass:", starMass, "Orbital Radius:", orbitalRadius, "Planet Size:", planetSize); // Debugging log
 
     // Get geological data
     const geologicalData = generateGeologicalData(planet.size, orbitalRadius, starSize, starMass);
-	console.log("Geological Data:", geologicalData);
-   // const compositionData = determinePlanetaryComposition(planetSize, orbitalRadius, starSize, starMass);
-   // console.log("Composition Data:", compositionData);
-      
+    console.log("Geological Data:", geologicalData); // Debugging log
+
     // Append geological data to planet details
     const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;
     let content = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p><p>${geologicalDetails}</p>`;
 
-	// this is where we determine masses of the valuable ores
+    // Element composition
     const compositionData = determinePlanetaryComposition(planet.size, planet.orbitRadius, star.size, star.mass);
-	console.log("Composition Data:", compositionData);
+    console.log("Composition Data:", compositionData); // Debugging log
+	console.log("Keys in Composition Data:", Object.keys(compositionData));
 
-    // Sort elements by abundance and filter for valuable elements
+
+    // Sort and filter elements
     const valuableElements = ['Fe', 'Cu', 'Ag', 'Au', 'Mth']; // Iron, Copper, Silver, Gold, Mithril
     const sortedComposition = Object.entries(compositionData)
                                      .filter(([element]) => valuableElements.includes(element))
                                      .sort((a, b) => b[1] - a[1]); // Sort by abundance
+    console.log("Sorted Composition:", sortedComposition); // Debugging log
 
-    // Calculate and display elemental mass
-    const planetVolume = (4/3) * Math.PI * Math.pow(planet.size, 3); // Volume of the planet
+    // Calculate and append elemental mass
+    const planetVolume = (4/3) * Math.PI * Math.pow(planet.size, 3);
     let elementDetails = '';
     sortedComposition.forEach(([element, percentage]) => {
         const elementVolume = planetVolume * percentage / 100;
-        const elementMass = elementVolume * getElementDensity(element); // Assume a getElementDensity function
+        const elementMass = elementVolume * getElementDensity(element);
         elementDetails += `<p>${element}: ${elementMass.toFixed(2)} kg</p>`;
     });
+    console.log("Element Details:", elementDetails); // Debugging log
+
     content += `<div>${elementDetails}</div>`;
     habitablePlanetDiv.innerHTML = content;
 }
+
 
 function getElementDensity(element) {
     // Return density of the element, placeholder values used here
