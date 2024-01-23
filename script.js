@@ -1,5 +1,5 @@
 import { generatePlanetName } from './generators/names.js';
-import { generateGeologicalData } from './generators/crust.js';
+import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -123,6 +123,8 @@ function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) 
 
     // Get geological data
     const geologicalData = generateGeologicalData(planet.size, orbitalRadius, starSize, starMass);
+	console.log("Geological Data:", geologicalData);
+
       
     // Append geological data to planet details
     const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;

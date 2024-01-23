@@ -1,5 +1,5 @@
 async function loadElementsData() {
-    const response = await fetch('path/to/elements.json');
+    const response = await fetch('generators/elements.json');
     return await response.json();
 }
 
@@ -121,4 +121,4 @@ function assessCoreState(planetRadius, starMass, distanceFromStar) { /* ... */ }
 
 function assessTectonicActivity(planetMantleSize) { /* ... */ }
 
-export { generateGeologicalData };
+export { generateGeologicalData, determinePlanetaryComposition };
