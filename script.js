@@ -153,9 +153,14 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     // Calculate and append elemental mass
     const planetVolume = (4/3) * Math.PI * Math.pow(planet.size, 3);
     let elementDetails = '';
-    sortedComposition.forEach(([element, percentage]) => {
+ 	sortedComposition.forEach(([element, percentage]) => {
         const elementVolume = planetVolume * percentage / 100;
-        const elementMass = elementVolume * getElementDensity(element);
+        let elementMass = elementVolume * getElementDensity(element);
+
+        // Apply additional scaling based on some planetary characteristics if needed
+        const scalingFactor = 1; // Adjust this scaling factor based on your requirements
+        elementMass *= scalingFactor;
+
         elementDetails += `<p>${element}: ${elementMass.toFixed(2)} kg</p>`;
     });
     console.log("Element Details:", elementDetails); // Debugging log

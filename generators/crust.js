@@ -106,11 +106,8 @@ function adjustForOrbitalRadius(element, orbitalRadius) {
 }
 
 function adjustForPlanetSize(elementProbability, planetSizeInEarthRadii) {
-    const earthRadiusInKilometers = 6371; // Earth's average radius in kilometers
-    const planetRadiusInKilometers = planetSizeInEarthRadii * earthRadiusInKilometers;
-
-    // Scale the probability by the planet's radius relative to Earth's radius in kilometers
-    return elementProbability * planetRadiusInKilometers;
+    // Simple linear scaling based on the size of the planet
+    return elementProbability * planetSizeInEarthRadii;
 }
 
 
