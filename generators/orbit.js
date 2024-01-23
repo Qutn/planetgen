@@ -3,13 +3,15 @@ function generateOrbit() {
     // Calculate the habitable zone based on the star's luminosity
     const luminosity = generateStarLuminosity(parentStar.type, parentStar.size);
     parentStar.habitableZone = calculateHabitableZone(luminosity);
-
+    const habitableZone = calculateHabitableZone(/* parameters */);
     const solarSystem = generateSolarSystem(parentStar);
 //    const targetPlanet = selectTargetPlanet(solarSystem);
 
     return {
         parentStar: parentStar,
         solarSystem: solarSystem,
+        habitableZone: habitableZone
+
 //        targetPlanet: targetPlanet
     };
 }
