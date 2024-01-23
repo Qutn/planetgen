@@ -2,6 +2,8 @@ import { generatePlanetName } from './generators/names.js';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone  } from './generators/orbit.js';
 
+// Global variables for the three.js objects
+let sphere, scene, camera, renderer;
 
 document.addEventListener('DOMContentLoaded', () => {
     setupThreeJS();
@@ -11,21 +13,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function setupThreeJS() {
     const canvas = document.getElementById('planetCanvas');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
-    const geometry = new THREE.SphereGeometry(5, 32, 32);
+    // Assuming Earth's radius is 1 unit in your 3D space
+    const earthRadiusUnit = 1;
+    // Start with a default sphere representing Earth
+    const geometry = new THREE.SphereGeometry(earthRadiusUnit, 32, 32);
     const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const sphere = new THREE.Mesh(geometry, material);
+    sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
     const light = new THREE.PointLight(0xffffff, 1, 100);
     light.position.set(10, 10, 10);
     scene.add(light);
 
-    camera.position.z = 15;
+    camera.position.z = 20; // Adjusted for better view
 
     window.addEventListener('resize', () => {
         renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -40,6 +45,25 @@ function setupThreeJS() {
 
     animate();
 }
+
+function updatePlanetSize(planetRadiusInEarthUnits) {
+    // Remove the existing sphere from the scene
+    scene.remove(sphere);
+    
+    // Create a new geometry with the updated size
+    const newGeometry = new THREE.SphereGeometry(planetRadiusInEarthUnits, 32, 32);
+    
+    // Update the sphere with the new geometry
+    sphere.geometry.dispose(); // Dispose of the old geometry
+    sphere.geometry = newGeometry;
+    
+    // Re-add the sphere to the scene
+    scene.add(sphere);
+    
+    // Adjust camera distance if the planet is significantly larger or smaller
+    camera.position.z = 20 * planetRadiusInEarthUnits;
+}
+
 // star generation
 
 function setupStarGeneration() {
@@ -115,7 +139,7 @@ function displaySolarSystemProperties(solarSystem, div, habitableZone, parentSta
 }
 
 async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
-    console.log("Displaying habitable planet details"); // Debugging log
+    // console.log("Displaying habitable planet details"); // Debugging log
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
     
     // Assuming these are placeholders for now
@@ -125,18 +149,19 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     const planetName = generatePlanetName(systemNumber, planetIndex, atmosphereType, geologicalActivity, moonCount);
 
     const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size.toFixed(2)}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
-    console.log("Planet Details:", planetDetails); // Debugging log
+
+	// console.log("Planet Details:", planetDetails); // Debugging log
 
     // Star and planet data
     const starSize = star.size;
     const starMass = star.mass;
     const orbitalRadius = planet.orbitRadius;
     const planetSize = planet.size;
-    console.log("Star Size:", starSize, "Star Mass:", starMass, "Orbital Radius:", orbitalRadius, "Planet Size:", planetSize); // Debugging log
+    // console.log("Star Size:", starSize, "Star Mass:", starMass, "Orbital Radius:", orbitalRadius, "Planet Size:", planetSize); // Debugging log
 
     // Get geological data
     const geologicalData = generateGeologicalData(planet.size, orbitalRadius, starSize, starMass);
-    console.log("Geological Data:", geologicalData); // Debugging log
+    // console.log("Geological Data:", geologicalData); // Debugging log
 
     // Append geological data to planet details
     const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;
@@ -144,8 +169,8 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
 
     // Element composition
     const compositionData = await determinePlanetaryComposition(planet.size, planet.orbitRadius, star.size, star.mass);
-    console.log("Composition Data:", compositionData); // Debugging log
-	console.log("Keys in Composition Data:", Object.keys(compositionData));
+    // console.log("Composition Data:", compositionData); // Debugging log
+	// console.log("Keys in Composition Data:", Object.keys(compositionData));
 
 
     // Sort and filter elements
@@ -153,7 +178,7 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     const sortedComposition = Object.entries(compositionData)
                                      .filter(([element]) => valuableElements.includes(element))
                                      .sort((a, b) => b[1] - a[1]); // Sort by abundance
-	console.log("Sorted Composition:", sortedComposition); // Debugging log
+	// console.log("Sorted Composition:", sortedComposition); // Debugging log
 
     // Calculate and append elemental mass
     const earthVolume = (4/3) * Math.PI * Math.pow(6371, 3); // Earth's volume in km^3
@@ -161,7 +186,7 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     const scalingFactor = planetVolume / earthVolume; // Scaling factor based on volume
 
 	console.log("Planet Size (in Earth radii):", planet.size);
-	console.log("Planet Volume (in km^3):", planetVolume);
+	// console.log("Planet Volume (in km^3):", planetVolume);
 
     const planetGravityInMs2 = (planet.size * 9.8).toFixed(2); // Gravity in m/s^2
     const planetGravityInG = (planetGravityInMs2 / 9.8).toFixed(2); // Convert to Earth's gravity
@@ -169,27 +194,30 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     const gravityDetails = `<p>Gravity: ${planetGravityInMs2} m/s<sup>2</sup> (${planetGravityInG} G)</p>`;
     content += gravityDetails;
 
+    updatePlanetSize(planet.size);
+
+
 let elementDetails = '';
 sortedComposition.forEach(([element, percentage]) => {
     const elementVolume = planetVolume * percentage * 1000000000;
     let elementMass = elementVolume * getElementDensity(element);
     elementMass *= scalingFactor; // Apply scaling factor to element mass
         
-    console.log(`Element: ${element}, Percentage: ${percentage}, Volume: ${elementVolume}, Mass: ${elementMass}`);
+    // console.log(`Element: ${element}, Percentage: ${percentage}, Volume: ${elementVolume}, Mass: ${elementMass}`);
 
     const formattedElementMass = elementMass.toExponential(2); // Format elementMass in scientific notation
 
     elementDetails += `<p>${element}: ${formattedElementMass} kg</p>`;
-    console.log(`Formatted Mass for ${element}: ${formattedElementMass}`);
+    // console.log(`Formatted Mass for ${element}: ${formattedElementMass}`);
 });
 
 
-    console.log("Element Details:", elementDetails); // Debugging log
+    // console.log("Element Details:", elementDetails); // Debugging log
 
 	content += `<div class="element-details">${elementDetails}</div>`;
     habitablePlanetDiv.innerHTML = content;
 
-	console.log("Final HTML Content:", content);
+	// console.log("Final HTML Content:", content);
 
 }
 
