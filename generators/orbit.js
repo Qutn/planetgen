@@ -336,3 +336,5 @@ function isInHabitableZone(orbitRadius, habitableZone) {
     // ...
 //    return targetPlanet;
 // }
+
+export { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone  };
