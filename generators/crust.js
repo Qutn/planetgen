@@ -81,8 +81,23 @@ function baseProbability(element) {
 
 
 function adjustForStarSize(element, starSize) {
-    // Logic to adjust probability based on star size
-    return 1; // Placeholder
+    let adjustmentFactor = 1;
+
+    // Assuming starSize is a relative measurement where 1 is similar to the Sun
+    if (starSize > 1) { // Larger than the Sun
+        // Heavier elements are more likely
+        adjustmentFactor += (element.atomicMass - 30) / 200; // Example adjustment
+    } else { // Smaller than or equal to the Sun
+        // Lighter elements are more likely
+        adjustmentFactor -= (element.atomicMass - 30) / 200; // Example adjustment
+    }
+
+    return Math.max(adjustmentFactor, 0.1); // Ensure the factor doesn't go below 0.1
+
+    // Log the adjustment factor for debugging
+    console.log(`Element: ${element.name}, Star Size: ${starSize}, Adjustment Factor: ${adjustmentFactor}`);
+
+    return adjustmentFactor;
 }
 
 function adjustForOrbitalRadius(element, orbitalRadius) {
