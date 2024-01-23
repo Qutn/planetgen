@@ -99,7 +99,7 @@ function setupSolarSystemGeneration() {
             return;
         }
         displayStarProperties(orbitData.parentStar, starPropertiesDiv);
-        displaySolarSystemProperties(orbitData.solarSystem, solarSystemPropertiesDiv, orbitData.habitableZone, orbitData.parentStar);
+        displaySolarSystemProperties(orbitData.solarSystem, solarSystemPropertiesDiv, orbitData.parentStar.habitableZone, orbitData.parentStar);
     });
 }
 
@@ -111,6 +111,7 @@ function displaySolarSystemProperties(solarSystem, div, habitableZone, parentSta
         return;
     }
     console.log("Habitable Zone:", habitableZone); // Debugging log
+    console.log("Habitable Zone in displaySolarSystemProperties:", habitableZone); // Debugging log
     solarSystem.forEach((planet, index) => {
         const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
         htmlContent += `<p>${planetDetails}</p>`;
