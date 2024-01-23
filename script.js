@@ -148,22 +148,28 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     const sortedComposition = Object.entries(compositionData)
                                      .filter(([element]) => valuableElements.includes(element))
                                      .sort((a, b) => b[1] - a[1]); // Sort by abundance
-    console.log("Sorted Composition:", sortedComposition); // Debugging log
+	console.log("Sorted Composition:", sortedComposition); // Debugging log
 
     // Calculate and append elemental mass
     const earthVolume = (4/3) * Math.PI * Math.pow(6371, 3); // Earth's volume in km^3
     const planetVolume = (4/3) * Math.PI * Math.pow(planet.size * 6371, 3); // Planet's volume in km^3
     const scalingFactor = planetVolume / earthVolume; // Scaling factor based on volume
 
+	console.log("Planet Size (in Earth radii):", planet.size);
+	console.log("Planet Volume (in km^3):", planetVolume);
+
     let elementDetails = '';
     sortedComposition.forEach(([element, percentage]) => {
-        const elementVolume = planetVolume * percentage / 100;
+        const elementVolume = planetVolume * percentage / 1;
         let elementMass = elementVolume * getElementDensity(element);
+        elementMass *= scalingFactor; // Apply scaling factor to element mass
+            
+    		console.log(`Element: ${element}, Percentage: ${percentage}, Volume: ${elementVolume}, Mass: ${elementMass}`);
 
-        // Apply scaling factor to element mass
-        elementMass *= scalingFactor;
+    	const formattedElementMass = Number(elementMass.toFixed(2)).toLocaleString(); // Format elementMass with commas for readability
+		elementDetails += `<p>${element}: ${formattedElementMass} kg</p>`;
+    	console.log(`Formatted Mass for ${element}: ${formattedElementMass}`);
 
-        elementDetails += `<p>${element}: ${elementMass.toFixed(2)} kg</p>`;
     });
 
 
@@ -171,6 +177,9 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
 
     content += `<div>${elementDetails}</div>`;
     habitablePlanetDiv.innerHTML = content;
+
+	console.log("Final HTML Content:", content);
+
 }
 
 
@@ -179,5 +188,7 @@ function getElementDensity(element) {
     const densities = { 'Fe': 7874, 'Cu': 8960, 'Ag': 10490, 'Au': 19300, 'Mth': 12000 }; // in kg/m^3
     return densities[element] || 5500; // Default density
 }
+
+
 // Additional functions for procedural generation of planet details
 // For example: generateGeology, generateMineralContent, generateAtmosphere, etc.

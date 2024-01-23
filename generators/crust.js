@@ -63,21 +63,57 @@ function baseProbability(element) {
     const atomicMass = element.atomicMass;
     let probability;
 
-    // Lighter elements generally more abundant
-    probability = 1 / atomicMass; 
+    // Custom adjustments for the most common elements in the crust
+    switch (element.symbol) {
+        case 'O': // Oxygen
+            probability = 0.461;
+            break;
+        case 'Si': // Silicon
+            probability = 0.282;
+            break;
+        case 'Al': // Aluminium
+            probability = 0.082;
+            break;
+        case 'Fe': // Iron
+            probability = 0.056;
+            break;
+        case 'Ca': // Calcium
+            probability = 0.041;
+            break;
+        case 'Na': // Sodium
+            probability = 0.023;
+            break;
+        case 'Mg': // Magnesium
+            probability = 0.023;
+            break;
+        case 'K': // Potassium
+            probability = 0.020;
+            break;
+        case 'Ti': // Titanium
+            probability = 0.005;
+            break;
+        case 'H': // Hydrogen
+            probability = 0.0014;
+            break;
+        default:
+            // For other elements, use the original probability calculation
+            probability = 1 / atomicMass;
 
-    // Adjust for the iron peak
-    if (atomicMass >= 55 && atomicMass <= 58) { // Around Iron's atomic mass
-        probability *= 2; // Increase probability for elements around iron
-    }
+            // Adjust for the iron peak
+            if (atomicMass >= 55 && atomicMass <= 58) {
+                probability *= 2;
+            }
 
-    // Adjust for the rarity of heavier elements
-    if (atomicMass > 200) { // Very heavy elements
-        probability *= 0.1; // Significantly reduce probability
+            // Adjust for the rarity of heavier elements
+            if (atomicMass > 200) {
+                probability *= 0.1;
+            }
+            break;
     }
 
     return probability;
 }
+
 
 
 function adjustForStarSize(element, starSize) {
