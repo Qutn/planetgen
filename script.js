@@ -130,12 +130,12 @@ function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) 
       
     // Append geological data to planet details
     const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;
-    habitablePlanetDiv.innerHTML += `<p>${geologicalDetails}</p>`;
-	habitablePlanetDiv.innerHTML = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p>`;
+    let content = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p><p>${geologicalDetails}</p>`;
 
 	// this is where we determine masses of the valuable ores
     const compositionData = determinePlanetaryComposition(planet.size, planet.orbitRadius, star.size, star.mass);
 	console.log("Composition Data:", compositionData);
+
     // Sort elements by abundance and filter for valuable elements
     const valuableElements = ['Fe', 'Cu', 'Ag', 'Au', 'Mth']; // Iron, Copper, Silver, Gold, Mithril
     const sortedComposition = Object.entries(compositionData)
@@ -150,8 +150,8 @@ function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) 
         const elementMass = elementVolume * getElementDensity(element); // Assume a getElementDensity function
         elementDetails += `<p>${element}: ${elementMass.toFixed(2)} kg</p>`;
     });
-
-    habitablePlanetDiv.innerHTML += `<div>${elementDetails}</div>`;
+    content += `<div>${elementDetails}</div>`;
+    habitablePlanetDiv.innerHTML = content;
 }
 
 function getElementDensity(element) {
