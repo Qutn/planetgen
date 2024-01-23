@@ -35,6 +35,11 @@
             "symbol": "Si",
             "atomicMass": 28.085
         },
+    	{
+        	"name": "Aluminium",
+        	"Symbol": "Al",
+        	"atomicMass": 26.981
+        },
         {
             "name": "Phosphorus",
             "symbol": "P",

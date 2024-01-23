@@ -144,7 +144,7 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
 
 
     // Sort and filter elements
-    const valuableElements = ['Fe', 'Cu', 'Ag', 'Au', 'Mth']; // Iron, Copper, Silver, Gold, Mithril
+    const valuableElements = ['O', 'Si', 'Al', 'Fe', 'Na', 'Mg', 'K', 'Ti', 'H', 'Cu', 'Ag', 'Au', 'Mth']; // Iron, Copper, Silver, Gold, Mithril
     const sortedComposition = Object.entries(compositionData)
                                      .filter(([element]) => valuableElements.includes(element))
                                      .sort((a, b) => b[1] - a[1]); // Sort by abundance
@@ -158,19 +158,19 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
 	console.log("Planet Size (in Earth radii):", planet.size);
 	console.log("Planet Volume (in km^3):", planetVolume);
 
-    let elementDetails = '';
-    sortedComposition.forEach(([element, percentage]) => {
-        const elementVolume = planetVolume * percentage / 1;
-        let elementMass = elementVolume * getElementDensity(element);
-        elementMass *= scalingFactor; // Apply scaling factor to element mass
-            
-    		console.log(`Element: ${element}, Percentage: ${percentage}, Volume: ${elementVolume}, Mass: ${elementMass}`);
+let elementDetails = '';
+sortedComposition.forEach(([element, percentage]) => {
+    const elementVolume = planetVolume * percentage * 1000000000;
+    let elementMass = elementVolume * getElementDensity(element);
+    elementMass *= scalingFactor; // Apply scaling factor to element mass
+        
+    console.log(`Element: ${element}, Percentage: ${percentage}, Volume: ${elementVolume}, Mass: ${elementMass}`);
 
-    	const formattedElementMass = Number(elementMass.toFixed(2)).toLocaleString(); // Format elementMass with commas for readability
-		elementDetails += `<p>${element}: ${formattedElementMass} kg</p>`;
-    	console.log(`Formatted Mass for ${element}: ${formattedElementMass}`);
+    const formattedElementMass = elementMass.toExponential(2); // Format elementMass in scientific notation
 
-    });
+    elementDetails += `<p>${element}: ${formattedElementMass} kg</p>`;
+    console.log(`Formatted Mass for ${element}: ${formattedElementMass}`);
+});
 
 
     console.log("Element Details:", elementDetails); // Debugging log
@@ -185,7 +185,21 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
 
 function getElementDensity(element) {
     // Return density of the element, placeholder values used here
-    const densities = { 'Fe': 7874, 'Cu': 8960, 'Ag': 10490, 'Au': 19300, 'Mth': 12000 }; // in kg/m^3
+const densities = {
+    'O': 1.429, // Gaseous form
+    'Si': 2330,
+    'Al': 2700,
+    'Fe': 7874,
+    'Na': 968,
+    'Mg': 1740,
+    'K': 856,
+    'Ti': 4506,
+    'H': 0.08988, // Gaseous form
+    'Cu': 8960,
+    'Ag': 10490,
+    'Au': 19300,
+    'Mth': 12000 // Fictional element
+};
     return densities[element] || 5500; // Default density
 }
 
