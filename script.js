@@ -109,7 +109,7 @@ function displaySolarSystemProperties(solarSystem, div, habitableZone, parentSta
     div.innerHTML = htmlContent;
 }
 
-function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
+async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
     console.log("Displaying habitable planet details"); // Debugging log
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
     
@@ -138,7 +138,7 @@ function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) 
     let content = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p><p>${geologicalDetails}</p>`;
 
     // Element composition
-    const compositionData = determinePlanetaryComposition(planet.size, planet.orbitRadius, star.size, star.mass);
+    const compositionData = await determinePlanetaryComposition(planet.size, planet.orbitRadius, star.size, star.mass);
     console.log("Composition Data:", compositionData); // Debugging log
 	console.log("Keys in Composition Data:", Object.keys(compositionData));
 
