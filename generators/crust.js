@@ -105,10 +105,15 @@ function adjustForOrbitalRadius(element, orbitalRadius) {
     return 1; // Placeholder
 }
 
-function adjustForPlanetSize(element, planetSize) {
-    // Logic to adjust probability based on planet size
-    return 1; // Placeholder
+function adjustForPlanetSize(elementProbability, planetSizeInEarthRadii) {
+    const earthRadiusInKilometers = 6371; // Earth's average radius in kilometers
+    const planetRadiusInKilometers = planetSizeInEarthRadii * earthRadiusInKilometers;
+
+    // Scale the probability by the planet's radius relative to Earth's radius in kilometers
+    return elementProbability * planetRadiusInKilometers;
 }
+
+
 
 // Implement the estimation functions based on astrophysical and geological models
 function estimateCoreSize(planetRadius) { /* ... */ }
