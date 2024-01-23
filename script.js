@@ -42,26 +42,32 @@ function setupThreeJS() {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
     }
-
+    console.log("ThreeJS setup complete"); // Confirm ThreeJS setup
     animate();
 }
 
 function updatePlanetSize(planetRadiusInEarthUnits) {
     // Remove the existing sphere from the scene
+    console.log("Updating planet size to:", planetRadiusInEarthUnits); // Log the input size
     scene.remove(sphere);
     
     // Create a new geometry with the updated size
     const newGeometry = new THREE.SphereGeometry(planetRadiusInEarthUnits, 32, 32);
-    
+    console.log("Updated sphere geometry"); // Log after updating geometry
+
     // Update the sphere with the new geometry
     sphere.geometry.dispose(); // Dispose of the old geometry
     sphere.geometry = newGeometry;
     
     // Re-add the sphere to the scene
     scene.add(sphere);
+    console.log("Re-added sphere to scene"); // Log after adding sphere back to scene
+
     
     // Adjust camera distance if the planet is significantly larger or smaller
-    camera.position.z = 20 * planetRadiusInEarthUnits;
+    // camera.position.z = 20 * planetRadiusInEarthUnits;
+    console.log("Updated camera position"); // Log camera position update
+
 }
 
 // star generation
@@ -194,21 +200,22 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     const gravityDetails = `<p>Gravity: ${planetGravityInMs2} m/s<sup>2</sup> (${planetGravityInG} G)</p>`;
     content += gravityDetails;
 
+    console.log("Displaying details for habitable planet. Size:", planet.size); // Log before calling updatePlanetSize
     updatePlanetSize(planet.size);
 
 
-let elementDetails = '';
-sortedComposition.forEach(([element, percentage]) => {
-    const elementVolume = planetVolume * percentage * 1000000000;
-    let elementMass = elementVolume * getElementDensity(element);
-    elementMass *= scalingFactor; // Apply scaling factor to element mass
+	let elementDetails = '';
+	sortedComposition.forEach(([element, percentage]) => {
+    	const elementVolume = planetVolume * percentage * 1000000000;
+    	let elementMass = elementVolume * getElementDensity(element);
+    	elementMass *= scalingFactor; // Apply scaling factor to element mass
         
-    // console.log(`Element: ${element}, Percentage: ${percentage}, Volume: ${elementVolume}, Mass: ${elementMass}`);
+    	// console.log(`Element: ${element}, Percentage: ${percentage}, Volume: ${elementVolume}, Mass: ${elementMass}`);
 
-    const formattedElementMass = elementMass.toExponential(2); // Format elementMass in scientific notation
+    	const formattedElementMass = elementMass.toExponential(2); // Format elementMass in scientific notation
 
-    elementDetails += `<p>${element}: ${formattedElementMass} kg</p>`;
-    // console.log(`Formatted Mass for ${element}: ${formattedElementMass}`);
+    	elementDetails += `<p>${element}: ${formattedElementMass} kg</p>`;
+    	// console.log(`Formatted Mass for ${element}: ${formattedElementMass}`);
 });
 
 
