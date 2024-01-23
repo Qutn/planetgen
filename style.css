@@ -88,3 +88,16 @@ button {
     color: white;
     border-radius: 10px;
 }
+
+/* New styles for the element details */
+.habitable-planet-container .element-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Adjust the gap between elements as needed */
+    margin-top: 10px; /* Adjust as needed */
+}
+
+.habitable-planet-container .element-details span {
+    margin: 0; /* Remove default paragraph margins */
+    white-space: nowrap; /* Prevents the text from wrapping */
+}
