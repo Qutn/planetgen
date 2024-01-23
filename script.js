@@ -70,6 +70,11 @@ function generateStar() {
     };
 }
 
+function calculateGravity(planetRadiusInEarthRadii) {
+    const earthGravity = 9.8; // in m/s^2
+    return earthGravity * planetRadiusInEarthRadii;
+}
+
 function displayStarProperties(star, div) {
     div.innerHTML = `
         <p>Type: ${star.type}</p>
@@ -157,6 +162,12 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
 
 	console.log("Planet Size (in Earth radii):", planet.size);
 	console.log("Planet Volume (in km^3):", planetVolume);
+
+    const planetGravityInMs2 = (planet.size * 9.8).toFixed(2); // Gravity in m/s^2
+    const planetGravityInG = (planetGravityInMs2 / 9.8).toFixed(2); // Convert to Earth's gravity
+
+    const gravityDetails = `<p>Gravity: ${planetGravityInMs2} m/s<sup>2</sup> (${planetGravityInG} G)</p>`;
+    content += gravityDetails;
 
 let elementDetails = '';
 sortedComposition.forEach(([element, percentage]) => {
