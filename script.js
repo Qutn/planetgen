@@ -89,6 +89,7 @@ function setupSolarSystemGeneration() {
 
     generateSystemButton.addEventListener('click', () => {
         const orbitData = generateOrbit();
+            console.log("Orbit Data:", orbitData); // Check if orbitData contains habitableZone
    			if (!orbitData.parentStar) {
             console.error("Parent star data is missing in orbit data.");
             return;
@@ -105,6 +106,10 @@ function setupSolarSystemGeneration() {
 function displaySolarSystemProperties(solarSystem, div, habitableZone, parentStar) {
     let htmlContent = '<h3>Solar System Planets</h3>';
     console.log("Parent Star:", parentStar); // Check if parentStar is defined and has necessary properties
+    if (!habitableZone) {
+        console.error("Habitable zone data is missing.");
+        return;
+    }
     console.log("Habitable Zone:", habitableZone); // Debugging log
     solarSystem.forEach((planet, index) => {
         const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
