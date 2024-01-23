@@ -1,3 +1,5 @@
+import * as THREE from './three.module.js';
+import { OrbitControls } from './OrbitControls.js';
 import { generatePlanetName } from './generators/names.js';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone  } from './generators/orbit.js';
@@ -38,8 +40,19 @@ function setupThreeJS() {
         camera.updateProjectionMatrix();
     });
 
+    // OrbitControls setup
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; // optional, for smoother interaction
+    controls.dampingFactor = 0.1;
+    controls.enableZoom = true; // enable zooming
+
+    window.addEventListener('resize', () => {
+        // ... (existing resize event listener)
+    });
+
     function animate() {
         requestAnimationFrame(animate);
+        controls.update(); // only required if controls.enableDamping or controls.autoRotate are set to true
         renderer.render(scene, camera);
     }
     console.log("ThreeJS setup complete"); // Confirm ThreeJS setup
