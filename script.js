@@ -73,10 +73,10 @@ function generateStar() {
 function displayStarProperties(star, div) {
     div.innerHTML = `
         <p>Type: ${star.type}</p>
-        <p>Age: ${star.age} billion years</p>
-        <p>Size: ${star.size} Solar radii</p>
-        <p>Mass: ${star.mass} Solar masses</p>
-        <p>Luminosity: ${star.luminosity} Solar luminosity</p>
+        <p>Age: ${star.age.toFixed(2)} billion years</p>
+        <p>Size: ${star.size.toFixed(2)} Solar radii</p>
+        <p>Mass: ${star.mass.toFixed(2)} Solar masses</p>
+        <p>Luminosity: ${star.luminosity.toFixed(2)} Solar luminosity</p>
         <p>Habitable Zone: ${star.habitableZone.innerBoundary.toFixed(2)} - ${star.habitableZone.outerBoundary.toFixed(2)} AU</p>
     `;
 }
@@ -98,7 +98,7 @@ function setupSolarSystemGeneration() {
 function displaySolarSystemProperties(solarSystem, div, habitableZone, parentStar) {
     let htmlContent = '<h3>Solar System Planets</h3>';
     solarSystem.forEach((planet, index) => {
-        const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
+        const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size.toFixed(2)}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
         htmlContent += `<p>${planetDetails}</p>`;
 
         if (planet.orbitRadius >= habitableZone.innerBoundary && planet.orbitRadius <= habitableZone.outerBoundary) {
@@ -119,7 +119,7 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     const moonCount = 2;
     const planetName = generatePlanetName(systemNumber, planetIndex, atmosphereType, geologicalActivity, moonCount);
 
-    const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
+    const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size.toFixed(2)}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
     console.log("Planet Details:", planetDetails); // Debugging log
 
     // Star and planet data
@@ -175,7 +175,7 @@ sortedComposition.forEach(([element, percentage]) => {
 
     console.log("Element Details:", elementDetails); // Debugging log
 
-    content += `<div>${elementDetails}</div>`;
+	content += `<div class="element-details">${elementDetails}</div>`;
     habitablePlanetDiv.innerHTML = content;
 
 	console.log("Final HTML Content:", content);
