@@ -125,14 +125,39 @@ function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) 
     // Get geological data
     const geologicalData = generateGeologicalData(planet.size, orbitalRadius, starSize, starMass);
 	console.log("Geological Data:", geologicalData);
-    const compositionData = determinePlanetaryComposition(planetSize, orbitalRadius, starSize, starMass);
-    console.log("Composition Data:", compositionData);
+   // const compositionData = determinePlanetaryComposition(planetSize, orbitalRadius, starSize, starMass);
+   // console.log("Composition Data:", compositionData);
       
     // Append geological data to planet details
     const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;
     habitablePlanetDiv.innerHTML += `<p>${geologicalDetails}</p>`;
 	habitablePlanetDiv.innerHTML = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p>`;
+
+	// this is where we determine masses of the valuable ores
+    const compositionData = determinePlanetaryComposition(planet.size, planet.orbitRadius, star.size, star.mass);
+	console.log("Composition Data:", compositionData);
+    // Sort elements by abundance and filter for valuable elements
+    const valuableElements = ['Fe', 'Cu', 'Ag', 'Au', 'Mth']; // Iron, Copper, Silver, Gold, Mithril
+    const sortedComposition = Object.entries(compositionData)
+                                     .filter(([element]) => valuableElements.includes(element))
+                                     .sort((a, b) => b[1] - a[1]); // Sort by abundance
+
+    // Calculate and display elemental mass
+    const planetVolume = (4/3) * Math.PI * Math.pow(planet.size, 3); // Volume of the planet
+    let elementDetails = '';
+    sortedComposition.forEach(([element, percentage]) => {
+        const elementVolume = planetVolume * percentage / 100;
+        const elementMass = elementVolume * getElementDensity(element); // Assume a getElementDensity function
+        elementDetails += `<p>${element}: ${elementMass.toFixed(2)} kg</p>`;
+    });
+
+    habitablePlanetDiv.innerHTML += `<div>${elementDetails}</div>`;
 }
 
+function getElementDensity(element) {
+    // Return density of the element, placeholder values used here
+    const densities = { 'Fe': 7874, 'Cu': 8960, 'Ag': 10490, 'Au': 19300, 'Mth': 12000 }; // in kg/m^3
+    return densities[element] || 5500; // Default density
+}
 // Additional functions for procedural generation of planet details
 // For example: generateGeology, generateMineralContent, generateAtmosphere, etc.
