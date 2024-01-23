@@ -120,11 +120,13 @@ function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) 
     const starSize = star.size;
     const starMass = star.mass;
     const orbitalRadius = planet.orbitRadius;
+	const planetSize = planet.size;
 
     // Get geological data
     const geologicalData = generateGeologicalData(planet.size, orbitalRadius, starSize, starMass);
 	console.log("Geological Data:", geologicalData);
-
+    const compositionData = determinePlanetaryComposition(planetSize, orbitalRadius, starSize, starMass);
+    console.log("Composition Data:", compositionData);
       
     // Append geological data to planet details
     const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;
