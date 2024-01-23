@@ -89,8 +89,12 @@ function setupSolarSystemGeneration() {
 
     generateSystemButton.addEventListener('click', () => {
         const orbitData = generateOrbit();
+    if (!orbitData.parentStar) {
+            console.error("Parent star data is missing in orbit data.");
+            return;
+        }
         displayStarProperties(orbitData.parentStar, starPropertiesDiv);
-        displaySolarSystemProperties(orbitData.solarSystem, solarSystemPropertiesDiv, orbitData.parentStar.habitableZone);
+        displaySolarSystemProperties(orbitData.solarSystem, solarSystemPropertiesDiv, orbitData.habitableZone, orbitData.parentStar);
     });
 }
 
