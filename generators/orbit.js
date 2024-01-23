@@ -1,3 +1,7 @@
+function getRandomValue(min, max) {
+    return Math.random() * (max - min) + min;
+}
+
 function generateOrbit() {
     const parentStar = generateParentStar();
     // Calculate the habitable zone based on the star's luminosity
@@ -134,9 +138,6 @@ function generateStarSizeAndMass(type, age) {
     return { size, mass };
 }
 
-function getRandomValue(min, max) {
-    return Math.random() * (max - min) + min;
-}
 
 function generateStarLuminosity(type, size) {
     let luminosity; // Luminosity in terms of Solar luminosity
@@ -260,9 +261,6 @@ function getPlanetSize(planetType) {
     }
 }
 
-function getRandomValue(min, max) {
-    return Math.random() * (max - min) + min;
-}
 
 function getPlanetAtmosphere(planetType, orbitRadius, habitableZone) {
     if (planetType === "Terrestrial" && isInHabitableZone(orbitRadius, habitableZone)) {
@@ -327,12 +325,6 @@ function isInHabitableZone(orbitRadius, habitableZone) {
     return orbitRadius >= habitableZone.innerBoundary && orbitRadius <= habitableZone.outerBoundary;
 }
 
-
-//
-
-function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
 // Implement the functions: getRandomPlanetType, getOrbitRadius, getOrbitPeriod, getPlanetSize
 // These functions will generate specific characteristics for each planet
