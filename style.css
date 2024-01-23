@@ -9,11 +9,12 @@ body {
 }
 
 .lcars-bar {
-    background-color: #7788ff;
+    background-color: #333333;
     /* clip-path: polygon(0 0, 100% 0, 100% 30%, 70% 100%, 0 100%); */
     padding: 10px 20px;
 	font-size: 24px;
  	text-transform: uppercase;
+	text-align: right;
     border-radius: 50px; /* Adjust as needed */
 
 
@@ -21,8 +22,10 @@ body {
 
 
 header h1 {
-    color: #FFFFFF;
-    text-align: center;
+    color: #cc77ff;
+    text-align: right;
+	padding: 10px;
+	margin: 20px;
     border-radius: 50px;
 
 }
@@ -34,18 +37,19 @@ header h1 {
 }
 
 .statistics, .generator-options {
-    background-color: #dd4444;
-    color: #000000;
+    background-color: #222222;
+    color: #cc77ff;
     width: 200px;
     height: 500px;
     overflow-y: auto;
-    border-radius: 50px;
+    border-radius: 10px;
     padding: 20px;
     margin: 10px;
 }
 
 button {
-    background-color: #ff7700;
+    font-family: 'Antonio', sans-serif;
+    background-color: #7788ff;
     border: 2px solid #000000;
     color: #000000;
     padding: 10px 20px;
