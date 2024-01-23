@@ -14,12 +14,16 @@ body {
     padding: 10px 20px;
 	font-size: 24px;
  	text-transform: uppercase;
+    border-radius: 50px; /* Adjust as needed */
+
 
 }
+
 
 header h1 {
     color: #FFFFFF;
     text-align: center;
+    border-radius: 50px;
 
 }
 
