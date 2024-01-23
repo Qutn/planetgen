@@ -153,7 +153,7 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     // Calculate and append elemental mass
     const planetVolume = (4/3) * Math.PI * Math.pow(planet.size, 3);
     let elementDetails = '';
- 	sortedComposition.forEach(([element, percentage]) => {
+ sortedComposition.forEach(([element, percentage]) => {
         const elementVolume = planetVolume * percentage / 100;
         let elementMass = elementVolume * getElementDensity(element);
 
