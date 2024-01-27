@@ -34,16 +34,25 @@ function setupThreeJS(star) {
     // Calculate star color and intensity
 
 
-    const { color, intensity } = calculateStarColorAndIntensity(starData.type);
-    console.log("Calculated Star Color:", color, "Intensity:", intensity);
-    const light = new THREE.PointLight(color, intensity);
+    const { color } = calculateStarColorAndIntensity(starData.type);
+	const luminosityMultiplier = 1.5; // Adjust this value to fine-tune the light intensity
+    let lightIntensity = starData.luminosity * luminosityMultiplier;
+
+    // Set a minimum intensity threshold
+    const minIntensity = 0.5; // Define a minimum intensity (adjust as needed)
+    const maxIntensity = 3;   // Define a maximum intensity
+
+    lightIntensity = Math.min(Math.max(lightIntensity, minIntensity), maxIntensity);
+
+    const light = new THREE.PointLight(color, lightIntensity);
     light.position.set(10, 10, 10);
+    scene.add(light);
+
+    console.log("Calculated Star Color:", color, "Intensity:", lightIntensity);
 
     // Ambient Light
-    const ambientLight = new THREE.AmbientLight(color, intensity/50); // ambient light 
+    const ambientLight = new THREE.AmbientLight(color, lightIntensity/10); // ambient light 
     scene.add(ambientLight);
-
-    scene.add(light);
 
 
 //camera
@@ -315,66 +324,49 @@ function calculateStarColorAndIntensity(starType, star) {
 // convert wavelength to rgb
 
 function wavelengthToRGB(wavelength) {
-    var r, g, b;
+    // Normalize wavelength to a range between 380 and 780
+    const normalizedWavelength = Math.max(380, Math.min(wavelength, 780));
 
-    if (wavelength < 380 || wavelength > 780) {
-        if (wavelength < 380) { // Extremely hot, lean towards violet
-            return 'rgb(22, 166, 255)'; // bright blue color
-        } else { // Extremely cool, lean towards red
-            return 'rgb(255, 0, 100)'; // Reddish color
-        }
+    // Map the normalized wavelength to a 0-1 range
+    const t = (normalizedWavelength - 380) / (780 - 380);
+
+    // Define color points for interpolation
+    const colors = {
+        red: { r: 255, g: 0, b: 0 },      // Red
+        yellow: { r: 255, g: 255, b: 0 }, // Yellow
+        white: { r: 255, g: 255, b: 255 },// White
+        blue: { r: 0, g: 0, b: 255 }      // Blue
+    };
+
+    let r, g, b;
+
+    // Linear interpolation between color points
+    if (t < 0.33) {
+        // From red to yellow
+        r = lerp(colors.red.r, colors.yellow.r, t / 0.33);
+        g = lerp(colors.red.g, colors.yellow.g, t / 0.33);
+        b = lerp(colors.red.b, colors.yellow.b, t / 0.33);
+    } else if (t < 0.66) {
+        // From yellow to white
+        r = lerp(colors.yellow.r, colors.white.r, (t - 0.33) / 0.33);
+        g = lerp(colors.yellow.g, colors.white.g, (t - 0.33) / 0.33);
+        b = lerp(colors.yellow.b, colors.white.b, (t - 0.33) / 0.33);
+    } else {
+        // From white to blue
+        r = lerp(colors.white.r, colors.blue.r, (t - 0.66) / 0.34);
+        g = lerp(colors.white.g, colors.blue.g, (t - 0.66) / 0.34);
+        b = lerp(colors.white.b, colors.blue.b, (t - 0.66) / 0.34);
     }
 
-    if (wavelength >= 380 && wavelength < 440) {
-        r = -1 * (wavelength - 440) / (440 - 380);
-        g = 0;
-        b = 1;
-   } else if (wavelength >= 440 && wavelength < 490) {
-        r = 0;
-        g = (wavelength - 440) / (490 - 440);
-        b = 1;  
-   } else if (wavelength >= 490 && wavelength < 510) {
-        r = 0;
-        g = 1;
-        b = -1 * (wavelength - 510) / (510 - 490);
-   } else if (wavelength >= 510 && wavelength < 580) {
-        r = (wavelength - 510) / (580 - 510);
-        g = 1;
-        b = 0;
-   } else if (wavelength >= 580 && wavelength < 645) {
-        r = 1;
-        g = -1 * (wavelength - 645) / (645 - 580);
-        b = 0.0;
-   } else if (wavelength >= 645 && wavelength <= 780) {
-        r = 1;
-        g = 0;
-        b = 0;
-   } else {
-        r = 0;
-        g = 0;
-        b = 0;
-   }
-
-   // Let the intensity fall off near the vision limits
-   var factor = 0;
-   if (wavelength >= 380 && wavelength < 420) {
-       factor = 0.3 + 0.7*(wavelength - 380) / (420 - 380);
-   } else if (wavelength >= 420 && wavelength < 645) {
-       factor = 1;
-   } else if (wavelength >= 645 && wavelength <= 780) {
-       factor = 0.3 + 0.7*(780 - wavelength) / (780 - 645);
-   }
-
-   var rgb = {
-       r: adjustGamma(r * factor),
-       g: adjustGamma(g * factor),
-       b: adjustGamma(b * factor)
-   };
-
-   return `rgb(${Math.round(rgb.r * 255)}, ${Math.round(rgb.g * 255)}, ${Math.round(rgb.b * 255)})`;
-    console.log("Wavelength:", wavelength, "RGB Values:", r, g, b);
-
+    // Convert RGB values to 0-255 range and return as string
+    return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 }
+
+// Linear interpolation function
+function lerp(start, end, t) {
+    return start * (1 - t) + end * t;
+}
+
 
 function adjustGamma(value) {
     if (value <= 0) {
