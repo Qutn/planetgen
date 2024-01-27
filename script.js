@@ -399,17 +399,21 @@ function adjustGamma(value) {
 
 // Assuming you have a function to get the atmosphere color based on composition
 function getAtmosphereColor(composition) {
-    // Return a color based on the composition
-    // This is a placeholder, replace with your actual logic
     const colors = {
         'water_vapor': 0x0000ff,
         'nitrogen_oxygen': 0xadd8e6,
         'hydrogen_helium': 0xffa500,
         'methane': 0x800080,
         'carbon_dioxide': 0xff0000,
-        'thin': 0x808080
+        'thin': 0x808080,
+        'unknown': 0xadd8e6 // This is an example, you can choose any color or handling for unknown compositions
     };
-    return colors[composition] || 0xadd8e6; // Default to light blue
+
+  // Log the composition and the corresponding color
+    console.log(`Atmosphere Composition: ${composition}`);
+    console.log(`Atmosphere Color:`, colors[composition] ? colors[composition].toString(16) : 'unknown');
+
+    return colors[composition] || colors['unknown']; // Fallback to 'unknown' if composition is not defined
 }
 
 
@@ -418,7 +422,11 @@ function createAtmosphere(planetRadius, composition) {
     const atmosphereRadius = planetRadius * atmosphereScaleFactor;
 	const geometry = new THREE.SphereGeometry(atmosphereRadius, 32, 32);
     const color = getAtmosphereColor(composition);
-	console.log("Planet Radius:", planetRadius, "Atmosphere Radius:", atmosphereRadius);
+ // Log the planet radius, atmosphere radius, and color
+    console.log("Planet Radius:", planetRadius);
+    console.log("Atmosphere Radius:", atmosphereRadius);
+    console.log("Atmosphere Color:", new THREE.Color(color).getStyle());
+
 
     const material = new THREE.ShaderMaterial({
         uniforms: {

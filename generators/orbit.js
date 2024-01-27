@@ -265,23 +265,23 @@ function getPlanetSize(planetType) {
 
 function getPlanetAtmosphere(planetType, orbitRadius, habitableZone) {
     if (planetType === "Terrestrial" && isInHabitableZone(orbitRadius, habitableZone)) {
-        return "Nitrogen-Oxygen";
+        return "nitrogen_oxygen";
     }
-	switch (planetType) {
+    switch (planetType) {
         case "Terrestrial":
-            return "Nitrogen-Oxygen";
+            return "nitrogen_oxygen";
         case "Ocean World":
-            return "Water Vapor";
+            return "water_vapor";
         case "Gas Giant":
-            return "Hydrogen-Helium";
+            return "hydrogen_helium";
         case "Ice Giant":
-            return "Methane";
+            return "methane";
         case "Lava Planet":
-            return "Carbon Dioxide";
+            return "carbon_dioxide";
         case "Dwarf Planet":
-            return "Thin or None";
+            return "thin"; // Assuming 'thin' represents a thin atmosphere
         default:
-            return "Unknown";
+            return "unknown"; // Make sure to handle the 'unknown' case in getAtmosphereColor if needed
     }
 }
 
