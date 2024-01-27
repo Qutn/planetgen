@@ -90,7 +90,7 @@ function updatePlanetSize(planetRadiusInEarthUnits) {
     
     // Create a new geometry with the updated size
     const newGeometry = new THREE.SphereGeometry(planetRadiusInEarthUnits, 32, 32);
-    console.log("Updated sphere geometry"); // Log after updating geometry
+    // console.log("Updated sphere geometry"); // Log after updating geometry
 
     // Update the sphere with the new geometry
     sphere.geometry.dispose(); // Dispose of the old geometry
@@ -98,12 +98,12 @@ function updatePlanetSize(planetRadiusInEarthUnits) {
     
     // Re-add the sphere to the scene
     scene.add(sphere);
-    console.log("Re-added sphere to scene"); // Log after adding sphere back to scene
+    // console.log("Re-added sphere to scene"); // Log after adding sphere back to scene
 
     
     // Adjust camera distance if the planet is significantly larger or smaller
     // camera.position.z = 20 * planetRadiusInEarthUnits;
-    console.log("Updated camera position"); // Log camera position update
+    // console.log("Updated camera position"); // Log camera position update
 
 }
 
@@ -233,7 +233,7 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     const planetVolume = (4/3) * Math.PI * Math.pow(planet.size * 6371, 3); // Planet's volume in km^3
     const scalingFactor = planetVolume / earthVolume; // Scaling factor based on volume
 
-	console.log("Planet Size (in Earth radii):", planet.size);
+	// console.log("Planet Size (in Earth radii):", planet.size);
 	// console.log("Planet Volume (in km^3):", planetVolume);
 
     const planetGravityInMs2 = (planet.size * 9.8).toFixed(2); // Gravity in m/s^2
@@ -313,7 +313,7 @@ function calculateStarColorAndIntensity(starType, star) {
 
     // Convert wavelength to RGB
     const color = wavelengthToRGB(peakWavelength * 1e9); // Convert to nanometers
-    console.log("Calculated RGB Color for Star:", color);
+    // console.log("Calculated RGB Color for Star:", color);
 
     // Placeholder for intensity
     const intensity = 1; // You can modify this based on star size or luminosity
@@ -374,4 +374,52 @@ function adjustGamma(value) {
     } else {
         return Math.pow(value, 0.8);
     }
+}
+
+// Assuming you have a function to get the atmosphere color based on composition
+function getAtmosphereColor(composition) {
+    // Return a color based on the composition
+    // This is a placeholder, replace with your actual logic
+    const colors = {
+        'water_vapor': 0x0000ff,
+        'nitrogen_oxygen': 0xadd8e6,
+        'hydrogen_helium': 0xffa500,
+        'methane': 0x800080,
+        'carbon_dioxide': 0xff0000,
+        'thin': 0x808080
+    };
+    return colors[composition] || 0xadd8e6; // Default to light blue
+}
+
+
+function createAtmosphere(planetRadius, composition) {
+    const atmosphereRadius = planetRadius * 1.1; // 10% larger than the planet
+    const geometry = new THREE.SphereGeometry(atmosphereRadius, 32, 32);
+    const color = getAtmosphereColor(composition);
+
+    const material = new THREE.ShaderMaterial({
+        uniforms: {
+            atmosphereColor: { value: new THREE.Color(color) }
+        },
+        vertexShader: /* glsl */`
+            varying vec3 vertexNormal;
+            void main() {
+                vertexNormal = normalize(normalMatrix * normal); // Normal in view space
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: /* glsl */`
+            uniform vec3 atmosphereColor;
+            varying vec3 vertexNormal;
+            void main() {
+                float intensity = pow(0.6 - dot(vertexNormal, vec3(0, 0, 1)), 2.0);
+                gl_FragColor = vec4(atmosphereColor, intensity);
+            }
+        `,
+        side: THREE.BackSide,
+        blending: THREE.AdditiveBlending,
+        transparent: true
+    });
+
+    return new THREE.Mesh(geometry, material);
 }
