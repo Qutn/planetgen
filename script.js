@@ -28,10 +28,22 @@ function setupThreeJS() {
     sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
-    const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(10, 10, 10);
-    scene.add(light);
+// lighting
+    // Ambient Light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // soft white light
+    scene.add(ambientLight);
 
+    // Directional Light
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 7.5); // position the light
+    scene.add(directionalLight);
+
+    // Point Light
+    const pointLight = new THREE.PointLight(0xffffff, 0.5, 100);
+    pointLight.position.set(-10, -10, -10);
+    scene.add(pointLight);
+
+//camera
     camera.position.z = 20; // Adjusted for better view
 
     window.addEventListener('resize', () => {
