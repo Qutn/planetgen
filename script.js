@@ -6,6 +6,7 @@ import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateSta
 
 // Global variables for the three.js objects
 let sphere, scene, camera, renderer;
+let atmosphereMesh;
 
 document.addEventListener('DOMContentLoaded', () => {
     const defaultStar = { type: 'G', size: 1, luminosity: 1, habitableZone: { innerBoundary: 0.95, outerBoundary: 1.37 } };
@@ -46,8 +47,8 @@ function setupThreeJS(star, planet, habitableZone) {
 
     // Create Atmosphere
     const atmosphereComposition = getPlanetAtmosphere(planetData.type, planetData.orbitRadius, starData.habitableZone);
-    const atmosphere = createAtmosphere(planetData.radius, atmosphereComposition);
-    scene.add(atmosphere);
+    atmosphereMesh = createAtmosphere(planetData.radius, atmosphereComposition);
+    scene.add(atmosphereMesh);
 
     // Calculate star color and intensity
 
@@ -115,6 +116,17 @@ function updatePlanetSize(planetRadiusInEarthUnits) {
     
     // Re-add the sphere to the scene
     scene.add(sphere);
+
+    if (atmosphereMesh) {
+        scene.remove(atmosphereMesh); // Remove the existing atmosphere mesh
+
+        const atmosphereScaleFactor = calculateAtmosphereScale(planetRadiusInEarthUnits);
+        const newAtmosphereGeometry = new THREE.SphereGeometry(planetRadiusInEarthUnits * atmosphereScaleFactor, 32, 32);
+        atmosphereMesh.geometry.dispose(); // Dispose of the old geometry
+        atmosphereMesh.geometry = newAtmosphereGeometry;
+
+        scene.add(atmosphereMesh); // Re-add the updated atmosphere to the scene
+    }
     // console.log("Re-added sphere to scene"); // Log after adding sphere back to scene
 
     
@@ -189,8 +201,10 @@ function setupSolarSystemGeneration() {
     });
 }
 
-function displaySolarSystemProperties(div, orbitData) {
+function displaySolarSystemProperties(div, orbitData, selectedPlanetIndex = null) {
     let htmlContent = '<h3>Solar System Planets</h3>';
+    let selectedPlanet = null;
+
     orbitData.solarSystem.forEach((planet, index) => {
         const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size.toFixed(2)}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
         htmlContent += `<p>${planetDetails}</p>`;
@@ -198,13 +212,19 @@ function displaySolarSystemProperties(div, orbitData) {
         if (planet.orbitRadius >= orbitData.parentStar.habitableZone.innerBoundary && planet.orbitRadius <= orbitData.parentStar.habitableZone.outerBoundary) {
             displayHabitablePlanetDetails(planet, 1, index, orbitData.parentStar);
         }
+
+        // Check if this is the selected planet for focused display
+        if (selectedPlanetIndex !== null && index === selectedPlanetIndex) {
+            selectedPlanet = planet;
+        }
     });
+
     div.innerHTML = htmlContent;
 
-    // Call setupThreeJS for each planet
-    orbitData.solarSystem.forEach(planet => {
-        setupThreeJS(orbitData.parentStar, planet, orbitData.parentStar.habitableZone);
-    });
+    // If a selected planet is defined, set up its ThreeJS representation
+    if (selectedPlanet) {
+        setupThreeJS(orbitData.parentStar, selectedPlanet, orbitData.parentStar.habitableZone);
+    }
 }
 
 async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
@@ -416,21 +436,35 @@ function getAtmosphereColor(composition) {
     return colors[composition] || colors['unknown']; // Fallback to 'unknown' if composition is not defined
 }
 
+function calculateAtmosphereScale(planetSize) {
+  // Define the base scale factor
+  const baseScale = 1.025; // 2.5% larger than the planet size as the base scale
+
+  // Define a scale rate that will determine how much larger the atmosphere gets for larger planets
+  const scaleRate = 0.01; // 1% additional scale per unit of planet size
+
+  // Calculate the atmosphere scale factor
+  const atmosphereScale = baseScale + (planetSize * scaleRate);
+
+  // Cap the atmosphere scale to a maximum value to prevent excessively large atmospheres
+  const maxScale = 1.1; // 10% larger than the planet size as the max scale
+  return Math.min(atmosphereScale, maxScale);
+}
 
 function createAtmosphere(planetRadius, composition) {
-    const atmosphereScaleFactor = planetRadius < 1 ? 1.05 : 1.1; // Smaller increase for smaller planets
-    const atmosphereRadius = planetRadius * atmosphereScaleFactor;
-	const geometry = new THREE.SphereGeometry(atmosphereRadius, 32, 32);
-    const color = getAtmosphereColor(composition);
- // Log the planet radius, atmosphere radius, and color
-    console.log("Planet Radius:", planetRadius);
-    console.log("Atmosphere Radius:", atmosphereRadius);
+  const atmosphereScaleFactor = calculateAtmosphereScale(planetRadius); // Use the new scale factor
+  const atmosphereRadius = planetRadius * atmosphereScaleFactor;
+  const geometry = new THREE.SphereGeometry(atmosphereRadius, 32, 32);
+  const color = getAtmosphereColor(composition);
+    
+    // Log the atmosphere information
+    console.log("Planet Radius:", planetRadius, "Atmosphere Radius:", atmosphereRadius);
     console.log("Atmosphere Color:", new THREE.Color(color).getStyle());
-
 
     const material = new THREE.ShaderMaterial({
         uniforms: {
-            atmosphereColor: { value: new THREE.Color(color) }
+            atmosphereColor: { value: new THREE.Color(color) },
+            surfaceColor: { value: new THREE.Color(0xffffff) }, // Assuming the surface is white for simplicity
         },
         vertexShader: /* glsl */`
             varying vec3 vertexNormal;
@@ -439,16 +473,26 @@ function createAtmosphere(planetRadius, composition) {
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `,
-    fragmentShader: /* glsl */`
-        uniform vec3 atmosphereColor;
-        varying vec3 vertexNormal;
-        void main() {
-            float intensity = pow(0.6 - dot(vertexNormal, vec3(0, 0, 1)), 1.5); // Adjust power for intensity
-            gl_FragColor = vec4(atmosphereColor * intensity, intensity); // Multiply color by intensity
-        }
-    `,
+        fragmentShader: /* glsl */`
+            uniform vec3 atmosphereColor;
+            uniform vec3 surfaceColor;
+            varying vec3 vertexNormal;
+            void main() {
+                // Calculate intensity based on the angle to the view direction
+                float viewAngle = dot(vertexNormal, vec3(0, 0, 1));
+                float atmosphereEffect = smoothstep(0.0, 1.0, pow(1.0 - viewAngle, 2.0));
+                float intensity = pow(0.6 - dot(vertexNormal, vec3(0, 0, 1)), 2.0);
+  					gl_FragColor = vec4(atmosphereColor, intensity * 0.5); // reduce intensity for a subtler effect
+
+                // Mix the surface color and the atmosphere color based on the calculated effect
+                vec3 finalColor = mix(surfaceColor, atmosphereColor, atmosphereEffect);
+
+                // Output the final color with the alpha representing the atmosphere effect
+                gl_FragColor = vec4(finalColor, atmosphereEffect);
+            }
+        `,
         side: THREE.BackSide,
-        blending: THREE.AdditiveBlending,
+        blending: THREE.NormalBlending,
         transparent: true
     });
 
