@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { generatePlanetName } from './generators/names.js';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
-import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone  } from './generators/orbit.js';
+import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, getPlanetAtmosphere, determinePlanetType  } from './generators/orbit.js';
 
 // Global variables for the three.js objects
 let sphere, scene, camera, renderer;
@@ -14,8 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupThreeJS(star) {
-    // Default star values (similar to the Sun)
+    // Default values for planet and star
     const defaultStar = { type: 'G', size: 1, luminosity: 1 };
+    const defaultPlanet = { type: 'Terrestrial', radius: 1 };
+    const planetData = planet || defaultPlanet;
     const starData = star || defaultStar;
     console.log("Star Data in setupThreeJS:", starData);
 
@@ -26,13 +28,19 @@ function setupThreeJS(star) {
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
     const earthRadiusUnit = 1;
-    const geometry = new THREE.SphereGeometry(earthRadiusUnit, 32, 32);
-	const material = new THREE.MeshStandardMaterial({ color: 0xf6d4bc }); // A light brown color
-    sphere = new THREE.Mesh(geometry, material);
+
+    // Create Planet
+    const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
+    const planetMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); // You can change the color
+    sphere = new THREE.Mesh(planetGeometry, planetMaterial);
     scene.add(sphere);
 
-    // Calculate star color and intensity
+    // Create Atmosphere
+    const atmosphereComposition = getPlanetAtmosphere(planetData.type, /* other necessary parameters */);
+    const atmosphere = createAtmosphere(planetData.radius, atmosphereComposition);
+    scene.add(atmosphere);
 
+    // Calculate star color and intensity
 
     const { color } = calculateStarColorAndIntensity(starData.type);
 	const luminosityMultiplier = 1.5; // Adjust this value to fine-tune the light intensity
@@ -116,7 +124,7 @@ function setupStarGeneration() {
     generateStarButton.addEventListener('click', () => {
         const star = generateStar();
         displayStarProperties(star, starPropertiesDiv);
-        setupThreeJS(star); // Call setupThreeJS with the generated star
+    	setupThreeJS(null, generatedStar); // Call setupThreeJS with the generated star only
 
     });
 }
@@ -182,8 +190,9 @@ function displaySolarSystemProperties(solarSystem, div, habitableZone, parentSta
             displayHabitablePlanetDetails(planet, 1, index, parentStar);
         }
     });
-    setupThreeJS(parentStar); // Add this line to use the star data for lighting
-    div.innerHTML = htmlContent;
+for (let planet of solarSystemPlanets) {
+        setupThreeJS(planet, parentStar); // Call setupThreeJS with each planet and the star
+    }    div.innerHTML = htmlContent;
 }
 
 async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
