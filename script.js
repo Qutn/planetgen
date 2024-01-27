@@ -13,35 +13,29 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSolarSystemGeneration();
 });
 
-function setupThreeJS() {
+function setupThreeJS(star) {
+    // Default star values (similar to the Sun)
+    const defaultStar = { type: 'G', size: 1, luminosity: 1 };
+    const starData = star || defaultStar;
+
     const canvas = document.getElementById('planetCanvas');
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
-    // Assuming Earth's radius is 1 unit in your 3D space
     const earthRadiusUnit = 1;
-    // Start with a default sphere representing Earth
     const geometry = new THREE.SphereGeometry(earthRadiusUnit, 32, 32);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
     sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
-// lighting
-    // Ambient Light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // soft white light
-    scene.add(ambientLight);
+    // Calculate star color and intensity
+    const { color, intensity } = calculateStarColorAndIntensity(starData.type);
+    const light = new THREE.PointLight(color, intensity);
+    light.position.set(10, 10, 10);
+    scene.add(light);
 
-    // Directional Light
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(5, 10, 7.5); // position the light
-    scene.add(directionalLight);
-
-    // Point Light
-    const pointLight = new THREE.PointLight(0xffffff, 0.5, 100);
-    pointLight.position.set(-10, -10, -10);
-    scene.add(pointLight);
 
 //camera
     camera.position.z = 20; // Adjusted for better view
@@ -104,6 +98,8 @@ function setupStarGeneration() {
     generateStarButton.addEventListener('click', () => {
         const star = generateStar();
         displayStarProperties(star, starPropertiesDiv);
+        setupThreeJS(star); // Call setupThreeJS with the generated star
+
     });
 }
 
@@ -277,3 +273,89 @@ const densities = {
 
 // Additional functions for procedural generation of planet details
 // For example: generateGeology, generateMineralContent, generateAtmosphere, etc.
+
+// star color generation for lighting
+function calculateStarColorAndIntensity(starType) {
+    const temperatures = {
+        'O': 35000, // Average temperature in Kelvin
+        'B': 20000, // Average temperature in Kelvin
+        'A': 8750,  // Average temperature in Kelvin
+        'F': 6750,  // Average temperature in Kelvin
+        'G': 5750,  // Average temperature in Kelvin
+        'K': 4250,  // Average temperature in Kelvin
+        'M': 3250   // Average temperature in Kelvin
+    };
+
+    const temperature = temperatures[starType] || 5800; // Default to Sun-like temperature (G-type)
+    const peakWavelength = 0.0029 / temperature; // In meters, using Wien's Law
+
+    // Convert wavelength to RGB
+    const color = wavelengthToRGB(peakWavelength * 1e9); // Convert to nanometers
+
+    // Placeholder for intensity
+    const intensity = 1; // You can modify this based on star size or luminosity
+
+    return { color, intensity };
+}
+
+// convert wavelength to rgb
+
+function wavelengthToRGB(wavelength) {
+    var r, g, b;
+
+    if (wavelength >= 380 && wavelength < 440) {
+        r = -1 * (wavelength - 440) / (440 - 380);
+        g = 0;
+        b = 1;
+   } else if (wavelength >= 440 && wavelength < 490) {
+        r = 0;
+        g = (wavelength - 440) / (490 - 440);
+        b = 1;  
+   } else if (wavelength >= 490 && wavelength < 510) {
+        r = 0;
+        g = 1;
+        b = -1 * (wavelength - 510) / (510 - 490);
+   } else if (wavelength >= 510 && wavelength < 580) {
+        r = (wavelength - 510) / (580 - 510);
+        g = 1;
+        b = 0;
+   } else if (wavelength >= 580 && wavelength < 645) {
+        r = 1;
+        g = -1 * (wavelength - 645) / (645 - 580);
+        b = 0.0;
+   } else if (wavelength >= 645 && wavelength <= 780) {
+        r = 1;
+        g = 0;
+        b = 0;
+   } else {
+        r = 0;
+        g = 0;
+        b = 0;
+   }
+
+   // Let the intensity fall off near the vision limits
+   var factor = 0;
+   if (wavelength >= 380 && wavelength < 420) {
+       factor = 0.3 + 0.7*(wavelength - 380) / (420 - 380);
+   } else if (wavelength >= 420 && wavelength < 645) {
+       factor = 1;
+   } else if (wavelength >= 645 && wavelength <= 780) {
+       factor = 0.3 + 0.7*(780 - wavelength) / (780 - 645);
+   }
+
+   var rgb = {
+       r: adjustGamma(r * factor),
+       g: adjustGamma(g * factor),
+       b: adjustGamma(b * factor)
+   };
+
+   return `rgb(${Math.round(rgb.r * 255)}, ${Math.round(rgb.g * 255)}, ${Math.round(rgb.b * 255)})`;
+}
+
+function adjustGamma(value) {
+    if (value <= 0) {
+        return 0;
+    } else {
+        return Math.pow(value, 0.8);
+    }
+}
