@@ -8,18 +8,27 @@ import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateSta
 let sphere, scene, camera, renderer;
 
 document.addEventListener('DOMContentLoaded', () => {
-    setupThreeJS();
+    const defaultStar = { type: 'G', size: 1, luminosity: 1, habitableZone: { innerBoundary: 0.95, outerBoundary: 1.37 } };
+    const defaultPlanet = { type: 'Terrestrial', radius: 1, orbitRadius: 1 };
+    setupThreeJS(defaultStar, defaultPlanet, defaultStar.habitableZone);
     setupStarGeneration();
     setupSolarSystemGeneration();
 });
 
-function setupThreeJS(star) {
+function setupThreeJS(star, planet, habitableZone) {
     // Default values for planet and star
     const defaultStar = { type: 'G', size: 1, luminosity: 1 };
     const defaultPlanet = { type: 'Terrestrial', radius: 1 };
     const planetData = planet || defaultPlanet;
     const starData = star || defaultStar;
     console.log("Star Data in setupThreeJS:", starData);
+    console.log("Planet Data in setupThreeJS:", planetData);
+
+    // Ensure planetData.radius is defined
+    if (typeof planetData.radius === 'undefined' || isNaN(planetData.radius)) {
+        console.error("Planet radius is undefined or NaN, using default radius.");
+        planetData.radius = defaultPlanet.radius;
+    }
 
     const canvas = document.getElementById('planetCanvas');
     scene = new THREE.Scene();
@@ -36,7 +45,7 @@ function setupThreeJS(star) {
     scene.add(sphere);
 
     // Create Atmosphere
-    const atmosphereComposition = getPlanetAtmosphere(planetData.type, /* other necessary parameters */);
+    const atmosphereComposition = getPlanetAtmosphere(planetData.type, planetData.orbitRadius, starData.habitableZone);
     const atmosphere = createAtmosphere(planetData.radius, atmosphereComposition);
     scene.add(atmosphere);
 
@@ -124,7 +133,7 @@ function setupStarGeneration() {
     generateStarButton.addEventListener('click', () => {
         const star = generateStar();
         displayStarProperties(star, starPropertiesDiv);
-    	setupThreeJS(null, generatedStar); // Call setupThreeJS with the generated star only
+    	setupThreeJS(null, Star, planet, orbitData.parentStar); // Call setupThreeJS with the generated star only
 
     });
 }
@@ -176,23 +185,26 @@ function setupSolarSystemGeneration() {
     generateSystemButton.addEventListener('click', () => {
         const orbitData = generateOrbit();
         displayStarProperties(orbitData.parentStar, starPropertiesDiv);
-        displaySolarSystemProperties(orbitData.solarSystem, solarSystemPropertiesDiv, orbitData.parentStar.habitableZone, orbitData.parentStar);
+    displaySolarSystemProperties(solarSystemPropertiesDiv, orbitData);
     });
 }
 
-function displaySolarSystemProperties(solarSystem, div, habitableZone, parentStar) {
+function displaySolarSystemProperties(div, orbitData) {
     let htmlContent = '<h3>Solar System Planets</h3>';
-    solarSystem.forEach((planet, index) => {
+    orbitData.solarSystem.forEach((planet, index) => {
         const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size.toFixed(2)}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
         htmlContent += `<p>${planetDetails}</p>`;
 
-        if (planet.orbitRadius >= habitableZone.innerBoundary && planet.orbitRadius <= habitableZone.outerBoundary) {
-            displayHabitablePlanetDetails(planet, 1, index, parentStar);
+        if (planet.orbitRadius >= orbitData.parentStar.habitableZone.innerBoundary && planet.orbitRadius <= orbitData.parentStar.habitableZone.outerBoundary) {
+            displayHabitablePlanetDetails(planet, 1, index, orbitData.parentStar);
         }
     });
-for (let planet of solarSystemPlanets) {
-        setupThreeJS(planet, parentStar); // Call setupThreeJS with each planet and the star
-    }    div.innerHTML = htmlContent;
+    div.innerHTML = htmlContent;
+
+    // Call setupThreeJS for each planet
+    orbitData.solarSystem.forEach(planet => {
+        setupThreeJS(orbitData.parentStar, planet, orbitData.parentStar.habitableZone);
+    });
 }
 
 async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
@@ -402,9 +414,11 @@ function getAtmosphereColor(composition) {
 
 
 function createAtmosphere(planetRadius, composition) {
-    const atmosphereRadius = planetRadius * 1.1; // 10% larger than the planet
-    const geometry = new THREE.SphereGeometry(atmosphereRadius, 32, 32);
+    const atmosphereScaleFactor = planetRadius < 1 ? 1.05 : 1.1; // Smaller increase for smaller planets
+    const atmosphereRadius = planetRadius * atmosphereScaleFactor;
+	const geometry = new THREE.SphereGeometry(atmosphereRadius, 32, 32);
     const color = getAtmosphereColor(composition);
+	console.log("Planet Radius:", planetRadius, "Atmosphere Radius:", atmosphereRadius);
 
     const material = new THREE.ShaderMaterial({
         uniforms: {
@@ -417,14 +431,14 @@ function createAtmosphere(planetRadius, composition) {
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `,
-        fragmentShader: /* glsl */`
-            uniform vec3 atmosphereColor;
-            varying vec3 vertexNormal;
-            void main() {
-                float intensity = pow(0.6 - dot(vertexNormal, vec3(0, 0, 1)), 2.0);
-                gl_FragColor = vec4(atmosphereColor, intensity);
-            }
-        `,
+    fragmentShader: /* glsl */`
+        uniform vec3 atmosphereColor;
+        varying vec3 vertexNormal;
+        void main() {
+            float intensity = pow(0.6 - dot(vertexNormal, vec3(0, 0, 1)), 1.5); // Adjust power for intensity
+            gl_FragColor = vec4(atmosphereColor * intensity, intensity); // Multiply color by intensity
+        }
+    `,
         side: THREE.BackSide,
         blending: THREE.AdditiveBlending,
         transparent: true

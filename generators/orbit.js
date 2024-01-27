@@ -7,14 +7,14 @@ function generateOrbit() {
     // Calculate the habitable zone based on the star's luminosity
     const luminosity = generateStarLuminosity(parentStar.type, parentStar.size);
     parentStar.habitableZone = calculateHabitableZone(luminosity);
-    const habitableZone = calculateHabitableZone(/* parameters */);
+    // const habitableZone = calculateHabitableZone(/* parameters */); // This line is not needed as habitableZone is already calculated
     const solarSystem = generateSolarSystem(parentStar);
 //    const targetPlanet = selectTargetPlanet(solarSystem);
 
     return {
         parentStar: parentStar,
         solarSystem: solarSystem,
-        habitableZone: habitableZone
+        habitableZone: parentStar.habitableZone
 
 //        targetPlanet: targetPlanet
     };
@@ -200,6 +200,7 @@ function generateSolarSystem(parentStar) {
             type: planetType,
             orbitRadius: orbitRadius,
             size: planetSize,
+        	radius: planetSize,
             atmosphere: planetAtmosphere,
             moons: planetMoons,
             // ... other characteristics
@@ -337,4 +338,4 @@ function isInHabitableZone(orbitRadius, habitableZone) {
 //    return targetPlanet;
 // }
 
-export { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone  };
+export { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, determinePlanetType, getPlanetAtmosphere };
