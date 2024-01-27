@@ -17,6 +17,7 @@ function setupThreeJS(star) {
     // Default star values (similar to the Sun)
     const defaultStar = { type: 'G', size: 1, luminosity: 1 };
     const starData = star || defaultStar;
+    console.log("Star Data in setupThreeJS:", starData);
 
     const canvas = document.getElementById('planetCanvas');
     scene = new THREE.Scene();
@@ -26,14 +27,22 @@ function setupThreeJS(star) {
 
     const earthRadiusUnit = 1;
     const geometry = new THREE.SphereGeometry(earthRadiusUnit, 32, 32);
-    const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+	const material = new THREE.MeshStandardMaterial({ color: 0xf6d4bc }); // A light brown color
     sphere = new THREE.Mesh(geometry, material);
     scene.add(sphere);
 
     // Calculate star color and intensity
+
+
     const { color, intensity } = calculateStarColorAndIntensity(starData.type);
+    console.log("Calculated Star Color:", color, "Intensity:", intensity);
     const light = new THREE.PointLight(color, intensity);
     light.position.set(10, 10, 10);
+
+    // Ambient Light
+    const ambientLight = new THREE.AmbientLight(color, intensity/50); // ambient light 
+    scene.add(ambientLight);
+
     scene.add(light);
 
 
@@ -105,6 +114,7 @@ function setupStarGeneration() {
 
 function generateStar() {
     console.log("generateStar called");
+
     // Import or reference the functions from orbit.js
     const parentStar = generateParentStar();
     const { size, mass } = generateStarSizeAndMass(parentStar.type, parentStar.age);
@@ -119,6 +129,8 @@ function generateStar() {
         luminosity: luminosity,
         habitableZone: habitableZone
     };
+    console.log("Generated Star:", parentStar);
+
 }
 
 function calculateGravity(planetRadiusInEarthRadii) {
@@ -161,7 +173,7 @@ function displaySolarSystemProperties(solarSystem, div, habitableZone, parentSta
             displayHabitablePlanetDetails(planet, 1, index, parentStar);
         }
     });
-
+    setupThreeJS(parentStar); // Add this line to use the star data for lighting
     div.innerHTML = htmlContent;
 }
 
@@ -275,7 +287,7 @@ const densities = {
 // For example: generateGeology, generateMineralContent, generateAtmosphere, etc.
 
 // star color generation for lighting
-function calculateStarColorAndIntensity(starType) {
+function calculateStarColorAndIntensity(starType, star) {
     const temperatures = {
         'O': 35000, // Average temperature in Kelvin
         'B': 20000, // Average temperature in Kelvin
@@ -288,9 +300,11 @@ function calculateStarColorAndIntensity(starType) {
 
     const temperature = temperatures[starType] || 5800; // Default to Sun-like temperature (G-type)
     const peakWavelength = 0.0029 / temperature; // In meters, using Wien's Law
+    console.log("Star Type:", starType, "Temperature:", temperature);
 
     // Convert wavelength to RGB
     const color = wavelengthToRGB(peakWavelength * 1e9); // Convert to nanometers
+    console.log("Calculated RGB Color for Star:", color);
 
     // Placeholder for intensity
     const intensity = 1; // You can modify this based on star size or luminosity
@@ -302,6 +316,14 @@ function calculateStarColorAndIntensity(starType) {
 
 function wavelengthToRGB(wavelength) {
     var r, g, b;
+
+    if (wavelength < 380 || wavelength > 780) {
+        if (wavelength < 380) { // Extremely hot, lean towards violet
+            return 'rgb(22, 166, 255)'; // bright blue color
+        } else { // Extremely cool, lean towards red
+            return 'rgb(255, 0, 100)'; // Reddish color
+        }
+    }
 
     if (wavelength >= 380 && wavelength < 440) {
         r = -1 * (wavelength - 440) / (440 - 380);
@@ -350,6 +372,8 @@ function wavelengthToRGB(wavelength) {
    };
 
    return `rgb(${Math.round(rgb.r * 255)}, ${Math.round(rgb.g * 255)}, ${Math.round(rgb.b * 255)})`;
+    console.log("Wavelength:", wavelength, "RGB Values:", r, g, b);
+
 }
 
 function adjustGamma(value) {
