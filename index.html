@@ -6,8 +6,14 @@
     <title>Planet Generator</title>
     <link rel="stylesheet" href="style.css">
     <!-- Defer three.js and generator scripts -->
-	<script type="module" src="three.module.js"></script>
-	<script type="module" src="OrbitControls.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./three.module.js",
+    "three/examples/jsm/controls/OrbitControls": "./OrbitControls.js"
+  }
+}
+</script>
     <script src="/planetgen/generators/atmosphere.js" defer></script>
     <script src="/planetgen/generators/biomes.js" defer></script>
     <script src="/planetgen/generators/climate.js" defer></script>
@@ -23,6 +29,7 @@
     <script src="/planetgen/generators/tectonics.js" defer></script>
     <!-- Defer the main script -->
 <script src="script.js" type="module" defer></script>
+
 </head>
 <body>
     <div class="lcars-bar">

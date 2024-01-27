@@ -1,5 +1,5 @@
-import * as THREE from './three.module.js';
-import { OrbitControls } from './OrbitControls.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { generatePlanetName } from './generators/names.js';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone  } from './generators/orbit.js';
@@ -41,7 +41,7 @@ function setupThreeJS() {
     });
 
     // OrbitControls setup
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true; // optional, for smoother interaction
     controls.dampingFactor = 0.1;
     controls.enableZoom = true; // enable zooming
