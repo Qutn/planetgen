@@ -73,6 +73,12 @@ function setupThreeJS(star, planet, habitableZone) {
     scene.add(ambientLight);
 
 
+    // Update planet and atmosphere
+    updatePlanetAndAtmosphere(planetData.radius, atmosphereComposition);
+
+    // Update lighting
+    updateLighting(starData.type);
+
 //camera
     camera.position.z = 20; // Adjusted for better view
 
@@ -101,7 +107,52 @@ function setupThreeJS(star, planet, habitableZone) {
     animate();
 }
 
-function updatePlanetSize(planetRadiusInEarthUnits) {
+function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
+    // Update planet geometry and material
+    // ... [existing code to update planet geometry]
+
+    // Update or create atmosphere
+    if (atmosphereMesh) {
+        scene.remove(atmosphereMesh);
+    }
+    atmosphereMesh = createAtmosphere(planetRadius, atmosphereComposition);
+    scene.add(atmosphereMesh);
+}
+
+function updateLighting(starType, starData) {
+    // Calculate new light color and intensity based on star type
+    const { color, intensity } = calculateStarColorAndIntensity(starType);
+
+    // Update existing lights in the scene
+    // ... [code to update lights]
+}
+
+function updateStarLight(starData) {
+    // Calculate new light color and intensity based on star type
+	const { color, intensity } = calculateStarColorAndIntensity(starData.type);
+
+    // Find the existing star light in the scene and update it
+    const starLight = scene.getObjectByName('starLight');
+    if (starLight) {
+        starLight.color.set(color);
+        starLight.intensity = intensity;
+    } else {
+        // If no star light is found, create a new one
+        const newStarLight = new THREE.PointLight(color, intensity);
+        newStarLight.name = 'starLight'; // Naming the light for easy identification
+        newStarLight.position.set(10, 10, 10); // Positioning the light source
+        scene.add(newStarLight);
+    }
+
+    // Update ambient light if needed
+    const ambientLight = scene.getObjectByName('ambientLight');
+    if (ambientLight) {
+        ambientLight.color.set(color);
+        ambientLight.intensity = intensity / 10;
+    }
+}
+
+function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, starData) {
     // Remove the existing sphere from the scene
     console.log("Updating planet size to:", planetRadiusInEarthUnits); // Log the input size
     scene.remove(sphere);
@@ -128,7 +179,12 @@ function updatePlanetSize(planetRadiusInEarthUnits) {
         scene.add(atmosphereMesh); // Re-add the updated atmosphere to the scene
     }
     // console.log("Re-added sphere to scene"); // Log after adding sphere back to scene
+    // Update atmosphere
+    const atmosphereComposition = getPlanetAtmosphere(planetType, orbitRadius, starData.habitableZone);
+    updatePlanetAndAtmosphere(planetRadiusInEarthUnits, atmosphereComposition);
 
+    // Update lighting based on star type
+    updateStarLight(starData.type);
     
     // Adjust camera distance if the planet is significantly larger or smaller
     // camera.position.z = 20 * planetRadiusInEarthUnits;
@@ -227,7 +283,7 @@ function displaySolarSystemProperties(div, orbitData, selectedPlanetIndex = null
     }
 }
 
-async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star) {
+async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star, starData) {
     // console.log("Displaying habitable planet details"); // Debugging log
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
     
@@ -284,7 +340,7 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
     content += gravityDetails;
 
     console.log("Displaying details for habitable planet. Size:", planet.size); // Log before calling updatePlanetSize
-    updatePlanetSize(planet.size);
+    updatePlanetSize(planet.size, planet.type, planet.orbitRadius, star, starData);
 
 
 	let elementDetails = '';
@@ -336,8 +392,8 @@ const densities = {
 // Additional functions for procedural generation of planet details
 // For example: generateGeology, generateMineralContent, generateAtmosphere, etc.
 
-// star color generation for lighting
-function calculateStarColorAndIntensity(starType, star) {
+// Star color generation for lighting
+function calculateStarColorAndIntensity(starType) {
     const temperatures = {
         'O': 35000, // Average temperature in Kelvin
         'B': 20000, // Average temperature in Kelvin
@@ -354,10 +410,9 @@ function calculateStarColorAndIntensity(starType, star) {
 
     // Convert wavelength to RGB
     const color = wavelengthToRGB(peakWavelength * 1e9); // Convert to nanometers
-    // console.log("Calculated RGB Color for Star:", color);
 
     // Placeholder for intensity
-    const intensity = 1; // You can modify this based on star size or luminosity
+    const intensity = 1; // Modify based on star size or luminosity
 
     return { color, intensity };
 }
