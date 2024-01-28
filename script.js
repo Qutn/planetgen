@@ -123,15 +123,14 @@ function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
 
 
 
-async function updateStarLight(starData) {
-    // let starType = starData.type;
-    let starType = 'O'; // Hardcoded for testing
+async function updateStarLight(starType) {
+
     console.log("updateStarLight - Explicit Star Type:", starType);
     const { color, intensity } = calculateStarColorAndIntensity(starType);
 
     // Find the existing star light in the scene and update it
     const starLight = scene.getObjectByName('starLight');
-if (starLight) {
+    if (starLight) {
         console.log("Updating existing star light. Old color:", starLight.color.getStyle());
         starLight.color.set(color);
         starLight.intensity = intensity;
