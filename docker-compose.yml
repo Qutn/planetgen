@@ -1,0 +1,8 @@
+services:
+  web:
+    build: .
+    volumes:
+    - ./:/usr/share/nginx/html:ro
+    ports:
+    - 80:80
+    - 8080:80
