@@ -8,6 +8,8 @@ import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateSta
 let sphere, scene, camera, renderer, controls, canvas;
 let atmosphereMesh;
 let starLight, ambientLight;
+let rotationSpeed = 0.001; // This is a placeholder value
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const defaultStar = { type: 'G', size: 1, luminosity: 1, habitableZone: { innerBoundary: 0.95, outerBoundary: 1.37 } };
@@ -38,7 +40,7 @@ function initializeThreeJSEnvironment(canvasId) {
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // or other shadow types as needed
     camera.castShadow = true;
 
     window.addEventListener('resize', onWindowResize, false);
@@ -54,6 +56,7 @@ function onWindowResize() {
 
 function createPlanet(planetData) {
     // Remove existing planet and rings (if any)
+    const noiseTexture = createNoiseTexture();
     if (sphere) {
         scene.remove(sphere);
         sphere.geometry.dispose();
@@ -69,9 +72,13 @@ function createPlanet(planetData) {
 
     // Create new planet
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
-    const planetMaterial = new THREE.MeshStandardMaterial({ color: 0xf1e3da });
+    const planetMaterial = new THREE.MeshStandardMaterial({
+        map: noiseTexture, // Apply the noise texture here
+        color: 0xf1e3da
+    });
     sphere = new THREE.Mesh(planetGeometry, planetMaterial);
     sphere.castShadow = true;
+    sphere.receiveShadow = true;
     sphere.name = 'planet'; // Naming the planet for easy identification
     scene.add(sphere);
 
@@ -101,15 +108,26 @@ function setupLighting(starData) {
     // Create a new directional light
     starLight = new THREE.DirectionalLight(color, intensity);
     starLight.position.set(0, 0, 1); // Position it to shine towards the scene
+
+    // Enable shadow casting for the light
+    starLight.castShadow = true;
+
+    // Configure shadow properties
+    starLight.shadow.mapSize.width = 1024; // Increase for better shadow resolution
+    starLight.shadow.mapSize.height = 1024;
+    starLight.shadow.camera.near = 0.5; // Adjust based on your scene's scale
+    starLight.shadow.camera.far = 5000;
+
+    // Add the light to the scene
     scene.add(starLight);
     adjustLightPosition();
 
     // Update ambient light as well
     if (ambientLight) {
         ambientLight.color.set(color);
-        ambientLight.intensity = intensity / 10;
+        ambientLight.intensity = intensity / 5;
     } else {
-        ambientLight = new THREE.AmbientLight(color, intensity / 10);
+        ambientLight = new THREE.AmbientLight(color, intensity / 5);
         scene.add(ambientLight);
     }
 }
@@ -126,6 +144,10 @@ function startAnimationLoop() {
     function animate() {
         requestAnimationFrame(animate);
         	// console.log("Animation frame");
+                    // Rotate the planet
+        if (sphere) {
+            sphere.rotation.y += rotationSpeed;
+        }
         controls.update();
         renderer.render(scene, camera);
     }
@@ -552,13 +574,15 @@ function createRings(planetRadius, planetType) {
     const outerRadius = getRandom(minRingSize, maxRingSize);
 
     // Create ring geometry
+
     const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
     const ringMaterial = new THREE.MeshStandardMaterial({ 
         color: 0xaaaabb, 
         side: THREE.DoubleSide 
     });
-    ringMaterial.receiveShadow = true;
 
+    ringMaterial.receiveShadow = true;
+    ringMaterial.castShadow = true;
     // Create ring mesh
     const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
 
@@ -570,4 +594,26 @@ function createRings(planetRadius, planetType) {
 
 function getRandom(min, max) {
     return Math.random() * (max - min) + min;
+}
+
+function createNoiseTexture(size = 512) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d');
+
+    const imageData = context.createImageData(size, size);
+
+    for (let i = 0; i < imageData.data.length; i += 4) {
+        // Generate random grayscale value
+        const val = Math.floor(Math.random() * 255);
+        imageData.data[i] = val;     // Red
+        imageData.data[i + 1] = val; // Green
+        imageData.data[i + 2] = val; // Blue
+        imageData.data[i + 3] = 255; // Alpha
+    }
+
+    context.putImageData(imageData, 0, 0);
+
+    return new THREE.CanvasTexture(canvas);
 }
