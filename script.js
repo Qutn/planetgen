@@ -96,7 +96,7 @@ function startAnimationLoop() {
 }
 
 //end setup scripts
-//
+
 //generation functions
 
 
