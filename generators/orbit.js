@@ -210,10 +210,9 @@ function generateSolarSystem(parentStar) {
     for (let i = 0; i < numberOfPlanets; i++) {
         const orbitRadius = getRandomOrbitRadius(parentStar, i, numberOfPlanets);
         const planetType = determinePlanetType(parentStar, orbitRadius, habitableZonePlanetAdded);
-        const planetSize = getPlanetSize(planetType); // Define this function
+        const planetSize = getPlanetSize(planetType); 
         const planetAtmosphere = getPlanetAtmosphere(planetType, orbitRadius, parentStar.habitableZone);
-        const planetMoons = getPlanetMoons(planetType); // Define this function
-        // ... other planet characteristics
+        const planetMoons = getPlanetMoons(planetType); 
 
         if (isInHabitableZone(orbitRadius, parentStar.habitableZone)) {
             habitableZonePlanetAdded = true;
@@ -226,7 +225,6 @@ function generateSolarSystem(parentStar) {
         	radius: planetSize,
             atmosphere: planetAtmosphere,
             moons: planetMoons,
-            // ... other characteristics
         });
     }
 
@@ -239,7 +237,7 @@ function generateSolarSystem(parentStar) {
 }
 
 function getRandomOrbitRadius(parentStar, planetIndex, totalPlanets) {
-    // Example: Simple logarithmic spacing for orbits
+    // simple logarithmic spacing for orbits
     const minOrbit = 0.2; // Minimum orbit radius in AU
     const maxOrbit = 50;  // Maximum orbit radius in AU
     const spacingFactor = (Math.log(maxOrbit) - Math.log(minOrbit)) / totalPlanets;
@@ -248,7 +246,7 @@ function getRandomOrbitRadius(parentStar, planetIndex, totalPlanets) {
 
 
 function determinePlanetType(parentStar, orbitRadius) {
-    // Example: Simple model based on orbit radius
+    // simple model based on orbit radius
     if (orbitRadius < 0.5) {
         return "Lava Planet";
     } else if (orbitRadius < 1.5) {
@@ -266,16 +264,16 @@ function determinePlanetType(parentStar, orbitRadius) {
 
 
 function getPlanetSize(planetType) {
-    // Example: Assign sizes based on planet type
+    // assign sizes based on planet type
     switch (planetType) {
         case "Lava Planet":
-            return getRandomValue(0.3, 1); // Earth radii
+            return getRandomValue(0.3, 1); 
         case "Terrestrial":
             return getRandomValue(0.5, 1.5);
         case "Ocean World":
             return getRandomValue(0.8, 2);
         case "Gas Giant":
-            return getRandomValue(6, 15); // Jupiter radii
+            return getRandomValue(6, 15); 
         case "Ice Giant":
             return getRandomValue(4, 8);
         case "Dwarf Planet":
@@ -302,7 +300,7 @@ function getPlanetAtmosphere(planetType, orbitRadius, habitableZone) {
         case "Lava Planet":
             return "carbon_dioxide";
         case "Dwarf Planet":
-            return "thin"; // Assuming 'thin' represents a thin atmosphere
+            return "thin"; 
         default:
             return "unknown"; // Make sure to handle the 'unknown' case in getAtmosphereColor if needed
     }
@@ -312,17 +310,17 @@ function getPlanetAtmosphere(planetType, orbitRadius, habitableZone) {
 function getPlanetMoons(planetType) {
     switch (planetType) {
         case "Terrestrial":
-            return getRandomInt(0, 3); // Earth-like planets might have few moons
+            return getRandomInt(0, 3);
         case "Ocean World":
             return getRandomInt(0, 2);
         case "Gas Giant":
-            return getRandomInt(1, 80); // Gas giants can have many moons
+            return getRandomInt(1, 80); 
         case "Ice Giant":
             return getRandomInt(1, 50);
         case "Lava Planet":
             return getRandomInt(0, 2);
         case "Dwarf Planet":
-            return getRandomInt(0, 5); // Dwarf planets might have small moons or none
+            return getRandomInt(0, 5); 
         default:
             return 0;
     }
@@ -340,7 +338,7 @@ function adjustForHabitableZonePlanet(planets, habitableZone) {
         // Find a planet to adjust into the habitable zone
         let planetToAdjust = planets[Math.floor(random() * planets.length)];
         planetToAdjust.orbitRadius = (habitableZone.innerBoundary + habitableZone.outerBoundary) / 2;
-        planetToAdjust.type = "Terrestrial"; // Adjust type for habitability
+        // planetToAdjust.type = "Terrestrial"; // Adjust type for habitability
     }
 }
 
