@@ -5,13 +5,13 @@ import { generateGeologicalData, determinePlanetaryComposition } from './generat
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, getPlanetAtmosphere, determinePlanetType  } from './generators/orbit.js';
 
 // Global variables for the three.js objects
-let sphere, scene, camera, renderer, controls;
+let sphere, scene, camera, renderer, controls, canvas;
 let atmosphereMesh;
 
 document.addEventListener('DOMContentLoaded', () => {
     const defaultStar = { type: 'G', size: 1, luminosity: 1, habitableZone: { innerBoundary: 0.95, outerBoundary: 1.37 } };
-		console.log("DOMContentLoaded - Default Star Data:", defaultStar);
     const defaultPlanet = { type: 'Terrestrial', radius: 1, orbitRadius: 1 };
+	//	console.log("DOMContentLoaded - Default Star Data:", defaultStar);
     setupThreeJS(defaultStar, defaultPlanet, defaultStar.habitableZone);
     setupStarGeneration();
     setupSolarSystemGeneration();
@@ -29,19 +29,23 @@ function setupThreeJS(star, planet, habitableZone) {
 // setup scripts
 
 function initializeThreeJSEnvironment(canvasId) {
-    const canvas = document.getElementById(canvasId);
+    canvas = document.getElementById(canvasId);
+    	console.log("Canvas initialized:", canvas, "Dimensions:", canvas.clientWidth, "x", canvas.clientHeight);
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+	camera.position.z = 20;
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
-    window.addEventListener('resize', onWindowResize);
+    window.addEventListener('resize', onWindowResize, false);
 }
 
 function onWindowResize() {
+    	console.log("Window resized: New dimensions", canvas.clientWidth, "x", canvas.clientHeight);
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     camera.aspect = canvas.clientWidth / canvas.clientHeight;
     camera.updateProjectionMatrix();
+	    console.log("Camera aspect updated to:", camera.aspect);
 }
 
 function createPlanet(planetData) {
@@ -75,6 +79,7 @@ function setupLighting(starData) {
 
 function setupOrbitControls() {
     controls = new OrbitControls(camera, renderer.domElement);
+	    console.log("OrbitControls initialized:", controls);
     controls.enableDamping = true;
     controls.dampingFactor = 0.1;
     controls.enableZoom = true;
@@ -83,6 +88,7 @@ function setupOrbitControls() {
 function startAnimationLoop() {
     function animate() {
         requestAnimationFrame(animate);
+    	        // console.log("Animation frame");
         controls.update();
         renderer.render(scene, camera);
     }
@@ -137,8 +143,8 @@ async function updateStarLight(starType) {
 
 function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, starData) {
     // Remove the existing sphere from the scene
-    console.log("Updating planet size to:", planetRadiusInEarthUnits); // Log the input size
-    console.log("updatePlanetSize - Star Data before updateStarLight call:", starData);
+    // console.log("Updating planet size to:", planetRadiusInEarthUnits); // Log the input size
+    // console.log("updatePlanetSize - Star Data before updateStarLight call:", starData);
     scene.remove(sphere);
     
     // Create a new geometry with the updated size
@@ -169,12 +175,12 @@ function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, sta
 
     // Update lighting based on star type
     updateStarLight(starData.type);
-        console.log("updatePlanetSize - Star Data AFTER updateStarLight call:", starData);
+     //   console.log("updatePlanetSize - Star Data AFTER updateStarLight call:", starData);
 
     // Adjust camera distance if the planet is significantly larger or smaller
     // camera.position.z = 20 * planetRadiusInEarthUnits;
     // console.log("Updated camera position"); // Log camera position update
-
+console.log("Camera initial position:", camera.position);
 }
 
 // star generation
@@ -192,8 +198,8 @@ function setupStarGeneration() {
 }
 
 function generateStar() {
-    console.log("generateStar called");
-	console.log("generateStar - Generated Star Data:", star);
+    // console.log("generateStar called");
+	// console.log("generateStar - Generated Star Data:", star);
 
     // Import or reference the functions from orbit.js
     const parentStar = generateParentStar();
