@@ -9,6 +9,7 @@ let sphere, scene, camera, renderer, controls, canvas;
 let atmosphereMesh;
 let starLight, ambientLight;
 let rotationSpeed = 0.001; // This is a placeholder value
+let ringRotationVariance = 0.0005; 
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -57,6 +58,9 @@ function onWindowResize() {
 function createPlanet(planetData) {
     // Remove existing planet and rings (if any)
     const noiseTexture = createNoiseTexture();
+    const planetColor = getColorForPlanetType(planetData.type); // Get color based on planet type
+    const planetColorRgb = hexToRgb(planetColor); // Convert hex color to RGB
+
     if (sphere) {
         scene.remove(sphere);
         sphere.geometry.dispose();
@@ -70,11 +74,13 @@ function createPlanet(planetData) {
         existingRings.geometry.dispose();
     }
 
+    console.log(`Creating ${planetData.type}: Color chosen is ${planetColorRgb} (Hex: ${planetColor.toString(16)})`);
+
     // Create new planet
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
     const planetMaterial = new THREE.MeshStandardMaterial({
         map: noiseTexture, // Apply the noise texture here
-        color: 0xf1e3da
+        color: planetColor // Apply the color from our function
     });
     sphere = new THREE.Mesh(planetGeometry, planetMaterial);
     sphere.castShadow = true;
@@ -144,10 +150,14 @@ function startAnimationLoop() {
     function animate() {
         requestAnimationFrame(animate);
         	// console.log("Animation frame");
-                    // Rotate the planet
+            // Rotate the planet
         if (sphere) {
             sphere.rotation.y += rotationSpeed;
         }
+            // Rotate the rings with variance
+    const rings = scene.getObjectByName('planetRings');
+    if (rings) rings.rotation.z += rotationSpeed + Math.random() * ringRotationVariance - ringRotationVariance / 2;
+
         controls.update();
         renderer.render(scene, camera);
     }
@@ -420,7 +430,11 @@ function calculateStarColorAndIntensity(starType, starLuminosity) {
 
     const temperature = temperatures[starType] || 5800; // Default to Sun-like temperature (G-type)
     const peakWavelength = 0.0029 / temperature; // Wien's Law
-    const color = wavelengthToRGB(peakWavelength * 1e9); // Convert to nanometers
+    let color = wavelengthToRGB(peakWavelength * 1e9); // Convert to nanometers
+
+    // Desaturate the color by blending it with white
+    const desaturationFactor = 0.5; // Adjust this to control the desaturation level (0 = full color, 1 = full white)
+    color = desaturateColor(color, desaturationFactor);
 
     // Calculate intensity based on star's luminosity
     const baseIntensity = 1; // Base intensity for a sun-like star (G-type)
@@ -434,6 +448,13 @@ function calculateStarColorAndIntensity(starType, starLuminosity) {
     return { color, intensity };
 }
 
+// Function to desaturate a color towards white
+function desaturateColor(color, factor) {
+    const white = new THREE.Color(0xffffff);
+    const originalColor = new THREE.Color(color);
+    const desaturatedColor = originalColor.lerp(white, factor);
+    return desaturatedColor.getStyle(); // Returns the CSS color string
+}
 
 // convert wavelength to rgb
 function wavelengthToRGB(wavelength) {
@@ -565,7 +586,6 @@ function createAtmosphere(planetRadius, composition) {
 }
 
 function createRings(planetRadius, planetType) {
-    // Define the range for ring sizes
     const minRingSize = planetRadius * 1.5; // Minimum ring size
     const maxRingSize = planetRadius * 3;   // Maximum ring size
 
@@ -574,27 +594,78 @@ function createRings(planetRadius, planetType) {
     const outerRadius = getRandom(minRingSize, maxRingSize);
 
     // Create ring geometry
-
     const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
-    const ringMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xaaaabb, 
-        side: THREE.DoubleSide 
+
+    // Use the procedural texture
+    const ringTexture = createRingTexture();
+
+    // ShaderMaterial for the rings, incorporating the procedural texture
+
+    const ringShaderMaterial = new THREE.ShaderMaterial({
+        uniforms: {
+            ringTexture: { value: createRingTexture() },
+            innerRadius: { value: innerRadius },
+            outerRadius: { value: outerRadius },
+            overlayColor: { value: ringColor(planetType) } // Use the ringColor function
+        },
+        vertexShader: `
+            varying vec3 vPosition;
+            void main() {
+                vPosition = position;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            #define PI 3.1415926535897932384626433832795
+            uniform sampler2D ringTexture;
+            uniform float innerRadius;
+            uniform float outerRadius;
+            uniform vec3 overlayColor; // Ensure this is declared
+            varying vec3 vPosition;
+            void main() {
+                float r = length(vPosition.xy);
+                float theta = atan(vPosition.y, vPosition.x);
+                float normalizedRadius = (r - innerRadius) / (outerRadius - innerRadius);
+                float u = (theta + PI) / (2.0 * PI);
+                float v = normalizedRadius;
+                vec4 texColor = texture2D(ringTexture, vec2(u, v));
+                vec3 colorMixed = mix(texColor.rgb, overlayColor, 0.5); // Mix texture color with overlay color
+                gl_FragColor = vec4(colorMixed, texColor.a); // Use mixed color and original alpha
+            }
+        `,
+        side: THREE.DoubleSide,
+        transparent: true
     });
 
-    ringMaterial.receiveShadow = true;
-    ringMaterial.castShadow = true;
-    // Create ring mesh
-    const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
-
-    // Adjust ring orientation
-    ringMesh.rotation.x = Math.PI / 2;
+    // Create ring mesh with the shader material
+    const ringMesh = new THREE.Mesh(ringGeometry, ringShaderMaterial);
+    ringMesh.rotation.x = Math.PI / 2; // Adjust ring orientation
+    ringMesh.rotation.y = 0; // Adjust if you want to tilt the ring
+    ringMesh.rotation.z = Math.random() * 2 * Math.PI; // Random rotation around the Z-axis for variety
+    ringMesh.receiveShadow = true;
+    ringMesh.castShadow = true;
+    ringMesh.name = 'planetRings';
 
     return ringMesh;
 }
 
+
+ // helpers
+
 function getRandom(min, max) {
     return Math.random() * (max - min) + min;
 }
+
+function hexToRgb(hex) {
+    // Assuming hex is a string like "0xffa07a"
+    var r = (hex >> 16) & 255;
+    var g = (hex >> 8) & 255;
+    var b = hex & 255;
+    return `rgb(${r}, ${g}, ${b})`;
+}
+
+
+// colors and textures
 
 function createNoiseTexture(size = 512) {
     const canvas = document.createElement('canvas');
@@ -616,4 +687,63 @@ function createNoiseTexture(size = 512) {
     context.putImageData(imageData, 0, 0);
 
     return new THREE.CanvasTexture(canvas);
+}
+
+function getColorForPlanetType(planetType) {
+    const colorMap = {
+        'Terrestrial': 0x228b22, // Forest Green
+        'Ice Giant': 0xadd8e6,   // Light Blue
+        'Gas Giant': 0xffa07a,   // Light Salmon (for an orange/tan look)
+        'Lava Planet': 0xff4500, // OrangeRed
+        'Ocean World': 0x1e90ff, // DodgerBlue
+        'Dwarf Planet': 0x808080, // Gray
+        // Add more types as needed
+    };
+
+    return colorMap[planetType] || 0xffffff; // Default to white if type not found
+}
+
+function createRingTexture() {
+    // Create a canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = 512; // Texture width
+    canvas.height = 128; // Texture height, making it elongated for ring-like appearance
+
+    const context = canvas.getContext('2d');
+
+    // Generate noise
+    for (let i = 0; i < canvas.width; i++) {
+        for (let j = 0; j < canvas.height; j++) {
+            const val = Math.floor(Math.random() * 255);
+            context.fillStyle = `rgb(${val},${val},${val})`;
+            context.fillRect(i, j, 1, 1);
+        }
+    }
+
+    // Optionally, apply additional effects like gradients or patterns here
+
+    // Use the canvas as a texture
+    const texture = new THREE.Texture(canvas);
+    texture.needsUpdate = true; // Important to update the texture with canvas data
+
+    return texture;
+}
+
+function ringColor(planetType) {
+    // Default color
+    let colorHex = 0xada9a1; // A generic ring color
+
+    switch (planetType) {
+        case 'Gas Giant':
+            colorHex = 0xd2b48c; // Tan
+            break;
+        case 'Ice Giant':
+            colorHex = 0xadd8e6; // Light Blue
+            break;
+        // Add more cases as needed
+        default:
+            console.log(`No specific ring color for planet type: ${planetType}. Using default.`);
+    }
+
+    return new THREE.Color(colorHex);
 }
