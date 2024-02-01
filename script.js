@@ -5,7 +5,7 @@ import { generateGeologicalData, determinePlanetaryComposition } from './generat
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, getPlanetAtmosphere, determinePlanetType  } from './generators/orbit.js';
 
 // Global variables for the three.js objects
-let sphere, scene, camera, renderer;
+let sphere, scene, camera, renderer, controls;
 let atmosphereMesh;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,96 +18,81 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupThreeJS(star, planet, habitableZone) {
-    // Default values for planet and star
-    const defaultStar = { type: 'G', size: 1, luminosity: 1 };
-    const defaultPlanet = { type: 'Terrestrial', radius: 1 };
-    const planetData = planet || defaultPlanet;
-    const starData = star || defaultStar;
- 		console.log("setupThreeJS - Star Data:", starData);
-    console.log("Planet Data in setupThreeJS:", planetData);
+    initializeThreeJSEnvironment('planetCanvas');
+    createPlanet(planet);
+    createAtmosphereMesh(planet, habitableZone);
+    setupLighting(star);
+    setupOrbitControls();
+    startAnimationLoop();
+}
 
-    // Ensure planetData.radius is defined
-    if (typeof planetData.radius === 'undefined' || isNaN(planetData.radius)) {
-        console.error("Planet radius is undefined or NaN, using default radius.");
-        planetData.radius = defaultPlanet.radius;
-    }
+// setup scripts
 
-    const canvas = document.getElementById('planetCanvas');
+function initializeThreeJSEnvironment(canvasId) {
+    const canvas = document.getElementById(canvasId);
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
 
-    const earthRadiusUnit = 1;
+    window.addEventListener('resize', onWindowResize);
+}
 
-    // Create Planet
+function onWindowResize() {
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    camera.aspect = canvas.clientWidth / canvas.clientHeight;
+    camera.updateProjectionMatrix();
+}
+
+function createPlanet(planetData) {
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
-    const planetMaterial = new THREE.MeshStandardMaterial({ color: 0xf1e3da }); // You can change the color
+    const planetMaterial = new THREE.MeshStandardMaterial({ color: 0xf1e3da });
     sphere = new THREE.Mesh(planetGeometry, planetMaterial);
     scene.add(sphere);
+}
 
-    // Create Atmosphere
-    const atmosphereComposition = getPlanetAtmosphere(planetData.type, planetData.orbitRadius, starData.habitableZone);
+function createAtmosphereMesh(planetData, habitableZone) {
+    const atmosphereComposition = getPlanetAtmosphere(planetData.type, planetData.orbitRadius, habitableZone);
     atmosphereMesh = createAtmosphere(planetData.radius, atmosphereComposition);
     scene.add(atmosphereMesh);
+}
 
-    // Calculate star color and intensity
-
-    const { color } = calculateStarColorAndIntensity(starData.type);
-	const luminosityMultiplier = 1.5; // Adjust this value to fine-tune the light intensity
+function setupLighting(starData) {
+    const { color, intensity } = calculateStarColorAndIntensity(starData.type);
+    const luminosityMultiplier = 1.5;
     let lightIntensity = starData.luminosity * luminosityMultiplier;
-
-    // Set a minimum intensity threshold
-    const minIntensity = 0.5; // Define a minimum intensity (adjust as needed)
-    const maxIntensity = 3;   // Define a maximum intensity
-
+    const minIntensity = 0.5;
+    const maxIntensity = 3;
     lightIntensity = Math.min(Math.max(lightIntensity, minIntensity), maxIntensity);
 
     const starLight = new THREE.PointLight(color, lightIntensity);
     starLight.position.set(10, 10, 10);
     scene.add(starLight);
 
-    console.log("Calculated Star Color:", color, "Intensity:", lightIntensity);
-
-    // Ambient Light
-    const ambientLight = new THREE.AmbientLight(color, lightIntensity/10); // ambient light 
+    const ambientLight = new THREE.AmbientLight(color, lightIntensity / 10);
     scene.add(ambientLight);
+}
 
-
-    // Update planet and atmosphere
-    updatePlanetAndAtmosphere(planetData.radius, atmosphereComposition);
-
-    // Update lighting
-    // updateLighting(starData.type);
-	updateStarLight(starData.type)
-
-//camera
-    camera.position.z = 20; // Adjusted for better view
-
-    window.addEventListener('resize', () => {
-        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-        camera.aspect = canvas.clientWidth / canvas.clientHeight;
-        camera.updateProjectionMatrix();
-    });
-
-    // OrbitControls setup
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; // optional, for smoother interaction
+function setupOrbitControls() {
+    controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
     controls.dampingFactor = 0.1;
-    controls.enableZoom = true; // enable zooming
+    controls.enableZoom = true;
+}
 
-    window.addEventListener('resize', () => {
-        // ... (existing resize event listener)
-    });
-
+function startAnimationLoop() {
     function animate() {
         requestAnimationFrame(animate);
-        controls.update(); // only required if controls.enableDamping or controls.autoRotate are set to true
+        controls.update();
         renderer.render(scene, camera);
     }
-    console.log("ThreeJS setup complete"); // Confirm ThreeJS setup
     animate();
 }
+
+//end setup scripts
+//
+//generation functions
+
 
 function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
     // Update planet geometry and material
@@ -120,8 +105,6 @@ function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
     atmosphereMesh = createAtmosphere(planetRadius, atmosphereComposition);
     scene.add(atmosphereMesh);
 }
-
-
 
 async function updateStarLight(starType) {
 
@@ -371,7 +354,6 @@ async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, 
 
 }
 
-
 function getElementDensity(element) {
     // Return density of the element, placeholder values used here
 const densities = {
@@ -392,11 +374,8 @@ const densities = {
     return densities[element] || 5500; // Default density
 }
 
-
-// Additional functions for procedural generation of planet details
-// For example: generateGeology, generateMineralContent, generateAtmosphere, etc.
-
 // Star color generation for lighting
+
 function calculateStarColorAndIntensity(starType) {
     console.log("calculateStarColorAndIntensity - Received Star Type:", starType);
     const temperatures = {
@@ -477,7 +456,7 @@ function adjustGamma(value) {
     }
 }
 
-// Assuming you have a function to get the atmosphere color based on composition
+// get color of atmosphere from generated comp, will adjust later
 function getAtmosphereColor(composition) {
     const colors = {
         'water_vapor': 0x0000ff,
@@ -486,7 +465,7 @@ function getAtmosphereColor(composition) {
         'methane': 0x800080,
         'carbon_dioxide': 0xff0000,
         'thin': 0x808080,
-        'unknown': 0xadd8e6 // This is an example, you can choose any color or handling for unknown compositions
+        'unknown': 0xadd8e6
     };
 
   // Log the composition and the corresponding color
