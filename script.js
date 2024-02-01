@@ -37,6 +37,9 @@ function initializeThreeJSEnvironment(canvasId) {
 	camera.position.z = 20;
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    camera.castShadow = true;
 
     window.addEventListener('resize', onWindowResize, false);
 }
@@ -50,11 +53,37 @@ function onWindowResize() {
 }
 
 function createPlanet(planetData) {
+    // Remove existing planet and rings (if any)
+    if (sphere) {
+        scene.remove(sphere);
+        sphere.geometry.dispose();
+        sphere = null;
+    }
+    
+    // Remove existing rings (if any)
+    const existingRings = scene.getObjectByName('planetRings');
+    if (existingRings) {
+        scene.remove(existingRings);
+        existingRings.geometry.dispose();
+    }
+
+    // Create new planet
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
     const planetMaterial = new THREE.MeshStandardMaterial({ color: 0xf1e3da });
     sphere = new THREE.Mesh(planetGeometry, planetMaterial);
+    sphere.castShadow = true;
+    sphere.name = 'planet'; // Naming the planet for easy identification
     scene.add(sphere);
+
+    // Create rings for Gas Giants and Ice Giants
+    if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
+        const ringMesh = createRings(planetData.radius, planetData.type);
+        ringMesh.name = 'planetRings'; // Naming the rings for easy identification
+        scene.add(ringMesh);
+        ringMesh.position.copy(sphere.position); // Position the rings at the planet's location
+    }
 }
+
 
 function createAtmosphereMesh(planetData, habitableZone) {
     const atmosphereComposition = getPlanetAtmosphere(planetData.type, planetData.orbitRadius, habitableZone);
@@ -63,19 +92,26 @@ function createAtmosphereMesh(planetData, habitableZone) {
 }
 
 function setupLighting(starData) {
-    const { color, intensity } = calculateStarColorAndIntensity(starData.type);
-    const luminosityMultiplier = 1.5;
-    let lightIntensity = starData.luminosity * luminosityMultiplier;
-    const minIntensity = 0.5;
-    const maxIntensity = 3;
-    lightIntensity = Math.min(Math.max(lightIntensity, minIntensity), maxIntensity);
+    const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
 
-    starLight = new THREE.PointLight(color, lightIntensity);
-    starLight.position.set(10, 10, 10);
+    if (starLight) {
+        scene.remove(starLight); // Remove existing light if present
+    }
+
+    // Create a new directional light
+    starLight = new THREE.DirectionalLight(color, intensity);
+    starLight.position.set(0, 0, 1); // Position it to shine towards the scene
     scene.add(starLight);
+    adjustLightPosition();
 
-    ambientLight = new THREE.AmbientLight(color, lightIntensity / 10);
-    scene.add(ambientLight);
+    // Update ambient light as well
+    if (ambientLight) {
+        ambientLight.color.set(color);
+        ambientLight.intensity = intensity / 10;
+    } else {
+        ambientLight = new THREE.AmbientLight(color, intensity / 10);
+        scene.add(ambientLight);
+    }
 }
 
 function setupOrbitControls() {
@@ -112,18 +148,21 @@ function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
     scene.add(atmosphereMesh);
 }
 
-function updateStarLight(starType) {
-    console.log("updateStarLight - Explicit Star Type:", starType);
-    const { color, intensity } = calculateStarColorAndIntensity(starType);
+function updateStarLight(starData) {
+    console.log("updateStarLight - Star Type and Luminosity:", starData.type, starData.luminosity);
+    const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
 
     // Update the lights
     updateStarLightIntensityAndColor(color, intensity);
     updateAmbientLightIntensityAndColor(color, intensity / 10);
 }
 
+
 function updateStarLightIntensityAndColor(color, intensity) {
     starLight.color.set(color);
     starLight.intensity = intensity;
+    adjustLightPosition();
+
 }
 
 function updateAmbientLightIntensityAndColor(color, intensity) {
@@ -131,50 +170,43 @@ function updateAmbientLightIntensityAndColor(color, intensity) {
     ambientLight.intensity = intensity;
 }
 
+function adjustLightPosition() {
+    const variance = 0.3; // Adjust this value for more or less variance
+    const randomX = (Math.random() - 0.5) * variance;
+    const randomY = (Math.random() - 0.5) * variance;
+    
+    // Adjust light position
+    starLight.position.x += randomX;
+    starLight.position.y += randomY;
+
+    // Log new light position for debugging
+    console.log("New Light Position:", starLight.position);
+}
+
+
 function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, starData) {
-    // Remove the existing sphere from the scene
-    scene.remove(sphere);
-    
-    	// console.log("Updating planet size to:", planetRadiusInEarthUnits); // Log the input size
-    	// console.log("updatePlanetSize - Star Data before updateStarLight call:", starData);
-    	// 
-    // Create a new geometry with the updated size
-    const newGeometry = new THREE.SphereGeometry(planetRadiusInEarthUnits, 32, 32);
-    	// console.log("Updated sphere geometry"); // Log after updating geometry
+    // Prepare new planet data
+    const newPlanetData = {
+        radius: planetRadiusInEarthUnits,
+        type: planetType,
+        orbitRadius: orbitRadius
+        // Add other necessary properties if needed
+    };
 
-    // Update the sphere with the new geometry
-	// Dispose of the old geometry
-    sphere.geometry.dispose(); 
-    sphere.geometry = newGeometry;
-    
-    // Re-add the sphere to the scene
-    scene.add(sphere);
+    // Create a new planet with the updated size
+    createPlanet(newPlanetData);
 
-    if (atmosphereMesh) {
-        scene.remove(atmosphereMesh); // Remove the existing atmosphere mesh
-
-        const atmosphereScaleFactor = calculateAtmosphereScale(planetRadiusInEarthUnits);
-        const newAtmosphereGeometry = new THREE.SphereGeometry(planetRadiusInEarthUnits * atmosphereScaleFactor, 32, 32);
-        atmosphereMesh.geometry.dispose(); // Dispose of the old geometry
-        atmosphereMesh.geometry = newAtmosphereGeometry;
-
-        scene.add(atmosphereMesh); // Re-add the updated atmosphere to the scene
-    }
-
-    	// console.log("Re-added sphere to scene"); // Log after adding sphere back to scene
     // Update atmosphere
     const atmosphereComposition = getPlanetAtmosphere(planetType, orbitRadius, starData.habitableZone);
     updatePlanetAndAtmosphere(planetRadiusInEarthUnits, atmosphereComposition);
 
     // Update lighting based on star type
-    updateStarLight(starData.type);
-    	// console.log("updatePlanetSize - Star Data AFTER updateStarLight call:", starData);
+    updateStarLight(starData);
 
-    // Adjust camera distance if the planet is significantly larger or smaller
+    // Adjust camera distance if necessary
     // camera.position.z = 20 * planetRadiusInEarthUnits;
-    	// console.log("Updated camera position"); // Log camera position update
-		// console.log("Camera initial position:", camera.position);
 }
+
 
 // star generation
 
@@ -352,8 +384,8 @@ const densities = {
 }
 
 // Star color generation for lighting
-function calculateStarColorAndIntensity(starType) {
-    	console.log("calculateStarColorAndIntensity - Received Star Type:", starType);
+function calculateStarColorAndIntensity(starType, starLuminosity) {
+    console.log("calculateStarColorAndIntensity - Received Star Type:", starType, "Luminosity:", starLuminosity);
     const temperatures = {
         'O': 35000, // Average temperature in Kelvin
         'B': 20000, // Average temperature in Kelvin
@@ -365,14 +397,21 @@ function calculateStarColorAndIntensity(starType) {
     };
 
     const temperature = temperatures[starType] || 5800; // Default to Sun-like temperature (G-type)
-    const peakWavelength = 0.0029 / temperature; // In meters, using Wien's Law
-    	console.log("Star Type:", starType, "Temperature:", temperature);
-    // Convert wavelength to RGB
+    const peakWavelength = 0.0029 / temperature; // Wien's Law
     const color = wavelengthToRGB(peakWavelength * 1e9); // Convert to nanometers
-    // Placeholder for intensity
-    const intensity = 1; // Modify based on star size or luminosity
+
+    // Calculate intensity based on star's luminosity
+    const baseIntensity = 1; // Base intensity for a sun-like star (G-type)
+    let intensity = baseIntensity * starLuminosity;
+
+    // Optionally, add limits or scaling as needed
+    // For example, a cap on the maximum intensity
+    const maxIntensity = 5; // Maximum intensity cap
+    intensity = Math.min(intensity, maxIntensity);
+
     return { color, intensity };
 }
+
 
 // convert wavelength to rgb
 function wavelengthToRGB(wavelength) {
@@ -501,4 +540,34 @@ function createAtmosphere(planetRadius, composition) {
     });
 
     return new THREE.Mesh(geometry, material);
+}
+
+function createRings(planetRadius, planetType) {
+    // Define the range for ring sizes
+    const minRingSize = planetRadius * 1.5; // Minimum ring size
+    const maxRingSize = planetRadius * 3;   // Maximum ring size
+
+    // Generate random inner and outer radius for the rings
+    const innerRadius = getRandom(planetRadius * 1.2, minRingSize);
+    const outerRadius = getRandom(minRingSize, maxRingSize);
+
+    // Create ring geometry
+    const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
+    const ringMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xaaaabb, 
+        side: THREE.DoubleSide 
+    });
+    ringMaterial.receiveShadow = true;
+
+    // Create ring mesh
+    const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+
+    // Adjust ring orientation
+    ringMesh.rotation.x = Math.PI / 2;
+
+    return ringMesh;
+}
+
+function getRandom(min, max) {
+    return Math.random() * (max - min) + min;
 }
