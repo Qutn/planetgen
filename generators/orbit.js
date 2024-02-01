@@ -1,8 +1,31 @@
-function getRandomValue(min, max) {
-    return Math.random() * (max - min) + min;
+// Courtesy of bryc and Bob Jenkins
+function splitmix32(a) {
+    return function() {
+      a |= 0; a = a + 0x9e3779b9 | 0;
+      var t = a ^ a >>> 16; t = Math.imul(t, 0x21f0aaad);
+          t = t ^ t >>> 15; t = Math.imul(t, 0x735a2d97);
+      return ((t = t ^ t >>> 15) >>> 0) / 4294967296;
+    }
 }
 
-function generateOrbit() {
+var SEED = Date.now();
+
+var random = splitmix32(SEED);
+
+export function set_random_seed(seed) {
+    random = splitmix32(seed);
+}
+
+function getRandomValue(min, max) {
+    return random() * (max - min) + min;
+}
+
+function generateOrbit(seed = null) {
+    if (seed != null)
+    {
+        set_random_seed(seed);
+    }
+
     const parentStar = generateParentStar();
     // Calculate the habitable zone based on the star's luminosity
     const luminosity = generateStarLuminosity(parentStar.type, parentStar.size);
@@ -22,7 +45,7 @@ function generateOrbit() {
 
 function generateParentStar() {
     const starTypes = ["M", "K", "G", "F", "A", "B", "O"];
-    const type = starTypes[Math.floor(Math.random() * starTypes.length)];
+    const type = starTypes[Math.floor(random() * starTypes.length)];
 
     const age = generateStarAge(type);
     const { size, mass } = generateStarSizeAndMass(type, age);
@@ -87,7 +110,7 @@ function generateStarAge(type) {
 }
 
 function getRandomAge(min, max) {
-    return Math.random() * (max - min) + min;
+    return random() * (max - min) + min;
 }
 
 function generateStarSizeAndMass(type, age) {
@@ -306,7 +329,7 @@ function getPlanetMoons(planetType) {
 }
 
 function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(random() * (max - min + 1)) + min;
 }
 
 
@@ -315,7 +338,7 @@ function adjustForHabitableZonePlanet(planets, habitableZone) {
 
     if (!habitableZonePlanetExists) {
         // Find a planet to adjust into the habitable zone
-        let planetToAdjust = planets[Math.floor(Math.random() * planets.length)];
+        let planetToAdjust = planets[Math.floor(random() * planets.length)];
         planetToAdjust.orbitRadius = (habitableZone.innerBoundary + habitableZone.outerBoundary) / 2;
         planetToAdjust.type = "Terrestrial"; // Adjust type for habitability
     }
