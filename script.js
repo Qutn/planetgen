@@ -7,6 +7,7 @@ import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateSta
 // Global variables for the three.js objects
 let sphere, scene, camera, renderer, controls, canvas;
 let atmosphereMesh;
+let starLight, ambientLight;
 
 document.addEventListener('DOMContentLoaded', () => {
     const defaultStar = { type: 'G', size: 1, luminosity: 1, habitableZone: { innerBoundary: 0.95, outerBoundary: 1.37 } };
@@ -69,11 +70,11 @@ function setupLighting(starData) {
     const maxIntensity = 3;
     lightIntensity = Math.min(Math.max(lightIntensity, minIntensity), maxIntensity);
 
-    const starLight = new THREE.PointLight(color, lightIntensity);
+    starLight = new THREE.PointLight(color, lightIntensity);
     starLight.position.set(10, 10, 10);
     scene.add(starLight);
 
-    const ambientLight = new THREE.AmbientLight(color, lightIntensity / 10);
+    ambientLight = new THREE.AmbientLight(color, lightIntensity / 10);
     scene.add(ambientLight);
 }
 
@@ -111,33 +112,23 @@ function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
     scene.add(atmosphereMesh);
 }
 
-async function updateStarLight(starType) {
+function updateStarLight(starType) {
+    console.log("updateStarLight - Explicit Star Type:", starType);
+    const { color, intensity } = calculateStarColorAndIntensity(starType);
 
-     const { color, intensity } = calculateStarColorAndIntensity(starType);
-     	console.log("updateStarLight - Explicit Star Type:", starType);
+    // Update the lights
+    updateStarLightIntensityAndColor(color, intensity);
+    updateAmbientLightIntensityAndColor(color, intensity / 10);
+}
 
-    // Find the existing star light in the scene and update it
-    const starLight = scene.getObjectByName('starLight');
-    if (starLight) {
-        	console.log("Updating existing star light. Old color:", starLight.color.getStyle());
-        starLight.color.set(color);
-        starLight.intensity = intensity;
-        	console.log("Updated star light. New color:", starLight.color.getStyle());
-    } else {
-        // If no star light is found, create a new one
-        const newStarLight = new THREE.PointLight(color, intensity);
-        newStarLight.name = 'starLight'; // Naming the light for easy identification
-        newStarLight.position.set(10, 10, 10); // Positioning the light source
-        scene.add(newStarLight);
-    }
+function updateStarLightIntensityAndColor(color, intensity) {
+    starLight.color.set(color);
+    starLight.intensity = intensity;
+}
 
-
-    // Update ambient light if needed
-    const ambientLight = scene.getObjectByName('ambientLight');
-    if (ambientLight) {
-        ambientLight.color.set(color);
-        ambientLight.intensity = intensity / 10;
-    }
+function updateAmbientLightIntensityAndColor(color, intensity) {
+    ambientLight.color.set(color);
+    ambientLight.intensity = intensity;
 }
 
 function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, starData) {
