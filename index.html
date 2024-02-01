@@ -32,6 +32,11 @@
 
 <script src="_hyperscript.min.js" defer></script>
 
+<script type="module" defer>
+        import { set_random_seed } from "./generators/orbit.js";
+        window.set_random_seed = set_random_seed;
+</script>
+
 </head>
 <body>
     <div class="lcars-bar">
@@ -51,6 +56,10 @@
         </main>
         <aside class="statistics">
             <div class="fixed-button-container">
+                <input _="
+                    on change or keyup
+                    call set_random_seed(my value)
+                " type="number">
                 <button id="generateSystemButton">Generate Solar System</button>
             </div>
             <div class="scrollable-content">
