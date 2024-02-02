@@ -10,6 +10,7 @@ let atmosphereMesh;
 let starLight, ambientLight;
 let rotationSpeed = 0.001; // This is a placeholder value
 let ringRotationVariance = 0.0005; 
+let selectedPlanet = { type: 'Terrestrial', radius: 1, orbitRadius: 1 };
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -34,15 +35,19 @@ function setupThreeJS(star, planet, habitableZone) {
 
 function initializeThreeJSEnvironment(canvasId) {
     canvas = document.getElementById(canvasId);
-    //	console.log("Canvas initialized:", canvas, "Dimensions:", canvas.clientWidth, "x", canvas.clientHeight);
     scene = new THREE.Scene();
+
+    const starFieldTexture = createStarFieldTexture(); // Assuming createStarFieldTexture is defined
+    scene.background = starFieldTexture;
+
     camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
 	camera.position.z = 20;
+    camera.castShadow = true;
+
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap; // or other shadow types as needed
-    camera.castShadow = true;
 
     window.addEventListener('resize', onWindowResize, false);
 }
@@ -81,6 +86,7 @@ function createPlanet(planetData) {
     const planetMaterial = new THREE.MeshStandardMaterial({
         map: noiseTexture,
         // map: cloudTexture, 
+        // map: texture, // Use the passed texture
         color: planetColor
     });
 
@@ -147,6 +153,9 @@ function setupLighting(starData) {
         ambientLight = new THREE.AmbientLight(color, intensity / 5);
         scene.add(ambientLight);
     }
+
+    addStarToScene(starData); // Add this line after setting up the light
+
 }
 
 function setupOrbitControls() {
@@ -266,6 +275,7 @@ function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, sta
 
     // Adjust camera distance if necessary
     // camera.position.z = 20 * planetRadiusInEarthUnits;
+    addStarToScene(starData);
 }
 
 
@@ -276,14 +286,15 @@ function setupStarGeneration(div, orbitData, selectedPlanetIndex = null) {
     const starPropertiesDiv = document.getElementById('starProperties');
 
     generateStarButton.addEventListener('click', () => {
+        const orbitData = generateOrbit();
         const star = generateStar();
         displayStarProperties(star, starPropertiesDiv);
-    	setupThreeJS(orbitData.parentStar, selectedPlanet, orbitData.parentStar.habitableZone); // Call setupThreeJS with the generated star only
+    	setupThreeJS(star, selectedPlanet, star.habitableZone); // Call setupThreeJS with the generated star only
 
     });
 }
 
-function generateStar() {
+function generateStar(orbitData) {
 	// console.log("generateStar - Generated Star Data:", star);
     // Import or reference the functions from orbit.js
     const parentStar = generateParentStar();
@@ -302,6 +313,32 @@ function generateStar() {
     console.log("Generated Star:", parentStar);
 
 }
+
+function addStarToScene(starData) {
+    const starGeometry = new THREE.SphereGeometry(starData.size, 32, 32); // Use starData.size to represent the visual size of the star
+    const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
+    const starMaterial = new THREE.MeshPhongMaterial({
+        
+        color: new THREE.Color(color), // Use the calculated star color
+        emissive: new THREE.Color(color),
+        emissiveIntensity: Math.log1p(intensity) // Adjust emissive intensity based on luminosity
+    });
+		console.log("Star color:", color); // Debugging log
+        console.log("intensity:", intensity);
+        
+    // If there's already a star object, remove it first
+    const existingStar = scene.getObjectByName('visualStar');
+    if (existingStar) {
+        scene.remove(existingStar);
+    }
+
+    const starMesh = new THREE.Mesh(starGeometry, starMaterial);
+    starMesh.name = 'visualStar';
+    starMesh.position.copy(starLight.position).normalize().multiplyScalar(100); // Adjust distance as needed
+    scene.add(starMesh);
+}
+
+
 
 function calculateGravity(planetRadiusInEarthRadii) {
     const earthGravity = 9.8; // in m/s^2
@@ -793,6 +830,31 @@ function createCloudTexture(size = 1024) {
     return texture;
 }
 
+function createStarFieldTexture(size = 2048, stars = 10000) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d');
+
+    // Fill the background with black
+    context.fillStyle = 'black';
+    context.fillRect(0, 0, size, size);
+
+    // Draw stars
+    for (let i = 0; i < stars; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const radius = Math.random() * 1.5; // Vary the size for a bit of variation
+        const alpha = 0.5 + Math.random() * 0.5; // Vary the opacity
+
+        context.beginPath();
+        context.arc(x, y, radius, 0, 2 * Math.PI);
+        context.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        context.fill();
+    }
+
+    return new THREE.CanvasTexture(canvas);
+}
 
 
 function ringColor(planetType) {
@@ -813,3 +875,5 @@ function ringColor(planetType) {
 
     return new THREE.Color(colorHex);
 }
+
+
