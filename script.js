@@ -3,6 +3,10 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { generatePlanetName } from './generators/names.js';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, getPlanetAtmosphere, determinePlanetType  } from './generators/orbit.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { BloomPass } from 'three/addons/postprocessing/BloomPass.js';
+//import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+//import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 // Global variables for the three.js objects
 let sphere, scene, camera, renderer, controls, canvas;
@@ -12,6 +16,7 @@ let rotationSpeed = 0.001; // This is a placeholder value
 let ringRotationVariance = 0.0005; 
 let selectedPlanet = { type: 'Terrestrial', radius: 1, orbitRadius: 1 };
 
+// let composer = new EffectComposer( renderer );
 
 document.addEventListener('DOMContentLoaded', () => {
     const defaultStar = { type: 'G', size: 1, luminosity: 1, habitableZone: { innerBoundary: 0.95, outerBoundary: 1.37 } };
@@ -45,9 +50,12 @@ function initializeThreeJSEnvironment(canvasId) {
     camera.castShadow = true;
 
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+    
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap; // or other shadow types as needed
+
+
 
     window.addEventListener('resize', onWindowResize, false);
 }
@@ -169,6 +177,7 @@ function setupOrbitControls() {
 function startAnimationLoop() {
     function animate() {
         requestAnimationFrame(animate);
+        // composer.render();
         	// console.log("Animation frame");
             // Rotate the planet
         if (sphere) {
