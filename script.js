@@ -3,10 +3,13 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { generatePlanetName } from './generators/names.js';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, getPlanetAtmosphere, determinePlanetType  } from './generators/orbit.js';
+
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { BloomPass } from 'three/addons/postprocessing/BloomPass.js';
-//import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-//import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { CopyShader } from 'three/addons/shaders/CopyShader.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 // Global variables for the three.js objects
 let sphere, scene, camera, renderer, controls, canvas;
@@ -15,7 +18,8 @@ let starLight, ambientLight;
 let rotationSpeed = 0.001; // This is a placeholder value
 let ringRotationVariance = 0.0005; 
 let selectedPlanet = { type: 'Terrestrial', radius: 1, orbitRadius: 1 };
-
+let composer;
+let bloomPass;
 // let composer = new EffectComposer( renderer );
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -55,7 +59,21 @@ function initializeThreeJSEnvironment(canvasId) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap; // or other shadow types as needed
 
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    
+    bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight), // resolution
 
+        1.0, // strength
+        0.4, // radius
+        0.85 // threshold
+    );
+    composer.addPass(bloomPass);
+    
+    const effectCopy = new ShaderPass(CopyShader);
+    effectCopy.renderToScreen = true;
+    composer.addPass(effectCopy);
 
     window.addEventListener('resize', onWindowResize, false);
 }
@@ -88,7 +106,7 @@ function createPlanet(planetData) {
     const cloudTexture = createCloudTexture();
     const planetColor = getColorForPlanetType(planetData.type);
     const planetColorRgb = hexToRgb(planetColor);
-    console.log(`Creating ${planetData.type}: Color chosen is ${planetColorRgb} (Hex: ${planetColor.toString(16)})`);
+    // console.log(`Creating ${planetData.type}: Color chosen is ${planetColorRgb} (Hex: ${planetColor.toString(16)})`);
 
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
     const planetMaterial = new THREE.MeshStandardMaterial({
@@ -130,12 +148,16 @@ function createAtmosphereMesh(planetData, habitableZone) {
 function setupLighting(starData) {
     const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
 
+    // Ensure a minimum intensity for visibility
+    const minIntensity = 0.5; // Adjust as needed for minimum visibility
+    const effectiveIntensity = Math.max(intensity, minIntensity);
+
     if (starLight) {
         scene.remove(starLight); // Remove existing light if present
     }
 
     // Create a new directional light
-    starLight = new THREE.DirectionalLight(color, intensity);
+    starLight = new THREE.DirectionalLight(color, effectiveIntensity);
     starLight.position.set(0, 0, 1); // Position it to shine towards the scene
 
     // Enable shadow casting for the light
@@ -188,7 +210,9 @@ function startAnimationLoop() {
     if (rings) rings.rotation.y += rotationSpeed + Math.random() * ringRotationVariance - ringRotationVariance / 2;
 
         controls.update();
-        renderer.render(scene, camera);
+        // renderer.render(scene, camera);
+        composer.render();
+
     }
     animate();
 }
@@ -210,13 +234,46 @@ function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
 }
 
 function updateStarLight(starData) {
-    console.log("updateStarLight - Star Type and Luminosity:", starData.type, starData.luminosity);
+    // console.log("updateStarLight - Star Type and Luminosity:", starData.type, starData.luminosity);
     const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
-
+    // Ensure a minimum intensity for visibility
+    const minIntensity = 5; // Adjust as needed for minimum visibility
+    const effectiveIntensity = Math.max(intensity, minIntensity);
     // Update the lights
-    updateStarLightIntensityAndColor(color, intensity);
+    updateStarLightIntensityAndColor(color, effectiveIntensity);
     updateAmbientLightIntensityAndColor(color, intensity / 10);
+    // Dynamic bloom effect adjustment
+    adjustBloomEffect(starData.luminosity);
 }
+
+function adjustBloomEffect(starLuminosity) {
+    // Adjust these values to fine-tune the appearance
+    const luminosityFloor = 0.01; // Increase if too dim stars are too bright
+    const luminosityCeiling = 4.0; // Decrease if very bright stars are too bright
+    const minBloomStrength = 0.5; // Minimum bloom, increase if dim stars are too bright
+    const maxBloomStrength = 2.0; // Maximum bloom, decrease if bright stars are too overpowering
+
+    // Apply a more aggressive adjustment for stars with high luminosity
+    let bloomStrength;
+    if (starLuminosity <= luminosityCeiling) {
+        // Normalize luminosity to the [0, 1] range based on defined floor and ceiling
+        const normalizedLuminosity = (starLuminosity - luminosityFloor) / (luminosityCeiling - luminosityFloor);
+        // Calculate bloom strength within the defined range
+        bloomStrength = maxBloomStrength - normalizedLuminosity * (maxBloomStrength - minBloomStrength);
+    } else {
+        // For luminosities above the ceiling, reduce bloom strength more aggressively
+        bloomStrength = maxBloomStrength / (Math.log(starLuminosity - luminosityCeiling + 2));
+    }
+
+    // Ensure bloom strength does not fall below the minimum
+    bloomStrength = Math.max(bloomStrength, minBloomStrength);
+
+    // Apply the calculated bloom strength to the bloomPass
+    bloomPass.strength = bloomStrength;
+    console.log("Star Luminosity:", starLuminosity, "Adjusted Bloom Strength:", bloomStrength);
+}
+
+
 
 
 function updateStarLightIntensityAndColor(color, intensity) {
@@ -232,18 +289,27 @@ function updateAmbientLightIntensityAndColor(color, intensity) {
 }
 
 function adjustLightPosition() {
-    const variance = 0.1; // Adjust this value for more or less variance
+    // Default starting position for the light
+    const defaultPosition = { x: 0, y: 0, z: 1 };
+    
+    // Reset starLight position to default before applying variance
+    starLight.position.set(defaultPosition.x, defaultPosition.y, defaultPosition.z);
+
+    const variance = 0.3; // Adjust this value for more or less variance
     const randomX = (Math.random() - 0.5) * variance;
     // Ensure that randomY is always positive or zero to keep the light above the planet
     const randomY = Math.random() * (variance / 2);
 
-    // Adjust light position
+    // Adjust light position with variance
     starLight.position.x += randomX;
     // Only add to the Y position to keep the light above the planet
     starLight.position.y += Math.abs(randomY); // Use Math.abs to ensure positivity
 
+    // Optionally, you can also adjust the Z position if needed
+    // This example keeps it fixed as per the default
+
     // Log new light position for debugging
-    console.log("New Light Position:", starLight.position);
+    console.log("New Light Position:", starLight.position.x, starLight.position.y, starLight.position.z);
 }
 
 function adjustShadowCameraForRings(planetRadius, ringsOuterRadius) {
@@ -258,7 +324,7 @@ function adjustShadowCameraForRings(planetRadius, ringsOuterRadius) {
     starLight.shadow.camera.updateProjectionMatrix();
     
     // This log will help you debug the sizes and ensure they're appropriate
-    console.log(`Shadow Camera Frustum adjusted: Size = ${size}`);
+    // console.log(`Shadow Camera Frustum adjusted: Size = ${size}`);
   }
 
 function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, starData) {
@@ -326,14 +392,18 @@ function generateStar(orbitData) {
 function addStarToScene(starData) {
     const starGeometry = new THREE.SphereGeometry(starData.size, 32, 32); // Use starData.size to represent the visual size of the star
     const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
+
+    // Define a minimum emissive intensity to ensure the star is always visible
+    const minEmissiveIntensity = 5.00; // Adjust as needed for visual preference
+    let emissiveIntensity = Math.log1p(intensity); // Adjust emissive intensity based on luminosity
+    emissiveIntensity = Math.max(emissiveIntensity, minEmissiveIntensity); // Ensure it doesn't go below the minimum
+
     const starMaterial = new THREE.MeshPhongMaterial({
-        
         color: new THREE.Color(color), // Use the calculated star color
         emissive: new THREE.Color(color),
-        emissiveIntensity: Math.log1p(intensity) // Adjust emissive intensity based on luminosity
+        emissiveIntensity: emissiveIntensity
     });
-		console.log("Star color:", color); // Debugging log
-        console.log("intensity:", intensity);
+    console.log("Star color:", color, "Emissive intensity:", emissiveIntensity);
         
     // If there's already a star object, remove it first
     const existingStar = scene.getObjectByName('visualStar');
@@ -346,6 +416,7 @@ function addStarToScene(starData) {
     starMesh.position.copy(starLight.position).normalize().multiplyScalar(100); // Adjust distance as needed
     scene.add(starMesh);
 }
+
 
 
 
@@ -490,34 +561,27 @@ const densities = {
     return densities[element] || 5500; // Default density
 }
 
-// Star color generation for lighting
+// Star color generation for lighting and star object
 function calculateStarColorAndIntensity(starType, starLuminosity) {
-    console.log("calculateStarColorAndIntensity - Received Star Type:", starType, "Luminosity:", starLuminosity);
     const temperatures = {
-        'O': 35000, // Average temperature in Kelvin
-        'B': 20000, // Average temperature in Kelvin
-        'A': 8750,  // Average temperature in Kelvin
-        'F': 6750,  // Average temperature in Kelvin
-        'G': 5750,  // Average temperature in Kelvin
-        'K': 4250,  // Average temperature in Kelvin
-        'M': 3250   // Average temperature in Kelvin
+        'O': 35000,
+        'B': 20000,
+        'A': 8750,
+        'F': 6750,
+        'G': 5750,
+        'K': 4250,
+        'M': 3250
     };
 
-    const temperature = temperatures[starType] || 5800; // Default to Sun-like temperature (G-type)
-    const peakWavelength = 0.0029 / temperature; // Wien's Law
-    let color = wavelengthToRGB(peakWavelength * 1e9); // Convert to nanometers
+    let baseTemperature = temperatures[starType] || 5800;
+    // Apply variance to the temperature for visual diversity
+    let variedTemperature = applyVisualTemperatureVariance(baseTemperature);
 
-    // Desaturate the color by blending it with white
-    const desaturationFactor = 0.5; // Adjust this to control the desaturation level (0 = full color, 1 = full white)
-    color = desaturateColor(color, desaturationFactor);
+    let color = temperatureToRGB(variedTemperature);
 
-    // Calculate intensity based on star's luminosity
-    const baseIntensity = 1; // Base intensity for a sun-like star (G-type)
+    const baseIntensity = 1;
     let intensity = baseIntensity * starLuminosity;
-
-    // Optionally, add limits or scaling as needed
-    // For example, a cap on the maximum intensity
-    const maxIntensity = 5; // Maximum intensity cap
+    const maxIntensity = 5;
     intensity = Math.min(intensity, maxIntensity);
 
     return { color, intensity };
@@ -531,53 +595,52 @@ function desaturateColor(color, factor) {
     return desaturatedColor.getStyle(); // Returns the CSS color string
 }
 
-// convert wavelength to rgb
-function wavelengthToRGB(wavelength) {
-    // Normalize wavelength to a range between 380 and 780
-    const normalizedWavelength = Math.max(380, Math.min(wavelength, 780));
-    // Map the normalized wavelength to a 0-1 range
-    const t = (normalizedWavelength - 380) / (780 - 380);
-    // Define color points for interpolation
+// function to apply variance to the temperature
+function applyVisualTemperatureVariance(baseTemperature) {
+    const variancePercentage = 0.05; // e.g., 5% variance
+    const varianceAmount = baseTemperature * variancePercentage;
+    const variedTemperature = baseTemperature + (Math.random() * 2 - 1) * varianceAmount;
+    return variedTemperature;
+}
+
+function temperatureToRGB(temperature) {
+    // Define temperature range
+    const minTemp = 3000; // Min temperature (K)
+    const maxTemp = 40000; // Max temperature (K)
+
+    // Normalize temperature to 0-1 range
+    const t = (Math.min(Math.max(temperature, minTemp), maxTemp) - minTemp) / (maxTemp - minTemp);
+
+    // Define color gradients
     const colors = {
-        red: { r: 255, g: 0, b: 0 },      // Red
-        yellow: { r: 255, g: 255, b: 0 }, // Yellow
-        white: { r: 255, g: 255, b: 255 },// White
-        blue: { r: 0, g: 0, b: 255 }      // Blue
+        red: [255, 0, 0],
+        yellow: [255, 255, 0],
+        white: [255, 255, 255],
+        lightBlue: [173, 216, 230],
+        blue: [0, 0, 255]
     };
-    let r, g, b;
-    // Linear interpolation between color points
-    if (t < 0.33) {
-        // From red to yellow
-        r = lerp(colors.red.r, colors.yellow.r, t / 0.33);
-        g = lerp(colors.red.g, colors.yellow.g, t / 0.33);
-        b = lerp(colors.red.b, colors.yellow.b, t / 0.33);
-    } else if (t < 0.66) {
-        // From yellow to white
-        r = lerp(colors.yellow.r, colors.white.r, (t - 0.33) / 0.33);
-        g = lerp(colors.yellow.g, colors.white.g, (t - 0.33) / 0.33);
-        b = lerp(colors.yellow.b, colors.white.b, (t - 0.33) / 0.33);
+
+    // Interpolate between colors based on temperature
+    let color;
+    if (t < 0.25) {
+        color = interpolateColors(colors.red, colors.yellow, t / 0.25);
+    } else if (t < 0.5) {
+        color = interpolateColors(colors.yellow, colors.white, (t - 0.25) / 0.25);
+    } else if (t < 0.75) {
+        color = interpolateColors(colors.white, colors.lightBlue, (t - 0.5) / 0.25);
     } else {
-        // From white to blue
-        r = lerp(colors.white.r, colors.blue.r, (t - 0.66) / 0.34);
-        g = lerp(colors.white.g, colors.blue.g, (t - 0.66) / 0.34);
-        b = lerp(colors.white.b, colors.blue.b, (t - 0.66) / 0.34);
+        color = interpolateColors(colors.lightBlue, colors.blue, (t - 0.75) / 0.25);
     }
-    // Convert RGB values to 0-255 range and return as string
-    return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+
+    return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
-// Linear interpolation function
-function lerp(start, end, t) {
-    return start * (1 - t) + end * t;
-}
-
-// adjust gamma function
-function adjustGamma(value) {
-    if (value <= 0) {
-        return 0;
-    } else {
-        return Math.pow(value, 0.8);
+function interpolateColors(color1, color2, factor) {
+    const result = color1.slice();
+    for (let i = 0; i < 3; i++) {
+        result[i] = Math.round(result[i] + factor * (color2[i] - color1[i]));
     }
+    return result;
 }
 
 // get color of atmosphere from generated comp, will adjust later
@@ -593,8 +656,8 @@ function getAtmosphereColor(composition) {
     };
 
   // Log the composition and the corresponding color
-    console.log(`Atmosphere Composition: ${composition}`);
-    console.log(`Atmosphere Color:`, colors[composition] ? colors[composition].toString(16) : 'unknown');
+   // console.log(`Atmosphere Composition: ${composition}`);
+   // console.log(`Atmosphere Color:`, colors[composition] ? colors[composition].toString(16) : 'unknown');
 
     return colors[composition] || colors['unknown']; // Fallback to 'unknown' if composition is not defined
 }
@@ -619,8 +682,8 @@ function createAtmosphere(planetRadius, composition) {
   const color = getAtmosphereColor(composition);
     
     // Log the atmosphere information
-    console.log("Planet Radius:", planetRadius, "Atmosphere Radius:", atmosphereRadius);
-    console.log("Atmosphere Color:", new THREE.Color(color).getStyle());
+   // console.log("Planet Radius:", planetRadius, "Atmosphere Radius:", atmosphereRadius);
+   // console.log("Atmosphere Color:", new THREE.Color(color).getStyle());
 
     const material = new THREE.ShaderMaterial({
         uniforms: {
@@ -682,7 +745,7 @@ function createSegmentedRings(planetRadius, planetType) {
             color: ringColor(planetType), // Dynamic color based on planet type
             side: THREE.DoubleSide,
             transparent: true,
-            opacity: 0.5 + Math.random() * 0.5 // Random opacity for visual variety
+            opacity: 0.4 + Math.random() * 0.5 // Random opacity for visual variety
         });
 
         const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
@@ -709,9 +772,7 @@ function createSegmentedRings(planetRadius, planetType) {
 
 // helpers
 
-function getRandom(min, max) {
-    return Math.random() * (max - min) + min;
-}
+
 
 function hexToRgb(hex) {
     // Assuming hex is a string like "0xffa07a"
@@ -765,31 +826,7 @@ function getColorForPlanetType(planetType) {
     return colorMap[planetType] || 0xffffff; // Default to white if type not found
 }
 
-function createRingTexture() {
-    // Create a canvas
-    const canvas = document.createElement('canvas');
-    canvas.width = 512; // Texture width
-    canvas.height = 128; // Texture height, making it elongated for ring-like appearance
 
-    const context = canvas.getContext('2d');
-
-    // Generate noise
-    for (let i = 0; i < canvas.width; i++) {
-        for (let j = 0; j < canvas.height; j++) {
-            const val = Math.floor(Math.random() * 255);
-            context.fillStyle = `rgb(${val},${val},${val})`;
-            context.fillRect(i, j, 1, 1);
-        }
-    }
-
-    // Optionally, apply additional effects like gradients or patterns here
-
-    // Use the canvas as a texture
-    const texture = new THREE.Texture(canvas);
-    texture.needsUpdate = true; // Important to update the texture with canvas data
-
-    return texture;
-}
 
 function createCloudTexture(size = 1024) {
     const canvas = document.createElement('canvas');
@@ -879,7 +916,7 @@ function ringColor(planetType) {
             break;
         // Add more cases as needed
         default:
-            console.log(`No specific ring color for planet type: ${planetType}. Using default.`);
+         //   console.log(`No specific ring color for planet type: ${planetType}. Using default.`);
     }
 
     return new THREE.Color(colorHex);
