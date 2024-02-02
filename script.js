@@ -56,50 +56,54 @@ function onWindowResize() {
 }
 
 function createPlanet(planetData) {
-    // Remove existing planet
+    // Remove existing planet and its resources
     if (sphere) {
         scene.remove(sphere);
-        if (sphere.geometry) sphere.geometry.dispose();
-        if (sphere.material.map) sphere.material.map.dispose();
-        if (sphere.material) sphere.material.dispose();
+        disposeOfMesh(sphere); // A helper function to clean up geometry, material, and texture
         sphere = null;
     }
     
     // Remove existing rings (if any)
     const existingRings = scene.getObjectByName('planetRings');
     if (existingRings) {
-        existingRings.children.forEach((child) => {
-            if (child.geometry) child.geometry.dispose();
-            if (child.material.map) child.material.map.dispose();
-            if (child.material) child.material.dispose();
-        });
         scene.remove(existingRings);
+        existingRings.children.forEach(child => disposeOfMesh(child)); // Clean up each segment
     }
 
     // Proceed with planet creation
     const noiseTexture = createNoiseTexture();
-    const planetColor = getColorForPlanetType(planetData.type); // Get color based on planet type
-    const planetColorRgb = hexToRgb(planetColor); // Convert hex color to RGB
+    const cloudTexture = createCloudTexture();
+    const planetColor = getColorForPlanetType(planetData.type);
+    const planetColorRgb = hexToRgb(planetColor);
     console.log(`Creating ${planetData.type}: Color chosen is ${planetColorRgb} (Hex: ${planetColor.toString(16)})`);
 
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
     const planetMaterial = new THREE.MeshStandardMaterial({
-        map: noiseTexture, // Apply the noise texture
-        color: planetColor // Apply the color from our function
+        map: noiseTexture,
+        // map: cloudTexture, 
+        color: planetColor
     });
 
     sphere = new THREE.Mesh(planetGeometry, planetMaterial);
     sphere.castShadow = true;
     sphere.receiveShadow = true;
-    sphere.name = 'planet'; // Naming the planet for easy identification
+    sphere.name = 'planet';
     scene.add(sphere);
+
+    let ringSegmentsGroup = null;
+    let ringsOuterRadius = 0; // Will hold the outermost radius of the rings
 
     // Create segmented rings for Gas Giants and Ice Giants
     if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
-        const ringSegmentsGroup = createSegmentedRings(planetData.radius, planetData.type);
-        ringSegmentsGroup.name = 'planetRings'; // Naming the group for easy access
-        scene.add(ringSegmentsGroup); // Add the group to the scene
+        const ringsData = createSegmentedRings(planetData.radius, planetData.type);
+        const ringSegmentsGroup = ringsData.group;
+        const ringsOuterRadius = ringsData.outerRadius;
+
+        ringSegmentsGroup.name = 'planetRings';
+        scene.add(ringSegmentsGroup);
     }
+
+    return ringsOuterRadius; // Return the outermost radius of the rings
 }
 
 
@@ -129,6 +133,7 @@ function setupLighting(starData) {
     starLight.shadow.camera.near = 0.1; // Adjust based on your scene's scale
     starLight.shadow.camera.far = 10000;
     starLight.shadow.radius = 4;
+
 
     // Add the light to the scene
     scene.add(starLight);
@@ -223,7 +228,20 @@ function adjustLightPosition() {
     console.log("New Light Position:", starLight.position);
 }
 
-
+function adjustShadowCameraForRings(planetRadius, ringsOuterRadius) {
+    const size = Math.max(planetRadius, ringsOuterRadius);
+    
+    starLight.shadow.camera.left = -size;
+    starLight.shadow.camera.right = size;
+    starLight.shadow.camera.top = size;
+    starLight.shadow.camera.bottom = -size;
+    starLight.shadow.camera.near = 0.1;
+    starLight.shadow.camera.far = size * 3; // Make sure the far plane is far enough to include the rings
+    starLight.shadow.camera.updateProjectionMatrix();
+    
+    // This log will help you debug the sizes and ensure they're appropriate
+    console.log(`Shadow Camera Frustum adjusted: Size = ${size}`);
+  }
 
 function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, starData) {
     // Prepare new planet data
@@ -233,7 +251,6 @@ function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, sta
         orbitRadius: orbitRadius
         // Add other necessary properties if needed
     };
-
     // Create a new planet with the updated size
     createPlanet(newPlanetData);
 
@@ -243,6 +260,9 @@ function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, sta
 
     // Update lighting based on star type
     updateStarLight(starData);
+    const ringsOuterRadius = createPlanet(newPlanetData); // Assuming createPlanet now returns the outer radius of the rings
+
+    adjustShadowCameraForRings(planetRadiusInEarthUnits, ringsOuterRadius);
 
     // Adjust camera distance if necessary
     // camera.position.z = 20 * planetRadiusInEarthUnits;
@@ -630,9 +650,14 @@ function createSegmentedRings(planetRadius, planetType) {
         // Prepare the outer radius of the next segment by including the segment width
         currentOuterRadius = outerRadius + distanceVariance; // Include the distance variance for the next segment
     }
+    
+    let outerRadius = planetRadius * 1.2;
 
-    ringSegmentsGroup.name = 'planetRings'; // Naming the group for easy access
-    return ringSegmentsGroup; // Return the group containing all segments
+    // Return the group and the final calculated outer radius
+    return {
+        group: ringSegmentsGroup, // The group containing all segments
+        outerRadius: outerRadius  // The final outer radius of the rings
+    };
 }
 
 
@@ -650,10 +675,15 @@ function hexToRgb(hex) {
     return `rgb(${r}, ${g}, ${b})`;
 }
 
+function disposeOfMesh(mesh) {
+    if (mesh.geometry) mesh.geometry.dispose();
+    if (mesh.material.map) mesh.material.map.dispose();
+    if (mesh.material) mesh.material.dispose();
+}
 
 // colors and textures
 
-function createNoiseTexture(size = 512) {
+function createNoiseTexture(size = 1024) {
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
@@ -714,6 +744,56 @@ function createRingTexture() {
 
     return texture;
 }
+
+function createCloudTexture(size = 1024) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const context = canvas.getContext('2d');
+
+    // Fill the background with a base color representing deep space
+    context.fillStyle = 'rgb(5, 10, 20)';
+    context.fillRect(0, 0, size, size);
+
+    // Draw clouds in the central part of the texture to avoid seams
+    const maxOpacity = 0.3; // Maximum cloud opacity
+    const minOpacity = 0.1; // Minimum cloud opacity
+    const cloudsCount = 500; // Number of clouds to draw
+    const buffer = size * 0.25; // Buffer space to avoid drawing at the edges
+
+    for (let i = 0; i < cloudsCount; i++) {
+        const opacity = Math.random() * (maxOpacity - minOpacity) + minOpacity;
+        context.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+
+        // Draw an ellipse for each cloud, ensuring it's within the central area
+        const x = Math.random() * (size - 2 * buffer) + buffer;
+        const y = Math.random() * (size - 2 * buffer) + buffer;
+        const radiusX = Math.random() * size / 8;
+        const radiusY = Math.random() * size / 16;
+
+        context.beginPath();
+        context.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
+        context.fill();
+    }
+
+    // Create a mirrored copy of the texture's central part to the edges
+    const halfSize = size / 2;
+    const quarterSize = size / 4;
+    const centerImageData = context.getImageData(quarterSize, 0, halfSize, size);
+    context.putImageData(centerImageData, 0, 0); // Mirror to the left
+    context.putImageData(centerImageData, 3 * quarterSize, 0); // Mirror to the right
+
+    // Use the canvas as a texture
+    const texture = new THREE.Texture(canvas);
+    texture.needsUpdate = true; // Important to update the texture with canvas data
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(1, 1);
+
+    return texture;
+}
+
+
 
 function ringColor(planetType) {
     // Default color

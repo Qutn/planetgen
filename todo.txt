@@ -1,0 +1,2 @@
+implement texture mapping on planet so that when we generate textures later, they are correctly applied
+    for now we will use a procedurally generated noise to text
