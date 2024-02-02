@@ -56,44 +56,49 @@ function onWindowResize() {
 }
 
 function createPlanet(planetData) {
-    // Remove existing planet and rings (if any)
-    const noiseTexture = createNoiseTexture();
-    const planetColor = getColorForPlanetType(planetData.type); // Get color based on planet type
-    const planetColorRgb = hexToRgb(planetColor); // Convert hex color to RGB
-
+    // Remove existing planet
     if (sphere) {
         scene.remove(sphere);
-        sphere.geometry.dispose();
+        if (sphere.geometry) sphere.geometry.dispose();
+        if (sphere.material.map) sphere.material.map.dispose();
+        if (sphere.material) sphere.material.dispose();
         sphere = null;
     }
     
     // Remove existing rings (if any)
     const existingRings = scene.getObjectByName('planetRings');
     if (existingRings) {
+        existingRings.children.forEach((child) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material.map) child.material.map.dispose();
+            if (child.material) child.material.dispose();
+        });
         scene.remove(existingRings);
-        existingRings.geometry.dispose();
     }
 
+    // Proceed with planet creation
+    const noiseTexture = createNoiseTexture();
+    const planetColor = getColorForPlanetType(planetData.type); // Get color based on planet type
+    const planetColorRgb = hexToRgb(planetColor); // Convert hex color to RGB
     console.log(`Creating ${planetData.type}: Color chosen is ${planetColorRgb} (Hex: ${planetColor.toString(16)})`);
 
-    // Create new planet
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
     const planetMaterial = new THREE.MeshStandardMaterial({
-        map: noiseTexture, // Apply the noise texture here
+        map: noiseTexture, // Apply the noise texture
         color: planetColor // Apply the color from our function
     });
+
     sphere = new THREE.Mesh(planetGeometry, planetMaterial);
     sphere.castShadow = true;
     sphere.receiveShadow = true;
     sphere.name = 'planet'; // Naming the planet for easy identification
     scene.add(sphere);
 
-    // Create rings for Gas Giants and Ice Giants
+    // Create segmented rings for Gas Giants and Ice Giants
     if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
-        const ringMesh = createRings(planetData.radius, planetData.type);
-        ringMesh.name = 'planetRings'; // Naming the rings for easy identification
-        scene.add(ringMesh);
-        ringMesh.position.copy(sphere.position); // Position the rings at the planet's location
+        const ringSegmentsGroup = createSegmentedRings(planetData.radius, planetData.type);
+        ringSegmentsGroup.name = 'planetRings'; // Naming the group for easy access
+        scene.add(ringSegmentsGroup); // Add the group to the scene
     }
 }
 
@@ -119,10 +124,11 @@ function setupLighting(starData) {
     starLight.castShadow = true;
 
     // Configure shadow properties
-    starLight.shadow.mapSize.width = 1024; // Increase for better shadow resolution
-    starLight.shadow.mapSize.height = 1024;
-    starLight.shadow.camera.near = 0.5; // Adjust based on your scene's scale
-    starLight.shadow.camera.far = 5000;
+    starLight.shadow.mapSize.width = 2048; // Increase for better shadow resolution
+    starLight.shadow.mapSize.height = 2048;
+    starLight.shadow.camera.near = 0.1; // Adjust based on your scene's scale
+    starLight.shadow.camera.far = 10000;
+    starLight.shadow.radius = 4;
 
     // Add the light to the scene
     scene.add(starLight);
@@ -156,7 +162,7 @@ function startAnimationLoop() {
         }
             // Rotate the rings with variance
     const rings = scene.getObjectByName('planetRings');
-    if (rings) rings.rotation.z += rotationSpeed + Math.random() * ringRotationVariance - ringRotationVariance / 2;
+    if (rings) rings.rotation.y += rotationSpeed + Math.random() * ringRotationVariance - ringRotationVariance / 2;
 
         controls.update();
         renderer.render(scene, camera);
@@ -203,17 +209,20 @@ function updateAmbientLightIntensityAndColor(color, intensity) {
 }
 
 function adjustLightPosition() {
-    const variance = 0.3; // Adjust this value for more or less variance
+    const variance = 0.1; // Adjust this value for more or less variance
     const randomX = (Math.random() - 0.5) * variance;
-    const randomY = (Math.random() - 0.5) * variance;
-    
+    // Ensure that randomY is always positive or zero to keep the light above the planet
+    const randomY = Math.random() * (variance / 2);
+
     // Adjust light position
     starLight.position.x += randomX;
-    starLight.position.y += randomY;
+    // Only add to the Y position to keep the light above the planet
+    starLight.position.y += Math.abs(randomY); // Use Math.abs to ensure positivity
 
     // Log new light position for debugging
     console.log("New Light Position:", starLight.position);
 }
+
 
 
 function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, starData) {
@@ -242,14 +251,14 @@ function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, sta
 
 // star generation
 
-function setupStarGeneration() {
+function setupStarGeneration(div, orbitData, selectedPlanetIndex = null) {
     const generateStarButton = document.getElementById('generateStarButton');
     const starPropertiesDiv = document.getElementById('starProperties');
 
     generateStarButton.addEventListener('click', () => {
         const star = generateStar();
         displayStarProperties(star, starPropertiesDiv);
-    	setupThreeJS(null, Star, planet, orbitData.parentStar); // Call setupThreeJS with the generated star only
+    	setupThreeJS(orbitData.parentStar, selectedPlanet, orbitData.parentStar.habitableZone); // Call setupThreeJS with the generated star only
 
     });
 }
@@ -585,72 +594,49 @@ function createAtmosphere(planetRadius, composition) {
     return new THREE.Mesh(geometry, material);
 }
 
-function createRings(planetRadius, planetType) {
-    const minRingSize = planetRadius * 1.5; // Minimum ring size
-    const maxRingSize = planetRadius * 3;   // Maximum ring size
+function createSegmentedRings(planetRadius, planetType) {
+    const ringSegmentsGroup = new THREE.Group(); // Group to hold all ring segments
 
-    // Generate random inner and outer radius for the rings
-    const innerRadius = getRandom(planetRadius * 1.2, minRingSize);
-    const outerRadius = getRandom(minRingSize, maxRingSize);
+    // Randomize the total number of ring segments between 5 and 20
+    const numSegments = Math.floor(Math.random() * (20 - 5 + 1)) + 5;
+    let currentOuterRadius = planetRadius * 1.2; // Initial outer radius of the first segment
 
-    // Create ring geometry
-    const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64);
+    for (let i = 0; i < numSegments; i++) {
+        // Generate random width for the segment, with a minimum width to ensure visibility
+        const segmentWidth = Math.random() * 0.2 + 0.05;
+        const innerRadius = currentOuterRadius;
+        const outerRadius = innerRadius + segmentWidth;
 
-    // Use the procedural texture
-    const ringTexture = createRingTexture();
+        // Add a small variance to the distance between segments
+        const distanceVariance = Math.random() * 0.05 + 0.01; // Adjust variance as desired
+        currentOuterRadius += distanceVariance; // Apply variance to the next segment's starting point
 
-    // ShaderMaterial for the rings, incorporating the procedural texture
+        const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 64, 1);
+        const ringMaterial = new THREE.MeshStandardMaterial({
+            color: ringColor(planetType), // Dynamic color based on planet type
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.5 + Math.random() * 0.5 // Random opacity for visual variety
+        });
 
-    const ringShaderMaterial = new THREE.ShaderMaterial({
-        uniforms: {
-            ringTexture: { value: createRingTexture() },
-            innerRadius: { value: innerRadius },
-            outerRadius: { value: outerRadius },
-            overlayColor: { value: ringColor(planetType) } // Use the ringColor function
-        },
-        vertexShader: `
-            varying vec3 vPosition;
-            void main() {
-                vPosition = position;
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-            }
-        `,
-        fragmentShader: `
-            #define PI 3.1415926535897932384626433832795
-            uniform sampler2D ringTexture;
-            uniform float innerRadius;
-            uniform float outerRadius;
-            uniform vec3 overlayColor; // Ensure this is declared
-            varying vec3 vPosition;
-            void main() {
-                float r = length(vPosition.xy);
-                float theta = atan(vPosition.y, vPosition.x);
-                float normalizedRadius = (r - innerRadius) / (outerRadius - innerRadius);
-                float u = (theta + PI) / (2.0 * PI);
-                float v = normalizedRadius;
-                vec4 texColor = texture2D(ringTexture, vec2(u, v));
-                vec3 colorMixed = mix(texColor.rgb, overlayColor, 0.5); // Mix texture color with overlay color
-                gl_FragColor = vec4(colorMixed, texColor.a); // Use mixed color and original alpha
-            }
-        `,
-        side: THREE.DoubleSide,
-        transparent: true
-    });
+        const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+        ringMesh.rotation.x = Math.PI / 2; // Adjust ring orientation to lie flat
 
-    // Create ring mesh with the shader material
-    const ringMesh = new THREE.Mesh(ringGeometry, ringShaderMaterial);
-    ringMesh.rotation.x = Math.PI / 2; // Adjust ring orientation
-    ringMesh.rotation.y = 0; // Adjust if you want to tilt the ring
-    ringMesh.rotation.z = Math.random() * 2 * Math.PI; // Random rotation around the Z-axis for variety
-    ringMesh.receiveShadow = true;
-    ringMesh.castShadow = true;
-    ringMesh.name = 'planetRings';
+        ringMesh.receiveShadow = true;
+        ringMesh.castShadow = true;
 
-    return ringMesh;
+        ringSegmentsGroup.add(ringMesh); // Add the segment to the group
+
+        // Prepare the outer radius of the next segment by including the segment width
+        currentOuterRadius = outerRadius + distanceVariance; // Include the distance variance for the next segment
+    }
+
+    ringSegmentsGroup.name = 'planetRings'; // Naming the group for easy access
+    return ringSegmentsGroup; // Return the group containing all segments
 }
 
 
- // helpers
+// helpers
 
 function getRandom(min, max) {
     return Math.random() * (max - min) + min;
