@@ -69,13 +69,48 @@ button {
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column; /* Adjust to stack elements vertically */
 }
 
 #planetCanvas {
     flex-grow: 1;
     max-width: 500px;
     height: 500px;
+    margin-bottom: 20px; /* Add some space between the canvas and the navigation bar */
 }
+
+/* New style for the planet navigation */
+#planet-navigation {
+    display: flex;
+    justify-content: center; /* Center the navigation buttons */
+    gap: 10px; /* Space between buttons */
+    padding: 10px; /* Padding around the navigation bar */
+    margin: 20px 0; /* Margin above and below the navigation bar */
+    width: 100%; /* Adjust this if necessary */
+    max-width: 500px; /* Match this with the canvas width */
+}
+
+#planet-navigation button {
+    background-color: #FFD700; /* Button color */
+    color: #000000; /* Button text color */
+    border: none; /* Remove border */
+    padding: 10px 15px; /* Padding inside buttons */
+    font-size: 16px; /* Text size */
+    cursor: pointer; /* Cursor on hover */
+    border-radius: 5px; /* Rounded corners for buttons */
+    text-transform: uppercase; /* Uppercase text */
+    font-weight: bold; /* Bold text */
+}
+
+#planet-navigation button:hover {
+    background-color: #cc77ff; /* Button hover color */
+}
+
+/* This ensures the navigation bar doesn't disrupt the layout of other components */
+.habitable-planet-container {
+    margin-top: 20px; /* Ensure there's a gap between the navigation bar and the details section */
+}
+
 
 /* Custom Scrollbar Styling */
 ::-webkit-scrollbar {

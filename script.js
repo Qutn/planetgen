@@ -22,24 +22,84 @@ let composer;
 let bloomPass;
 let orbitAngle = 0; // Initial angle
 const orbitSpeed = 0.001; // Speed of the orbit, adjust as necessary
+let celestialObjects = [];
 
-const AU_TO_SCENE_SCALE = 0.15;
 
+const AU_TO_SCENE_SCALE = 200.00;
+
+let universeData = {
+    parentStar: {
+        type: null,
+        size: null,
+        age: null,
+        mass: null,
+        luminosity: null,
+        habitableZone: {
+            innerBoundary: null,
+            outerBoundary: null
+        }
+    },
+    solarSystem: [],
+    selectedPlanet: null,
+    // Additional properties and methods can be added as needed
+};
+
+function populateUniverseData() {
+    // Assume generateOrbit() is an async function if it makes external calls or processes large data
+    // If it's synchronous, you can remove the async/await keywords
+    const orbitData = generateOrbit();
+
+    universeData.parentStar = orbitData.parentStar;
+    universeData.starData = orbitData.parentStar;
+    universeData.solarSystem = orbitData.solarSystem.map(planet => ({
+        type: planet.type,
+        radius: planet.size, // Assuming 'size' should be mapped to 'radius'
+        orbitRadius: planet.orbitRadius,
+        atmosphere: planet.atmosphere,
+        moons: planet.moons,
+    }));
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-    const defaultStar = { type: 'G', size: 1, luminosity: 1, habitableZone: { innerBoundary: 0.95, outerBoundary: 1.37 } };
-    const defaultPlanet = { type: 'Terrestrial', radius: 1, orbitRadius: 1 };
-	//	console.log("DOMContentLoaded - Default Star Data:", defaultStar);
-    setupThreeJS(defaultStar, defaultPlanet, defaultStar.habitableZone);
+    // Initialize default star and planet data directly into universeData
+    universeData.parentStar = {
+        type: 'G',
+        size: 1,
+        luminosity: 1,
+        habitableZone: { innerBoundary: 0.95, outerBoundary: 1.37 }
+    };
+    universeData.solarSystem = [
+        { type: 'Terrestrial', radius: 1, orbitRadius: 1 }
+    ];
+    universeData.selectedPlanet = universeData.solarSystem[0]; // Assuming the first planet as the selected one
+
+    setupThreeJS();
     setupStarGeneration();
     setupSolarSystemGeneration();
+
+    let currentTargetIndex = 0; // Initialize the index for the currently targeted object
+
+    document.getElementById('prevPlanet').addEventListener('click', () => {
+        currentTargetIndex = Math.max(currentTargetIndex - 1, 0);
+        snapCameraToCelestialObject(currentTargetIndex);
+    });
+
+    document.getElementById('snapToStar').addEventListener('click', () => {
+        currentTargetIndex = 0; // Index of the star
+        snapCameraToCelestialObject(currentTargetIndex);
+    });
+
+    document.getElementById('nextPlanet').addEventListener('click', () => {
+        currentTargetIndex = Math.min(currentTargetIndex + 1, celestialObjects.length - 1);
+        snapCameraToCelestialObject(currentTargetIndex);
+    });
+
 });
 
-function setupThreeJS(star, planet, habitableZone) {
+
+function setupThreeJS() {
     initializeThreeJSEnvironment('planetCanvas');
-    createPlanet(planet);
-    createAtmosphereMesh(planet, habitableZone);
-    setupLighting(star);
+    setupLighting(); // Now uses universeData
     setupOrbitControls();
     startAnimationLoop();
 }
@@ -53,7 +113,7 @@ function initializeThreeJSEnvironment(canvasId) {
     const starFieldTexture = createStarFieldTexture(); // Assuming createStarFieldTexture is defined
     scene.background = starFieldTexture;
 
-    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 10000);
 	camera.position.z = 20;
     camera.castShadow = true;
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
@@ -89,93 +149,76 @@ function onWindowResize() {
 	//    console.log("Camera aspect updated to:", camera.aspect);
 }
 
+function snapCameraToCelestialObject(index) {
+    const target = celestialObjects[index];
+    if (!target) return; // If the target doesn't exist, exit the function
 
-function createPlanet(planetData) {
-    // Remove existing planet and its resources
-    if (sphere) {
-        scene.remove(sphere);
-        disposeOfMesh(sphere); // A helper function to clean up geometry, material, and texture
-        sphere = null;
-    }
-    
-    // Remove existing rings (if any)
-    const existingRings = scene.getObjectByName('planetRings');
-    if (existingRings) {
-        scene.remove(existingRings);
-        existingRings.children.forEach(child => disposeOfMesh(child)); // Clean up each segment
-    }
+    // Update the target of the orbit controls to the selected object
+    controls.target.copy(target.position);
 
-    // Proceed with planet creation
-    const noiseTexture = createNoiseTexture();
-    const cloudTexture = createCloudTexture();
-    const planetColor = getColorForPlanetType(planetData.type);
-    const planetColorRgb = hexToRgb(planetColor);
+    // You might want to adjust the camera's position here as well
+    // For example, position it some distance away from the target's position
+    camera.position.set(target.position.x, target.position.y, target.position.z + 10);
 
+    // Update the controls and render the scene
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+
+function updateParentStar(type, size, age, mass, luminosity) {
+    universeData.parentStar.type = type;
+    universeData.parentStar.size = size;
+    universeData.parentStar.age = age;
+    universeData.parentStar.mass = mass;
+    universeData.parentStar.luminosity = luminosity;
+
+    // Assuming calculateHabitableZone is a function that returns { innerBoundary, outerBoundary }
+    const habitableZone = calculateHabitableZone(luminosity);
+    universeData.parentStar.habitableZone = habitableZone;
+}
+
+
+function createPlanet(planetData, index) {
+    // Access parent star's habitable zone directly from universeData
+    const habitableZone = universeData.parentStar.habitableZone;
+
+    // Planet geometry and material
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
-    const planetMaterial = new THREE.MeshStandardMaterial({
-        map: noiseTexture,
-        color: planetColor
+    const planetMaterial = new THREE.MeshBasicMaterial({
+        color: getColorForPlanetType(planetData.type)
     });
+    const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
+    planetMesh.position.setFromSphericalCoords(
+        planetData.orbitRadius * AU_TO_SCENE_SCALE, 
+        0, // Flat orbit for simplicity
+        Math.random() * Math.PI * 2 // Randomize starting position on orbit
+    );
+    planetMesh.name = `planet${index}`;
 
-    sphere = new THREE.Mesh(planetGeometry, planetMaterial);
-    sphere.castShadow = true;
-    sphere.receiveShadow = true;
-    sphere.name = 'planet';
-
-    // Position the planet according to its orbit radius
-    // Assuming the sun is at the scene's origin
-    scene.add(sphere);
-    //sphere.position.x = planetData.orbitRadius; // Place it on the x-axis at its orbit radius distance
-
-    // Create segmented rings for Gas Giants and Ice Giants, if applicable
-    let ringSegmentsGroup = null;
-    let ringsOuterRadius = 0; // Will hold the outermost radius of the rings
-    if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
-        const ringsData = createSegmentedRings(planetData.radius, planetData.type);
-        const ringSegmentsGroup = ringsData.group;
-        const ringsOuterRadius = ringsData.outerRadius;
-
-        ringSegmentsGroup.name = 'planetRings';
-        sphere.add(ringSegmentsGroup);
-    }
-
-    // Optionally, draw orbit path
-    //adjustCameraToPlanet(planetData); 
-    console.log("Planet Position:", sphere.position);
-    console.log("Camera Position:", camera.position);
-    sphere.add(atmosphereMesh);
-    return ringsOuterRadius; // Return the outermost radius of the rings
-}
-
-function drawOrbitPath(orbitRadius) {
-    // Remove existing orbit path if it exists
-    const existingOrbitMesh = scene.getObjectByName('orbitPath');
-    if (existingOrbitMesh) {
-        scene.remove(existingOrbitMesh);
-    }
-
-    // Assuming starLight represents the position of your star
-    const starPosition = starLight.position; // Adjust if your star's position is defined differently
-
-    // Create new orbit path geometry and material
-    const orbitGeometry = new THREE.RingGeometry(orbitRadius - 0.01, orbitRadius + 0.01, 64);
-    const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
-    const orbitMesh = new THREE.Mesh(orbitGeometry, orbitMaterial);
-    orbitMesh.rotation.x = Math.PI / 2;
-    orbitMesh.position.set(starPosition.x, starPosition.y, starPosition.z);
-    orbitMesh.name = 'orbitPath';
-    scene.add(orbitMesh);
-}
-
-
-
-function createAtmosphereMesh(planetData, habitableZone) {
+    // Determine atmosphere composition based on the planet's type and its orbit radius
     const atmosphereComposition = getPlanetAtmosphere(planetData.type, planetData.orbitRadius, habitableZone);
-    atmosphereMesh = createAtmosphere(planetData.radius, atmosphereComposition);
-    sphere.add(atmosphereMesh);
+    const atmosphereMesh = createAtmosphere(planetData.radius, atmosphereComposition);
+    atmosphereMesh.name = `atmosphere${index}`;
+    planetMesh.add(atmosphereMesh); // Attach the atmosphere as a child of the planet
+
+    // Add the planet (with its atmosphere) to the scene
+    scene.add(planetMesh);
+    celestialObjects[index + 1] = planetMesh; // We use index + 1 because index 0 is reserved for the star
+
 }
 
-function setupLighting(starData) {
+
+function generatePlanets() {
+    universeData.solarSystem.forEach((planetData, index) => {
+        createPlanet(planetData, index);
+    });
+}
+
+
+function setupLighting() {
+    // Access star data directly from universeData
+    const starData = universeData.parentStar;
     const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
 
     // Ensure a minimum intensity for visibility
@@ -187,8 +230,8 @@ function setupLighting(starData) {
     }
 
     // Create a new directional light
-    starLight = new THREE.DirectionalLight(color, effectiveIntensity);
-    starLight.position.set(0, 0, 1); // Position it to shine towards the scene
+    starLight = new THREE.PointLight(color, effectiveIntensity);
+    starLight.position.set(0, 0, 0); // Position it to shine towards the scene
 
     // Enable shadow casting for the light
     starLight.castShadow = true;
@@ -199,7 +242,6 @@ function setupLighting(starData) {
     starLight.shadow.camera.near = 0.1; // Adjust based on your scene's scale
     starLight.shadow.camera.far = 10000;
     starLight.shadow.radius = 4;
-
 
     // Add the light to the scene
     scene.add(starLight);
@@ -214,9 +256,10 @@ function setupLighting(starData) {
         scene.add(ambientLight);
     }
 
-    addStarToScene(starData); // Add this line after setting up the light
-
+    // Now, addStarToScene should also utilize universeData instead of requiring starData as a parameter
+    addStarToScene();
 }
+
 
 function setupOrbitControls() {
     controls = new OrbitControls(camera, renderer.domElement);
@@ -242,7 +285,7 @@ function startAnimationLoop() {
             orbitAngle += orbitSpeed; // Increment orbit angle
             planet.position.x = starLight.position.x + Math.cos(orbitAngle) * selectedPlanet.orbitRadius;
             planet.position.z = starLight.position.z + Math.sin(orbitAngle) * selectedPlanet.orbitRadius;
-            planet.position.y = starLight.position.y + Math.sin(orbitAngle) * selectedPlanet.orbitRadius;
+            // planet.position.y = starLight.position.y + Math.sin(orbitAngle) * selectedPlanet.orbitRadius;
 
         }
             // Rotate the rings with variance
@@ -263,31 +306,39 @@ function startAnimationLoop() {
 
 
 
-function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
-    // Update planet geometry and material
-    // Update or create atmosphere
-    if (atmosphereMesh) {
-        scene.remove(atmosphereMesh);
-    }
-
-    atmosphereMesh = createAtmosphere(planetRadius, atmosphereComposition);
-    sphere.add(atmosphereMesh);
-}
-
-function updateStarLight(starData) {
-    // console.log("updateStarLight - Star Type and Luminosity:", starData.type, starData.luminosity);
+function updateStarLight() {
+    // Access star data directly from universeData
+    const starData = universeData.parentStar;
     const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
+
     // Ensure a minimum intensity for visibility
     const minIntensity = 5; // Adjust as needed for minimum visibility
     const effectiveIntensity = Math.max(intensity, minIntensity);
+
     // Update the lights
-    updateStarLightIntensityAndColor(color, effectiveIntensity);
-    updateAmbientLightIntensityAndColor(color, intensity / 10);
-    // Dynamic bloom effect adjustment
+    if (starLight) {
+        starLight.color.set(new THREE.Color(color));
+        starLight.intensity = effectiveIntensity;
+    }
+
+    // Update ambient light as well
+    if (ambientLight) {
+        ambientLight.color.set(new THREE.Color(color));
+        ambientLight.intensity = intensity / 10;
+    } else {
+        ambientLight = new THREE.AmbientLight(new THREE.Color(color), intensity / 10);
+        scene.add(ambientLight);
+    }
+
+    // Dynamic bloom effect adjustment based on star luminosity
     adjustBloomEffect(starData.luminosity);
 }
 
-function adjustBloomEffect(starLuminosity) {
+
+function adjustBloomEffect() {
+    // Access star luminosity directly from universeData
+    const starLuminosity = universeData.parentStar.luminosity;
+
     // Adjust these values to fine-tune the appearance
     const luminosityFloor = 0.01; // Increase if too dim stars are too bright
     const luminosityCeiling = 4.0; // Decrease if very bright stars are too bright
@@ -315,43 +366,25 @@ function adjustBloomEffect(starLuminosity) {
 }
 
 
-
-
-function updateStarLightIntensityAndColor(color, intensity) {
-    starLight.color.set(color);
-    starLight.intensity = intensity;
-    adjustLightPosition();
-
-}
-
-function updateAmbientLightIntensityAndColor(color, intensity) {
-    ambientLight.color.set(color);
-    ambientLight.intensity = intensity;
-}
-
 function adjustLightPosition() {
-    // Default starting position for the light
-    const defaultPosition = { x: 0, y: 0, z: 1 };
-    
+    // Default starting position for the light remains the same
+    const defaultPosition = { x: 0, y: 0, z: 0 };
+
     // Reset starLight position to default before applying variance
     starLight.position.set(defaultPosition.x, defaultPosition.y, defaultPosition.z);
 
-    const variance = 0.3; // Adjust this value for more or less variance
+    // Variance can be adjusted or kept dynamic based on universeData properties if needed in the future
+    const variance = 0.3;
     const randomX = (Math.random() - 0.5) * variance;
-    // Ensure that randomY is always positive or zero to keep the light above the planet
     const randomY = Math.random() * (variance / 2);
 
     // Adjust light position with variance
     starLight.position.x += randomX;
-    // Only add to the Y position to keep the light above the planet
-    starLight.position.y += Math.abs(randomY); // Use Math.abs to ensure positivity
+    starLight.position.y += Math.abs(randomY);
 
-    // Optionally, you can also adjust the Z position if needed
-    // This example keeps it fixed as per the default
-
-    // Log new light position for debugging
     console.log("New Light Position:", starLight.position.x, starLight.position.y, starLight.position.z);
 }
+
 
 function adjustShadowCameraForRings(planetRadius, ringsOuterRadius) {
     const size = Math.max(planetRadius, ringsOuterRadius);
@@ -371,62 +404,45 @@ function adjustShadowCameraForRings(planetRadius, ringsOuterRadius) {
 
   //planet stuff
 
-function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, starData) {
-    // Prepare new planet data
-    const newPlanetData = {
-        radius: planetRadiusInEarthUnits,
-        type: planetType,
-        orbitRadius: orbitRadius
-        // Add other necessary properties if needed
-    };
-   const orbitRadiusAU = orbitRadius; // This should be the actual AU value
-
-    // Create a new planet with the updated size
-    createPlanet(newPlanetData);
-
-    // Update atmosphere
-    const atmosphereComposition = getPlanetAtmosphere(planetType, orbitRadius, starData.habitableZone);
-    updatePlanetAndAtmosphere(planetRadiusInEarthUnits, atmosphereComposition);
-
-    // Update lighting based on star type
-    updateStarLight(starData);
-    const ringsOuterRadius = createPlanet(newPlanetData); // Assuming createPlanet now returns the outer radius of the rings
-
-    adjustShadowCameraForRings(planetRadiusInEarthUnits, ringsOuterRadius);
-
-    // Adjust camera distance if necessary
-    // camera.position.z = 20 * planetRadiusInEarthUnits;
-    addStarToScene(starData);
-    drawOrbitPath(orbitRadius);
-    console.log("orbitRadius (converted):", orbitRadius);
-    console.log("orbitRadiusAU:", orbitRadiusAU);
+  function updateScene() {
+    cleanUp(); // Clears the scene of existing planets and star meshes
+    generatePlanets(); // Uses universeData to add new planet meshes to the scene
+    updateStarLight(); // Updates the lighting based on the new star
+    addStarToScene(); // Adds the new star mesh to the scene
 }
 
+function cleanUp() {
+    scene.children = scene.children.filter(child => {
+        if (child.name.startsWith('planet')) {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material instanceof THREE.Material) child.material.dispose();
+            return false; // Remove the planet from the scene.children array
+        }
+        return true; // Keep the item in the scene.children array
+    });
+    celestialObjects = [];
 
+}
 // star generation
 
-function setupStarGeneration(div, orbitData, selectedPlanetIndex = null) {
+function setupStarGeneration() {
     const generateStarButton = document.getElementById('generateStarButton');
-    const starPropertiesDiv = document.getElementById('starProperties');
 
     generateStarButton.addEventListener('click', () => {
-        const orbitData = generateOrbit();
-        const star = generateStar();
-        displayStarProperties(star, starPropertiesDiv);
-    	setupThreeJS(star, selectedPlanet, star.habitableZone); // Call setupThreeJS with the generated star only
-
+        generateStar(); // This will update the universeData directly
+        displayStarProperties(); // Now reads from universeData
+        setupThreeJS(); // Should be refactored to use universeData
     });
 }
 
-function generateStar(orbitData) {
-	// console.log("generateStar - Generated Star Data:", star);
-    // Import or reference the functions from orbit.js
+function generateStar() {
     const parentStar = generateParentStar();
     const { size, mass } = generateStarSizeAndMass(parentStar.type, parentStar.age);
     const luminosity = generateStarLuminosity(parentStar.type, size);
     const habitableZone = calculateHabitableZone(luminosity);
 
-    return {
+    // Updating universeData directly
+    universeData.starData = {
         type: parentStar.type,
         age: parentStar.age,
         size: size,
@@ -434,145 +450,137 @@ function generateStar(orbitData) {
         luminosity: luminosity,
         habitableZone: habitableZone
     };
-    console.log("Generated Star:", parentStar);
 
+    console.log("Generated Star:", universeData.starData);
 }
 
-function addStarToScene(starData) {
-    const starGeometry = new THREE.SphereGeometry(starData.size, 32, 32); // Use starData.size to represent the visual size of the star
+
+function addStarToScene() {
+    // Access starData directly from universeData
+    const starData = universeData.parentStar; // This line needs to be corrected
+
+    const starGeometry = new THREE.SphereGeometry(starData.size, 32, 32);
     const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
 
-    // Define a minimum emissive intensity to ensure the star is always visible
-    const minEmissiveIntensity = 5.00; // Adjust as needed for visual preference
-    let emissiveIntensity = Math.log1p(intensity); // Adjust emissive intensity based on luminosity
-    emissiveIntensity = Math.max(emissiveIntensity, minEmissiveIntensity); // Ensure it doesn't go below the minimum
+    const minEmissiveIntensity = 5.00; // Minimum visible emissive intensity
+    let emissiveIntensity = Math.max(Math.log1p(intensity), minEmissiveIntensity);
 
     const starMaterial = new THREE.MeshPhongMaterial({
-        color: new THREE.Color(color), // Use the calculated star color
+        color: new THREE.Color(color),
         emissive: new THREE.Color(color),
         emissiveIntensity: emissiveIntensity
     });
-    console.log("Star color:", color, "Emissive intensity:", emissiveIntensity);
-        
-    // If there's already a star object, remove it first
+
+    // Remove the existing visual star if present
     const existingStar = scene.getObjectByName('visualStar');
     if (existingStar) {
         scene.remove(existingStar);
     }
 
+    // Create and add the new star mesh to the scene
     const starMesh = new THREE.Mesh(starGeometry, starMaterial);
-    starMesh.name = 'visualStar';
-    starMesh.position.copy(starLight.position).normalize().multiplyScalar(100); // Adjust distance as needed
+    starMesh.name = 'visualStar'; // For easy identification and access
+    starMesh.position.set(0, 0, 0); // Center the star in the scene
+
     scene.add(starMesh);
+    celestialObjects[0] = starMesh;
+
 }
 
 
 
+function displayStarProperties() {
+    const starPropertiesDiv = document.getElementById('starProperties');
 
-function calculateGravity(planetRadiusInEarthRadii) {
-    const earthGravity = 9.8; // in m/s^2
-    return earthGravity * planetRadiusInEarthRadii;
-}
+    // Accessing the star data directly from universeData
+    const { type, age, size, mass, luminosity, habitableZone } = universeData.starData;
 
-function displayStarProperties(star, div) {
-    div.innerHTML = `
-        <p>Type: ${star.type}</p>
-        <p>Age: ${star.age.toFixed(2)} billion years</p>
-        <p>Size: ${star.size.toFixed(2)} Solar radii</p>
-        <p>Mass: ${star.mass.toFixed(2)} Solar masses</p>
-        <p>Luminosity: ${star.luminosity.toFixed(2)} Solar luminosity</p>
-        <p>Habitable Zone: ${star.habitableZone.innerBoundary.toFixed(2)} - ${star.habitableZone.outerBoundary.toFixed(2)} AU</p>
+    starPropertiesDiv.innerHTML = `
+        <p>Type: ${type}</p>
+        <p>Age: ${age.toFixed(2)} billion years</p>
+        <p>Size: ${size.toFixed(2)} Solar radii</p>
+        <p>Mass: ${mass.toFixed(2)} Solar masses</p>
+        <p>Luminosity: ${luminosity.toFixed(2)} Solar luminosity</p>
+        <p>Habitable Zone: ${habitableZone.innerBoundary.toFixed(2)} - ${habitableZone.outerBoundary.toFixed(2)} AU</p>
     `;
 }
+
 
 // solar system generation
 
 function setupSolarSystemGeneration() {
     const generateSystemButton = document.getElementById('generateSystemButton');
-    const solarSystemPropertiesDiv = document.getElementById('solarSystemProperties');
-    const starPropertiesDiv = document.getElementById('starProperties');
 
     generateSystemButton.addEventListener('click', () => {
-        const orbitData = generateOrbit();
-        displayStarProperties(orbitData.parentStar, starPropertiesDiv);
-    	displaySolarSystemProperties(solarSystemPropertiesDiv, orbitData);
+        populateUniverseData();
+        displayStarProperties(universeData.starData);
+        displaySolarSystemProperties(); // Now directly uses universeData without needing it passed as a parameter
+        updateScene(); // A new function that encapsulates necessary updates
+
     });
 }
 
-function displaySolarSystemProperties(div, orbitData, selectedPlanetIndex = null) {
+function displaySolarSystemProperties() {
+    const solarSystemPropertiesDiv = document.getElementById('solarSystemProperties');
     let htmlContent = '<h3>Solar System Planets</h3>';
-    let selectedPlanet = null;
 
-    orbitData.solarSystem.forEach((planet, index) => {
-        const planetDetails = `Planet ${index + 1}: Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size.toFixed(2)}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
-        htmlContent += `<p>${planetDetails}</p>`;
+    // Corrected to iterate over universeData.solarSystem instead of universeData.solarSystemData
+    universeData.solarSystem.forEach((planet, index) => {
+        const moonsCount = typeof planet.moons === 'number' ? planet.moons : 'N/A';
+        const planetDetails = `
+            <p>
+                Planet ${index + 1}: 
+                Type - ${planet.type}, 
+                Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, 
+                Size - ${planet.radius.toFixed(2)},
+                Atmosphere - ${planet.atmosphere ? planet.atmosphere : 'N/A'}, 
+                Moons - ${moonsCount}
+            </p>
+        `;
+        htmlContent += planetDetails;
 
-        	if (planet.orbitRadius >= orbitData.parentStar.habitableZone.innerBoundary && planet.orbitRadius <= orbitData.parentStar.habitableZone.outerBoundary) {
-            	displayHabitablePlanetDetails(planet, 1, index, orbitData.parentStar);
-        	}
-
-        // Check if this is the selected planet for focused display
-        	if (selectedPlanetIndex !== null && index === selectedPlanetIndex) {
-            	selectedPlanet = planet;
-        	}
+        // Optionally, you could also check if the planet is in the habitable zone and highlight it
+        if (planet.orbitRadius >= universeData.parentStar.habitableZone.innerBoundary &&
+            planet.orbitRadius <= universeData.parentStar.habitableZone.outerBoundary) {
+            htmlContent += `<p><strong>This planet is in the habitable zone!</strong></p>`;
+        }
     });
 
-    div.innerHTML = htmlContent;
-
-    // If a selected planet is defined, set up its ThreeJS representation
-    if (selectedPlanet) {
-        setupThreeJS(orbitData.parentStar, selectedPlanet, orbitData.parentStar.habitableZone);
-    }
+    solarSystemPropertiesDiv.innerHTML = htmlContent;
 }
 
-async function displayHabitablePlanetDetails(planet, systemNumber, planetIndex, star, starData) {
-    	// console.log("Displaying habitable planet details"); // Debugging log
+
+
+async function displayHabitablePlanetDetails(planetIndex) {
+    const planet = universeData.solarSystemData[planetIndex];
+    const star = universeData.starData;
+
+
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
-    
-    // Assuming these are placeholders for now
     const atmosphereType = 'M';
     const geologicalActivity = 'Active';
     const moonCount = 2;
     const planetName = generatePlanetName(systemNumber, planetIndex, atmosphereType, geologicalActivity, moonCount);
     const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size.toFixed(2)}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
-		// console.log("Planet Details:", planetDetails); // Debugging log
-    // Star and planet data
     const starSize = star.size;
     const starMass = star.mass;
     const orbitalRadius = planet.orbitRadius;
     const planetSize = planet.size;
-    	// console.log("Star Size:", starSize, "Star Mass:", starMass, "Orbital Radius:", orbitalRadius, "Planet Size:", planetSize); // Debugging log
-    // Get geological data
     const geologicalData = generateGeologicalData(planet.size, orbitalRadius, starSize, starMass);
-    	// console.log("Geological Data:", geologicalData); // Debugging log
-    // Append geological data to planet details
     const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;
     let content = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p><p>${geologicalDetails}</p>`;
-    // Element composition
     const compositionData = await determinePlanetaryComposition(planet.size, planet.orbitRadius, star.size, star.mass);
-    	// console.log("Composition Data:", compositionData); // Debugging log
-		// console.log("Keys in Composition Data:", Object.keys(compositionData));
-    // Sort and filter elements
     const valuableElements = ['O', 'Si', 'Al', 'Fe', 'Na', 'Mg', 'K', 'Ti', 'H', 'Cu', 'Ag', 'Au', 'Mth']; // Iron, Copper, Silver, Gold, Mithril
     const sortedComposition = Object.entries(compositionData)
                                      .filter(([element]) => valuableElements.includes(element))
                                      .sort((a, b) => b[1] - a[1]); // Sort by abundance
-		// console.log("Sorted Composition:", sortedComposition); // Debugging log
-    // Calculate and append elemental mass
     const earthVolume = (4/3) * Math.PI * Math.pow(6371, 3); // Earth's volume in km^3
     const planetVolume = (4/3) * Math.PI * Math.pow(planet.size * 6371, 3); // Planet's volume in km^3
     const scalingFactor = planetVolume / earthVolume; // Scaling factor based on volume
-		// console.log("Planet Size (in Earth radii):", planet.size);
-		// console.log("Planet Volume (in km^3):", planetVolume);
     const planetGravityInMs2 = (planet.size * 9.8).toFixed(2); // Gravity in m/s^2
     const planetGravityInG = (planetGravityInMs2 / 9.8).toFixed(2); // Convert to Earth's gravity
     const gravityDetails = `<p>Gravity: ${planetGravityInMs2} m/s<sup>2</sup> (${planetGravityInG} G)</p>`;
     content += gravityDetails;
-
-    	// console.log("Displaying details for habitable planet. Size:", planet.size); // Log before calling updatePlanetSize
-		// console.log("displayHabitablePlanetDetails - Star Data:", star);
-    updatePlanetSize(planet.size, planet.type, planet.orbitRadius, star, starData);
-
 	let elementDetails = '';
 	sortedComposition.forEach(([element, percentage]) => {
     	const elementVolume = planetVolume * percentage * 1000000000;
@@ -622,27 +630,24 @@ function calculateStarColorAndIntensity(starType, starLuminosity) {
         'M': 3250
     };
 
+    // Default temperature for stars not in the map
     let baseTemperature = temperatures[starType] || 5800;
-    // Apply variance to the temperature for visual diversity
+
+    // Applying visual temperature variance for diversity
     let variedTemperature = applyVisualTemperatureVariance(baseTemperature);
 
+    // Converting temperature to a visible color
     let color = temperatureToRGB(variedTemperature);
 
+    // Base intensity to start with, ensuring no star is invisible
     const baseIntensity = 1;
-    let intensity = baseIntensity * starLuminosity;
-    const maxIntensity = 5;
-    intensity = Math.min(intensity, maxIntensity);
+    // Adjusting intensity based on the star's luminosity with a cap
+    let intensity = Math.min(baseIntensity * starLuminosity, 5);
 
     return { color, intensity };
 }
 
-// Function to desaturate a color towards white
-function desaturateColor(color, factor) {
-    const white = new THREE.Color(0xffffff);
-    const originalColor = new THREE.Color(color);
-    const desaturatedColor = originalColor.lerp(white, factor);
-    return desaturatedColor.getStyle(); // Returns the CSS color string
-}
+
 
 // function to apply variance to the temperature
 function applyVisualTemperatureVariance(baseTemperature) {
@@ -876,54 +881,6 @@ function getColorForPlanetType(planetType) {
 }
 
 
-
-function createCloudTexture(size = 1024) {
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const context = canvas.getContext('2d');
-
-    // Fill the background with a base color representing deep space
-    context.fillStyle = 'rgb(5, 10, 20)';
-    context.fillRect(0, 0, size, size);
-
-    // Draw clouds in the central part of the texture to avoid seams
-    const maxOpacity = 0.3; // Maximum cloud opacity
-    const minOpacity = 0.1; // Minimum cloud opacity
-    const cloudsCount = 500; // Number of clouds to draw
-    const buffer = size * 0.25; // Buffer space to avoid drawing at the edges
-
-    for (let i = 0; i < cloudsCount; i++) {
-        const opacity = Math.random() * (maxOpacity - minOpacity) + minOpacity;
-        context.fillStyle = `rgba(255, 255, 255, ${opacity})`;
-
-        // Draw an ellipse for each cloud, ensuring it's within the central area
-        const x = Math.random() * (size - 2 * buffer) + buffer;
-        const y = Math.random() * (size - 2 * buffer) + buffer;
-        const radiusX = Math.random() * size / 8;
-        const radiusY = Math.random() * size / 16;
-
-        context.beginPath();
-        context.ellipse(x, y, radiusX, radiusY, 0, 0, Math.PI * 2);
-        context.fill();
-    }
-
-    // Create a mirrored copy of the texture's central part to the edges
-    const halfSize = size / 2;
-    const quarterSize = size / 4;
-    const centerImageData = context.getImageData(quarterSize, 0, halfSize, size);
-    context.putImageData(centerImageData, 0, 0); // Mirror to the left
-    context.putImageData(centerImageData, 3 * quarterSize, 0); // Mirror to the right
-
-    // Use the canvas as a texture
-    const texture = new THREE.Texture(canvas);
-    texture.needsUpdate = true; // Important to update the texture with canvas data
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(1, 1);
-
-    return texture;
-}
 
 function createStarFieldTexture(size = 2048, stars = 10000) {
     const canvas = document.createElement('canvas');

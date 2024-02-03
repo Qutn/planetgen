@@ -61,6 +61,7 @@
             <h1>Astrea / Planet Generator • 5823.15</h1>
         </header>
     </div>
+
     <div class="lcars-container">
         <aside class="statistics">
             <button id="generateStarButton">Generate Star</button>
@@ -68,9 +69,17 @@
                 <!-- Star properties will be displayed here -->
             </div>
         </aside>
+
         <main class="map-canvas">
             <canvas id="planetCanvas"></canvas>
+            <div id="planet-navigation" class="planet-navigation">
+                <button id="prevPlanet">← Prev</button>
+                <button id="snapToStar">Snap to Star</button>
+                <button id="nextPlanet">Next →</button>
         </main>
+        
+
+
         <aside class="statistics">
             <div class="fixed-button-container">
                 <input _="
@@ -86,10 +95,12 @@
             </div>
         </aside>
     </div>
+
     <div id="habitablePlanetDetails" class="habitable-planet-container">
         <!-- Habitable planet details will be displayed here -->
         <div class="element-details">
-            </div>
+        </div> 
     </div>
+    
 </body>
 </html>
