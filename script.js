@@ -20,7 +20,11 @@ let ringRotationVariance = 0.0005;
 let selectedPlanet = { type: 'Terrestrial', radius: 1, orbitRadius: 1 };
 let composer;
 let bloomPass;
-// let composer = new EffectComposer( renderer );
+let orbitAngle = 0; // Initial angle
+const orbitSpeed = 0.001; // Speed of the orbit, adjust as necessary
+
+const AU_TO_SCENE_SCALE = 0.15;
+
 
 document.addEventListener('DOMContentLoaded', () => {
     const defaultStar = { type: 'G', size: 1, luminosity: 1, habitableZone: { innerBoundary: 0.95, outerBoundary: 1.37 } };
@@ -52,7 +56,6 @@ function initializeThreeJSEnvironment(canvasId) {
     camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
 	camera.position.z = 20;
     camera.castShadow = true;
-
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
@@ -86,6 +89,7 @@ function onWindowResize() {
 	//    console.log("Camera aspect updated to:", camera.aspect);
 }
 
+
 function createPlanet(planetData) {
     // Remove existing planet and its resources
     if (sphere) {
@@ -106,13 +110,10 @@ function createPlanet(planetData) {
     const cloudTexture = createCloudTexture();
     const planetColor = getColorForPlanetType(planetData.type);
     const planetColorRgb = hexToRgb(planetColor);
-    // console.log(`Creating ${planetData.type}: Color chosen is ${planetColorRgb} (Hex: ${planetColor.toString(16)})`);
 
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
     const planetMaterial = new THREE.MeshStandardMaterial({
         map: noiseTexture,
-        // map: cloudTexture, 
-        // map: texture, // Use the passed texture
         color: planetColor
     });
 
@@ -120,29 +121,58 @@ function createPlanet(planetData) {
     sphere.castShadow = true;
     sphere.receiveShadow = true;
     sphere.name = 'planet';
-    scene.add(sphere);
 
+    // Position the planet according to its orbit radius
+    // Assuming the sun is at the scene's origin
+    scene.add(sphere);
+    //sphere.position.x = planetData.orbitRadius; // Place it on the x-axis at its orbit radius distance
+
+    // Create segmented rings for Gas Giants and Ice Giants, if applicable
     let ringSegmentsGroup = null;
     let ringsOuterRadius = 0; // Will hold the outermost radius of the rings
-
-    // Create segmented rings for Gas Giants and Ice Giants
     if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
         const ringsData = createSegmentedRings(planetData.radius, planetData.type);
         const ringSegmentsGroup = ringsData.group;
         const ringsOuterRadius = ringsData.outerRadius;
 
         ringSegmentsGroup.name = 'planetRings';
-        scene.add(ringSegmentsGroup);
+        sphere.add(ringSegmentsGroup);
     }
 
+    // Optionally, draw orbit path
+    //adjustCameraToPlanet(planetData); 
+    console.log("Planet Position:", sphere.position);
+    console.log("Camera Position:", camera.position);
+    sphere.add(atmosphereMesh);
     return ringsOuterRadius; // Return the outermost radius of the rings
 }
+
+function drawOrbitPath(orbitRadius) {
+    // Remove existing orbit path if it exists
+    const existingOrbitMesh = scene.getObjectByName('orbitPath');
+    if (existingOrbitMesh) {
+        scene.remove(existingOrbitMesh);
+    }
+
+    // Assuming starLight represents the position of your star
+    const starPosition = starLight.position; // Adjust if your star's position is defined differently
+
+    // Create new orbit path geometry and material
+    const orbitGeometry = new THREE.RingGeometry(orbitRadius - 0.01, orbitRadius + 0.01, 64);
+    const orbitMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide });
+    const orbitMesh = new THREE.Mesh(orbitGeometry, orbitMaterial);
+    orbitMesh.rotation.x = Math.PI / 2;
+    orbitMesh.position.set(starPosition.x, starPosition.y, starPosition.z);
+    orbitMesh.name = 'orbitPath';
+    scene.add(orbitMesh);
+}
+
 
 
 function createAtmosphereMesh(planetData, habitableZone) {
     const atmosphereComposition = getPlanetAtmosphere(planetData.type, planetData.orbitRadius, habitableZone);
     atmosphereMesh = createAtmosphere(planetData.radius, atmosphereComposition);
-    scene.add(atmosphereMesh);
+    sphere.add(atmosphereMesh);
 }
 
 function setupLighting(starData) {
@@ -204,6 +234,16 @@ function startAnimationLoop() {
             // Rotate the planet
         if (sphere) {
             sphere.rotation.y += rotationSpeed;
+            controls.target.set(sphere.position.x, sphere.position.y, sphere.position.z);
+
+        }
+        const planet = scene.getObjectByName('planet');
+        if (planet) {
+            orbitAngle += orbitSpeed; // Increment orbit angle
+            planet.position.x = starLight.position.x + Math.cos(orbitAngle) * selectedPlanet.orbitRadius;
+            planet.position.z = starLight.position.z + Math.sin(orbitAngle) * selectedPlanet.orbitRadius;
+            planet.position.y = starLight.position.y + Math.sin(orbitAngle) * selectedPlanet.orbitRadius;
+
         }
             // Rotate the rings with variance
     const rings = scene.getObjectByName('planetRings');
@@ -222,6 +262,7 @@ function startAnimationLoop() {
 //generation functions
 
 
+
 function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
     // Update planet geometry and material
     // Update or create atmosphere
@@ -230,7 +271,7 @@ function updatePlanetAndAtmosphere(planetRadius, atmosphereComposition) {
     }
 
     atmosphereMesh = createAtmosphere(planetRadius, atmosphereComposition);
-    scene.add(atmosphereMesh);
+    sphere.add(atmosphereMesh);
 }
 
 function updateStarLight(starData) {
@@ -327,6 +368,9 @@ function adjustShadowCameraForRings(planetRadius, ringsOuterRadius) {
     // console.log(`Shadow Camera Frustum adjusted: Size = ${size}`);
   }
 
+
+  //planet stuff
+
 function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, starData) {
     // Prepare new planet data
     const newPlanetData = {
@@ -335,6 +379,8 @@ function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, sta
         orbitRadius: orbitRadius
         // Add other necessary properties if needed
     };
+   const orbitRadiusAU = orbitRadius; // This should be the actual AU value
+
     // Create a new planet with the updated size
     createPlanet(newPlanetData);
 
@@ -351,6 +397,9 @@ function updatePlanetSize(planetRadiusInEarthUnits, planetType, orbitRadius, sta
     // Adjust camera distance if necessary
     // camera.position.z = 20 * planetRadiusInEarthUnits;
     addStarToScene(starData);
+    drawOrbitPath(orbitRadius);
+    console.log("orbitRadius (converted):", orbitRadius);
+    console.log("orbitRadiusAU:", orbitRadiusAU);
 }
 
 
