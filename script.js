@@ -23,6 +23,11 @@ let bloomPass;
 let orbitAngle = 0; // Initial angle
 const orbitSpeed = 0.001; // Speed of the orbit, adjust as necessary
 let celestialObjects = [];
+let currentTargetIndex = 0; // Initialize the index for the currently targeted object globally
+let desiredTargetPosition = new THREE.Vector3();
+let isFollowingObject = true; // Initially, let's say we are following an object.
+let cameraOffsetRelativeToPlanet = new THREE.Vector3();
+
 
 
 const AU_TO_SCENE_SCALE = 200.00;
@@ -51,13 +56,30 @@ function populateUniverseData() {
 
     universeData.parentStar = orbitData.parentStar;
     universeData.starData = orbitData.parentStar;
-    universeData.solarSystem = orbitData.solarSystem.map(planet => ({
-        type: planet.type,
-        radius: planet.size, // Assuming 'size' should be mapped to 'radius'
-        orbitRadius: planet.orbitRadius,
-        atmosphere: planet.atmosphere,
-        moons: planet.moons,
-    }));
+    universeData.solarSystem = orbitData.solarSystem.map(planet => {
+        // Calculate orbital speed based on the orbitRadius
+        // The farther the planet, the slower it should orbit
+        const baseSpeed = 0.0001; // Base speed for scaling
+        const scalingFactor = 200; // Adjust this factor to control the scaling effect
+        const orbitalSpeed = baseSpeed / (planet.orbitRadius * scalingFactor);
+        const rotationPeriodInHours = rotationSpeedToHours(rotationSpeed);
+        const orbitalPeriodInEarthDays = orbitalSpeedToEarthDays(orbitalSpeed);
+        const localDays = calculateLocalDays(orbitalPeriodInEarthDays, rotationPeriodInHours);
+
+        return {
+            type: planet.type,
+            radius: planet.size, // Assuming 'size' should be mapped to 'radius'
+            orbitRadius: planet.orbitRadius,
+            atmosphere: planet.atmosphere,
+            moons: planet.moons,
+            rotationSpeed: Math.random() * 0.05, // Random rotation speed
+            orbitalSpeed: orbitalSpeed, // Scaled orbital speed based on distance from the star
+            isTidallyLocked: Math.random() < 0.1, // Assuming a 10% chance for a planet to be tidally locked
+            rotationPeriodInHours,
+            orbitalPeriodInEarthDays,
+            localDays
+        };
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -81,20 +103,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('prevPlanet').addEventListener('click', () => {
         currentTargetIndex = Math.max(currentTargetIndex - 1, 0);
-        snapCameraToCelestialObject(currentTargetIndex);
-    });
+        updateDesiredTargetPosition(currentTargetIndex);
+        selectPlanet(currentTargetIndex); // Update the target planet for the camera
+        if (currentTargetIndex > 0) {
+            // Adjust the index by -1 because the first index (0) is reserved for the star
+            displayTimeConversions(currentTargetIndex - 1);
+        }
 
+    });
+    
     document.getElementById('snapToStar').addEventListener('click', () => {
         currentTargetIndex = 0; // Index of the star
-        snapCameraToCelestialObject(currentTargetIndex);
+        updateDesiredTargetPosition(currentTargetIndex);
+        selectPlanet(currentTargetIndex);
+        // Optionally, clear the display or skip displaying conversions for the star
     });
-
+    
     document.getElementById('nextPlanet').addEventListener('click', () => {
         currentTargetIndex = Math.min(currentTargetIndex + 1, celestialObjects.length - 1);
-        snapCameraToCelestialObject(currentTargetIndex);
+        updateDesiredTargetPosition(currentTargetIndex);
+        selectPlanet(currentTargetIndex); // Update the target planet for the camera
+        if (currentTargetIndex > 0) {
+            // Adjust the index by -1 because the first index (0) is reserved for the star
+            displayTimeConversions(currentTargetIndex - 1);
+        }
+
     });
 
 });
+
+function updateDesiredTargetPosition(index) {
+    const targetObject = celestialObjects[index];
+    if (targetObject) {
+        desiredTargetPosition.copy(targetObject.position);
+    }
+}
 
 
 function setupThreeJS() {
@@ -114,7 +157,7 @@ function initializeThreeJSEnvironment(canvasId) {
     const starFieldTexture = createStarFieldTexture(); // Assuming createStarFieldTexture is defined
     scene.background = starFieldTexture;
 
-    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 10000);
+    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 100000);
     camera.position.set(0, 0, 20); // You might want to experiment with these values
     camera.castShadow = true;
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
@@ -155,18 +198,17 @@ function snapCameraToCelestialObject(index) {
     if (!target) return; // If the target doesn't exist, exit the function
 
     // Update the target of the orbit controls to the selected object
-    controls.target.copy(target.position);
+    // controls.target.copy(target.position);
 
     // Position the camera away from the target by a fixed distance
-    const distance = 20; // for example, the value can be adjusted as needed
-    camera.position.copy(target.position).add(new THREE.Vector3(0, 0, distance));
+    desiredTargetPosition.copy(target.position);
 
     // Ensure the camera's up vector is correct (optional, if not the default)
     // camera.up.set(0, 1, 0);
 
     // Update the controls and render the scene
-    controls.update();
-    renderer.render(scene, camera);
+    // controls.update();
+    // renderer.render(scene, camera);
 }
 
 
@@ -176,11 +218,19 @@ function createPlanet(planetData, index) {
     // Access parent star's habitable zone directly from universeData
     const habitableZone = universeData.parentStar.habitableZone;
 
-    // Planet geometry and material
+    // Planet geometry
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
+    
+    // Create a noise texture for the planet
+    const noiseTexture = createNoiseTexture();
+
+    // Planet material with noise texture
     const planetMaterial = new THREE.MeshStandardMaterial({
-        color: getColorForPlanetType(planetData.type)
+        map: noiseTexture, // Apply the noise texture as the map
+        color: getColorForPlanetType(planetData.type), // You might blend this color with the texture
+        // Other material properties can be adjusted as needed
     });
+
     const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
 
     // Set planet position on a horizontal plane
@@ -203,8 +253,8 @@ function createPlanet(planetData, index) {
     // Add the planet (with its atmosphere) to the scene
     scene.add(planetMesh);
     celestialObjects[index + 1] = planetMesh; // We use index + 1 because index 0 is reserved for the star
-
 }
+
 
 
 function generatePlanets() {
@@ -270,17 +320,88 @@ function setupOrbitControls() {
 }
 
 function startAnimationLoop() {
-    function animate() {
-        requestAnimationFrame(animate);
-            // Rotate the rings with variance
-        controls.update();
-        composer.render();
-    }
+    let followSpeed = 0.05; // Adjust for smoother or faster following
 
-    animate();
+function animate() {
+    requestAnimationFrame(animate);
+    animatePlanets();
+
+//    if (isFollowingObject && celestialObjects[currentTargetIndex]) {
+//        const targetObject = celestialObjects[currentTargetIndex];
+//        desiredTargetPosition.copy(targetObject.position);
+//    }
+
+    controls.target.lerp(desiredTargetPosition, followSpeed);
+    updateCameraPositionWithPlanet();
+
+    controls.update();
+    composer.render();
+}
+animate()
+}
+//end setup scripts
+
+// animation functions
+function animatePlanets() {
+    universeData.solarSystem.forEach((planetData, index) => {
+        const planetMesh = scene.getObjectByName(`planet${index}`);
+        if (planetMesh) {
+            // Rotate the planet around its axis
+            planetMesh.rotation.y += planetData.rotationSpeed;
+
+            // Update the planet's orbital position
+            const orbitRadius = planetData.orbitRadius * AU_TO_SCENE_SCALE;
+            const theta = (Date.now() * planetData.orbitalSpeed) % (Math.PI * 2);
+            planetMesh.position.x = Math.cos(theta) * orbitRadius;
+            planetMesh.position.z = Math.sin(theta) * orbitRadius;
+        }
+    });
 }
 
-//end setup scripts
+function visualizeOrbits() {
+    universeData.solarSystem.forEach((planetData, index) => {
+        const orbitRadius = planetData.orbitRadius * AU_TO_SCENE_SCALE;
+        // Create a geometry for the orbit. Since we're using a LineLoop, no need to remove the center vertex.
+        const orbitGeometry = new THREE.RingGeometry(orbitRadius - 0.1, orbitRadius, 64);
+        const orbitMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 });
+        
+        // Create a LineLoop with the geometry and material
+        const orbitPath = new THREE.LineLoop(orbitGeometry, orbitMaterial);
+        orbitPath.rotation.x = Math.PI / 2; // Orient the orbit horizontally
+        orbitPath.name = `orbitPath${index}`; // Assign a name to the orbit path for cleanup identification
+        scene.add(orbitPath);
+    });
+}
+
+function updateCameraPositionWithPlanet() {
+    if (celestialObjects[currentTargetIndex]) {
+        const planet = celestialObjects[currentTargetIndex];
+        // Calculate the current offset between the camera and the planet
+        cameraOffsetRelativeToPlanet.subVectors(camera.position, planet.position);
+
+        // When the planet moves, update the camera position to maintain the offset
+        const newCameraPosition = planet.position.clone().add(cameraOffsetRelativeToPlanet);
+        camera.position.copy(newCameraPosition);
+
+        // Ensure the camera still looks at the planet
+        camera.lookAt(planet.position);
+    }
+}
+
+
+function selectPlanet(index) {
+    currentTargetIndex = index;
+    if (celestialObjects[currentTargetIndex]) {
+        const planet = celestialObjects[currentTargetIndex];
+        // Calculate the current offset between the camera and the planet
+        cameraOffsetRelativeToPlanet.subVectors(camera.position, planet.position);
+    }
+
+    // Optionally, you might want to adjust the camera to immediately look at the selected planet
+   // if (celestialObjects[currentTargetIndex]) {
+   //     camera.lookAt(celestialObjects[currentTargetIndex].position);
+  //  }
+}
 
 //generation functions
 
@@ -389,19 +510,19 @@ function adjustShadowCameraForRings(planetRadius, ringsOuterRadius) {
     generatePlanets(); // Uses universeData to add new planet meshes to the scene
     updateStarLight(); // Updates the lighting based on the new star
     addStarToScene(); // Adds the new star mesh to the scene
+    visualizeOrbits();
 }
 
 function cleanUp() {
     scene.children = scene.children.filter(child => {
-        if (child.name.startsWith('planet')) {
+        if (child.name.startsWith('planet') || child.name.startsWith('orbitPath')) {
             if (child.geometry) child.geometry.dispose();
             if (child.material instanceof THREE.Material) child.material.dispose();
-            return false; // Remove the planet from the scene.children array
+            return false; // Remove the planet and orbit path from the scene.children array
         }
         return true; // Keep the item in the scene.children array
     });
-    celestialObjects = [];
-
+    celestialObjects = []; // Reset the celestial objects array
 }
 // star generation
 
@@ -514,7 +635,9 @@ function displaySolarSystemProperties() {
                 Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, 
                 Size - ${planet.radius.toFixed(2)},
                 Atmosphere - ${planet.atmosphere ? planet.atmosphere : 'N/A'}, 
-                Moons - ${moonsCount}
+                Moons - ${moonsCount},
+                Rotation Speed -${planet.rotationSpeed},
+                Orbital Period -${planet.orbitalSpeed}
             </p>
         `;
         htmlContent += planetDetails;
@@ -909,3 +1032,34 @@ function ringColor(planetType) {
 }
 
 
+// Helper function to convert rotation speed from radians/frame to rotation period in hours
+function rotationSpeedToHours(rotationSpeed) {
+    const framesForFullRotation = (2 * Math.PI) / rotationSpeed; // Total frames for a 360 rotation
+    const secondsForFullRotation = framesForFullRotation / 60; // Assuming 60 FPS
+    return secondsForFullRotation / 3600; // Convert seconds to hours
+}
+
+// Helper function to convert orbital speed from radians/frame to orbital period in Earth days
+function orbitalSpeedToEarthDays(orbitalSpeed) {
+    const framesForFullOrbit = (2 * Math.PI) / orbitalSpeed; // Total frames for a full orbit
+    const secondsForFullOrbit = framesForFullOrbit / 60; // Assuming 60 FPS
+    return secondsForFullOrbit / 86400; // Convert seconds to Earth days
+}
+
+// Helper function to calculate local days from orbital and rotation periods
+function calculateLocalDays(orbitalPeriodInEarthDays, rotationPeriodInHours) {
+    const rotationPeriodInEarthDays = rotationPeriodInHours / 24;
+    return orbitalPeriodInEarthDays / rotationPeriodInEarthDays; // Local days per orbital period
+}
+
+// Example of usage within populateUniverseData or when displaying planet details
+function displayTimeConversions(selectedPlanetIndex) {
+    const planet = universeData.solarSystem[selectedPlanetIndex];
+
+    console.log(`Rotation Period for ${planet.type}: ${planet.rotationPeriodInHours.toFixed(2)} hours`);
+    console.log(`Orbital Period for ${planet.type}: ${planet.orbitalPeriodInEarthDays.toFixed(2)} Earth days`);
+    console.log(`Local Days per Orbit for ${planet.type}: ${planet.localDays.toFixed(2)}`);
+}
+
+// Adjusting the populateUniverseData function to include these conversions
+// in the display or storing converted values in universeData for display elsewhere.
