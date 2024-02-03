@@ -1,2 +1,2 @@
-implement texture mapping on planet so that when we generate textures later, they are correctly applied
-    for now we will use a procedurally generated noise to text
+fix camera tracking with orbital movement
+correct time calculations with scale factor to get correct day and year length
