@@ -99,8 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function setupThreeJS() {
     initializeThreeJSEnvironment('planetCanvas');
-    setupLighting(); // Now uses universeData
     setupOrbitControls();
+    setupLighting(); // Now uses universeData
+
     startAnimationLoop();
 }
 
@@ -114,7 +115,7 @@ function initializeThreeJSEnvironment(canvasId) {
     scene.background = starFieldTexture;
 
     camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 10000);
-	camera.position.z = 20;
+    camera.position.set(0, 0, 20); // You might want to experiment with these values
     camera.castShadow = true;
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     
@@ -156,9 +157,12 @@ function snapCameraToCelestialObject(index) {
     // Update the target of the orbit controls to the selected object
     controls.target.copy(target.position);
 
-    // You might want to adjust the camera's position here as well
-    // For example, position it some distance away from the target's position
-    camera.position.set(target.position.x, target.position.y, target.position.z + 10);
+    // Position the camera away from the target by a fixed distance
+    const distance = 20; // for example, the value can be adjusted as needed
+    camera.position.copy(target.position).add(new THREE.Vector3(0, 0, distance));
+
+    // Ensure the camera's up vector is correct (optional, if not the default)
+    // camera.up.set(0, 1, 0);
 
     // Update the controls and render the scene
     controls.update();
@@ -166,17 +170,6 @@ function snapCameraToCelestialObject(index) {
 }
 
 
-function updateParentStar(type, size, age, mass, luminosity) {
-    universeData.parentStar.type = type;
-    universeData.parentStar.size = size;
-    universeData.parentStar.age = age;
-    universeData.parentStar.mass = mass;
-    universeData.parentStar.luminosity = luminosity;
-
-    // Assuming calculateHabitableZone is a function that returns { innerBoundary, outerBoundary }
-    const habitableZone = calculateHabitableZone(luminosity);
-    universeData.parentStar.habitableZone = habitableZone;
-}
 
 
 function createPlanet(planetData, index) {
@@ -185,15 +178,20 @@ function createPlanet(planetData, index) {
 
     // Planet geometry and material
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
-    const planetMaterial = new THREE.MeshBasicMaterial({
+    const planetMaterial = new THREE.MeshStandardMaterial({
         color: getColorForPlanetType(planetData.type)
     });
     const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
+
+    // Set planet position on a horizontal plane
+    const phi = Math.PI / 2; // Horizontal plane
+    const theta = Math.random() * Math.PI * 2; // Randomize starting position on orbit
     planetMesh.position.setFromSphericalCoords(
         planetData.orbitRadius * AU_TO_SCENE_SCALE, 
-        0, // Flat orbit for simplicity
-        Math.random() * Math.PI * 2 // Randomize starting position on orbit
+        phi, // Horizontal plane
+        theta // Randomized azimuthal angle
     );
+
     planetMesh.name = `planet${index}`;
 
     // Determine atmosphere composition based on the planet's type and its orbit radius
@@ -263,40 +261,22 @@ function setupLighting() {
 
 function setupOrbitControls() {
     controls = new OrbitControls(camera, renderer.domElement);
-	//    console.log("OrbitControls initialized:", controls);
     controls.enableDamping = true;
-    controls.dampingFactor = 0.1;
+    controls.dampingFactor = 0.25;
+    controls.screenSpacePanning = false;
     controls.enableZoom = true;
+    // Removed min/max polar angle to allow full vertical rotation
+    // Removed min/max distance to allow any distance
 }
 
 function startAnimationLoop() {
     function animate() {
         requestAnimationFrame(animate);
-        // composer.render();
-        	// console.log("Animation frame");
-            // Rotate the planet
-        if (sphere) {
-            sphere.rotation.y += rotationSpeed;
-            controls.target.set(sphere.position.x, sphere.position.y, sphere.position.z);
-
-        }
-        const planet = scene.getObjectByName('planet');
-        if (planet) {
-            orbitAngle += orbitSpeed; // Increment orbit angle
-            planet.position.x = starLight.position.x + Math.cos(orbitAngle) * selectedPlanet.orbitRadius;
-            planet.position.z = starLight.position.z + Math.sin(orbitAngle) * selectedPlanet.orbitRadius;
-            // planet.position.y = starLight.position.y + Math.sin(orbitAngle) * selectedPlanet.orbitRadius;
-
-        }
             // Rotate the rings with variance
-    const rings = scene.getObjectByName('planetRings');
-    if (rings) rings.rotation.y += rotationSpeed + Math.random() * ringRotationVariance - ringRotationVariance / 2;
-
         controls.update();
-        // renderer.render(scene, camera);
         composer.render();
-
     }
+
     animate();
 }
 
