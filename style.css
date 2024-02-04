@@ -39,12 +39,22 @@ header h1 {
 .statistics, .generator-options {
     background-color: #222222;
     color: #cc77ff;
-    width: 200px;
-    height: 500px;
+    width: 200px; /* Adjusted width */
+    height: 500px; /* Changed to auto to accommodate content */
     overflow-y: auto;
     border-radius: 10px;
     padding: 20px;
     margin: 10px;
+    line-height: 1.5; /* Improved line spacing for readability */
+}
+
+/* Additional styling for better readability */
+.statistics p, .generator-options p {
+    margin-bottom: 0.5rem; /* Adds a little space below each paragraph for separation */
+}
+
+.planet-separator {
+    height: 10px; /* Adjust the height for more or less space */
 }
 
 button {

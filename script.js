@@ -46,40 +46,43 @@ let universeData = {
     },
     solarSystem: [],
     selectedPlanet: null,
+    systemOuterEdge: null,
     // Additional properties and methods can be added as needed
 };
 
 function populateUniverseData() {
-    // Assume generateOrbit() is an async function if it makes external calls or processes large data
-    // If it's synchronous, you can remove the async/await keywords
     const orbitData = generateOrbit();
 
     universeData.parentStar = orbitData.parentStar;
     universeData.starData = orbitData.parentStar;
+
+    // Calculate systemOuterEdge before mapping over solarSystem
+    // Ensure orbitData.solarSystem is sorted or has the last planet as the furthest one
+    let systemOuterEdge = orbitData.solarSystem[orbitData.solarSystem.length - 1].orbitRadius;
+
     universeData.solarSystem = orbitData.solarSystem.map(planet => {
-        // Calculate orbital speed based on the orbitRadius
-        // The farther the planet, the slower it should orbit
         const baseSpeed = 0.0001; // Base speed for scaling
         const scalingFactor = 200; // Adjust this factor to control the scaling effect
         const orbitalSpeed = baseSpeed / (planet.orbitRadius * scalingFactor);
-        const rotationPeriodInHours = rotationSpeedToHours(rotationSpeed);
-        const orbitalPeriodInEarthDays = orbitalSpeedToEarthDays(orbitalSpeed);
-        const localDays = calculateLocalDays(orbitalPeriodInEarthDays, rotationPeriodInHours);
+        let rotationSpeed = getRotationSpeed(planet.orbitRadius, {
+            innerBoundary: universeData.parentStar.habitableZone.innerBoundary, 
+            outerBoundary: universeData.parentStar.habitableZone.outerBoundary
+        }, AU_TO_SCENE_SCALE, systemOuterEdge); // Now correctly passing systemOuterEdge
 
         return {
             type: planet.type,
-            radius: planet.size, // Assuming 'size' should be mapped to 'radius'
+            radius: planet.size,
             orbitRadius: planet.orbitRadius,
             atmosphere: planet.atmosphere,
             moons: planet.moons,
-            rotationSpeed: Math.random() * 0.05, // Random rotation speed
-            orbitalSpeed: orbitalSpeed, // Scaled orbital speed based on distance from the star
-            isTidallyLocked: Math.random() < 0.1, // Assuming a 10% chance for a planet to be tidally locked
-            rotationPeriodInHours,
-            orbitalPeriodInEarthDays,
-            localDays
+            rotationSpeed,
+            orbitalSpeed,
+            isTidallyLocked: Math.random() < 0.1,
         };
     });
+
+    // Now that systemOuterEdge is calculated outside the map, it can be assigned to universeData
+    universeData.systemOuterEdge = systemOuterEdge;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -621,28 +624,37 @@ function setupSolarSystemGeneration() {
     });
 }
 
+function formatAtmosphere(atmosphere) {
+    // Convert identifier to title case for display
+    return atmosphere.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
 function displaySolarSystemProperties() {
     const solarSystemPropertiesDiv = document.getElementById('solarSystemProperties');
     let htmlContent = '<h3>Solar System Planets</h3>';
 
-    // Corrected to iterate over universeData.solarSystem instead of universeData.solarSystemData
     universeData.solarSystem.forEach((planet, index) => {
         const moonsCount = typeof planet.moons === 'number' ? planet.moons : 'N/A';
+        const atmosphereFormatted = planet.atmosphere ? formatAtmosphere(planet.atmosphere) : 'N/A';
+        const rotationPeriodHours = rotationSpeedToEarthHours(planet.rotationSpeed).toFixed(2);
+        const orbitalPeriodDays = orbitalSpeedToEarthDays(planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
+        const localDaysPerOrbitValue = localDaysPerOrbit(planet.rotationSpeed, planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
+
         const planetDetails = `
-            <p>
-                Planet ${index + 1}: 
-                Type - ${planet.type}, 
-                Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, 
-                Size - ${planet.radius.toFixed(2)},
-                Atmosphere - ${planet.atmosphere ? planet.atmosphere : 'N/A'}, 
-                Moons - ${moonsCount},
-                Rotation Speed -${planet.rotationSpeed},
-                Orbital Period -${planet.orbitalSpeed}
-            </p>
+            <div class="planet-details">
+                <strong>Planet ${index + 1}:</strong><br>
+                Type: ${planet.type}<br>
+                Orbit Radius: ${planet.orbitRadius.toFixed(2)} AU<br>
+                Size: ${planet.radius.toFixed(2)}<br>
+                Atmosphere: ${atmosphereFormatted}<br>
+                Moons: ${moonsCount}<br>
+                Sidereal Day: ${rotationPeriodHours} hours<br>
+                Sidereal Year: ${localDaysPerOrbitValue} Sidereal Days (${orbitalPeriodDays} Earth Days)
+            </div>
+            <div class="planet-separator"></div>
         `;
         htmlContent += planetDetails;
 
-        // Optionally, you could also check if the planet is in the habitable zone and highlight it
         if (planet.orbitRadius >= universeData.parentStar.habitableZone.innerBoundary &&
             planet.orbitRadius <= universeData.parentStar.habitableZone.outerBoundary) {
             htmlContent += `<p><strong>This planet is in the habitable zone!</strong></p>`;
@@ -651,6 +663,8 @@ function displaySolarSystemProperties() {
 
     solarSystemPropertiesDiv.innerHTML = htmlContent;
 }
+
+
 
 
 
@@ -1032,34 +1046,81 @@ function ringColor(planetType) {
 }
 
 
-// Helper function to convert rotation speed from radians/frame to rotation period in hours
-function rotationSpeedToHours(rotationSpeed) {
-    const framesForFullRotation = (2 * Math.PI) / rotationSpeed; // Total frames for a 360 rotation
-    const secondsForFullRotation = framesForFullRotation / 60; // Assuming 60 FPS
-    return secondsForFullRotation / 3600; // Convert seconds to hours
+
+
+// Constants for scaling factors - these can be adjusted to "look right"
+const ROTATION_SPEED_SCALE = 0.001; // Scale factor for rotation speed to Earth hours
+const ORBITAL_SPEED_SCALE = 0.00001; // Scale factor for orbital speed to Earth days
+const LOCAL_DAY_SCALE = 1.00; // Scale factor for calculating local days per orbit
+
+// Convert rotation speed to equivalent Earth hours for display
+function rotationSpeedToEarthHours(rotationSpeed) {
+    const rotationPeriodHours = (2 * Math.PI / Math.abs(rotationSpeed)) * ROTATION_SPEED_SCALE;
+    return rotationPeriodHours;
 }
 
-// Helper function to convert orbital speed from radians/frame to orbital period in Earth days
-function orbitalSpeedToEarthDays(orbitalSpeed) {
-    const framesForFullOrbit = (2 * Math.PI) / orbitalSpeed; // Total frames for a full orbit
-    const secondsForFullOrbit = framesForFullOrbit / 60; // Assuming 60 FPS
-    return secondsForFullOrbit / 86400; // Convert seconds to Earth days
+// Convert orbital speed to equivalent Earth days for the orbit period display
+function orbitalSpeedToEarthDays(orbitalSpeed, orbitRadiusAU) {
+    const orbitalPeriodDays = (2 * Math.PI * orbitRadiusAU / orbitalSpeed) * ORBITAL_SPEED_SCALE;
+    return orbitalPeriodDays;
 }
 
-// Helper function to calculate local days from orbital and rotation periods
-function calculateLocalDays(orbitalPeriodInEarthDays, rotationPeriodInHours) {
-    const rotationPeriodInEarthDays = rotationPeriodInHours / 24;
-    return orbitalPeriodInEarthDays / rotationPeriodInEarthDays; // Local days per orbital period
+// Calculate the number of local days per orbit for display
+function localDaysPerOrbit(rotationSpeed, orbitalSpeed, orbitRadiusAU) {
+    const rotationPeriodHours = rotationSpeedToEarthHours(rotationSpeed);
+    const orbitalPeriodDays = orbitalSpeedToEarthDays(orbitalSpeed, orbitRadiusAU);
+    // Convert rotation period in hours to days for the ratio calculation
+    const rotationPeriodDays = rotationPeriodHours / 24;
+    // Calculate local days per orbit without any additional scaling
+    const localDays = orbitalPeriodDays / rotationPeriodDays;
+    return localDays;
 }
 
-// Example of usage within populateUniverseData or when displaying planet details
+// Corrected function for displaying time conversions
 function displayTimeConversions(selectedPlanetIndex) {
     const planet = universeData.solarSystem[selectedPlanetIndex];
 
-    console.log(`Rotation Period for ${planet.type}: ${planet.rotationPeriodInHours.toFixed(2)} hours`);
-    console.log(`Orbital Period for ${planet.type}: ${planet.orbitalPeriodInEarthDays.toFixed(2)} Earth days`);
-    console.log(`Local Days per Orbit for ${planet.type}: ${planet.localDays.toFixed(2)}`);
+    const rotationPeriodHours = rotationSpeedToEarthHours(planet.rotationSpeed);
+    const orbitalPeriodDays = orbitalSpeedToEarthDays(planet.orbitalSpeed, planet.orbitRadius);
+    const localDays = localDaysPerOrbit(planet.rotationSpeed, planet.orbitalSpeed, planet.orbitRadius);
+
+    console.log(`Rotation Period for ${planet.type}: ${rotationPeriodHours.toFixed(2)} Earth hours`);
+    console.log(`Orbital Period for ${planet.type}: ${orbitalPeriodDays.toFixed(2)} Earth days`);
+    console.log(`Local Days per Orbit for ${planet.type}: ${localDays.toFixed(2)}`);
 }
 
-// Adjusting the populateUniverseData function to include these conversions
-// in the display or storing converted values in universeData for display elsewhere.
+
+function getRotationSpeed(orbitRadius, habitableZone, AU_TO_SCENE_SCALE, systemOuterEdge) {
+    // Convert orbitRadius to AU for accurate comparison
+    let orbitRadiusAU = orbitRadius / AU_TO_SCENE_SCALE;
+    
+    // Determine system size and calculate the distance as a percentage of system size
+    let systemSizeAU = systemOuterEdge / AU_TO_SCENE_SCALE;
+    let distancePercentage = orbitRadiusAU / systemSizeAU;
+
+    // Dynamic base speed adjustment based on system size or habitable zone width
+    let habitableZoneWidth = habitableZone.outerBoundary - habitableZone.innerBoundary;
+    let scalingFactor = 1 + (habitableZoneWidth / 2); // Example scaling based on habitable zone width
+    
+    // Apply a random factor for additional variability
+    let randomFactor = Math.random() * scalingFactor;
+    
+    // Adjust base rotation speed dynamically
+    let baseRotationSpeed = 0.0001 + (distancePercentage * randomFactor * 0.0001);
+
+    // Apply a further modifier based on distance to the center of the habitable zone
+    let habCenterAU = (habitableZone.innerBoundary + habitableZone.outerBoundary) / 2;
+    let distanceFromCenter = Math.abs(orbitRadiusAU - habCenterAU) / habCenterAU;
+    let speedModifier = Math.max(0.5, 1 - distanceFromCenter); // Closer to the center = slower rotation
+
+    // Final rotation speed calculation
+    let finalRotationSpeed = baseRotationSpeed * speedModifier;
+    finalRotationSpeed = Math.max(0.00001, Math.min(finalRotationSpeed, 0.0005)); // Ensure within realistic bounds
+
+    // Optionally randomize rotation direction
+    finalRotationSpeed *= Math.random() < 0.5 ? 1 : -1;
+
+    return finalRotationSpeed;
+}
+
+
