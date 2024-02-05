@@ -29,6 +29,7 @@ let cameraOffsetRelativeToPlanet = new THREE.Vector3();
 let followOffset = new THREE.Vector3();
 let isManuallyControlling = false;
 let manualControlEnabled = true; // Track whether manual control is enabled
+let initialDistanceToTarget = 10; // Global variable to store the initial distance
 
 
 const AU_TO_SCENE_SCALE = 200.00;
@@ -145,6 +146,7 @@ function updateDesiredTargetPosition(index) {
     const targetObject = celestialObjects[index];
     if (targetObject) {
         desiredTargetPosition.copy(targetObject.position);
+        
     }
 }
 
@@ -226,14 +228,8 @@ function snapCameraToCelestialObject(index) {
 function createPlanet(planetData, index) {
     // Access parent star's habitable zone directly from universeData
     const habitableZone = universeData.parentStar.habitableZone;
-
-    // Planet geometry
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
-    
-    // Create a noise texture for the planet
     const noiseTexture = createNoiseTexture();
-
-    // Planet material with noise texture
     const planetMaterial = new THREE.MeshStandardMaterial({
         map: noiseTexture, // Apply the noise texture as the map
         color: getColorForPlanetType(planetData.type), // You might blend this color with the texture
@@ -241,8 +237,6 @@ function createPlanet(planetData, index) {
     });
 
     const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
-
-    // Set planet position on a horizontal plane
     const phi = Math.PI / 2; // Horizontal plane
     const theta = Math.random() * Math.PI * 2; // Randomize starting position on orbit
     planetMesh.position.setFromSphericalCoords(
@@ -253,18 +247,33 @@ function createPlanet(planetData, index) {
 
     planetMesh.name = `planet${index}`;
 
-    // Determine atmosphere composition based on the planet's type and its orbit radius
-    const atmosphereComposition = getPlanetAtmosphere(planetData.type, planetData.orbitRadius, habitableZone);
-    const atmosphereMesh = createAtmosphere(planetData.radius, atmosphereComposition);
-    atmosphereMesh.name = `atmosphere${index}`;
-    planetMesh.add(atmosphereMesh); // Attach the atmosphere as a child of the planet
-
-    // Add the planet (with its atmosphere) to the scene
     scene.add(planetMesh);
     celestialObjects[index + 1] = planetMesh; // We use index + 1 because index 0 is reserved for the star
+
+   // if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
+   //     const { group: ringGroup, outerRadius } = createSegmentedRings(planetData.radius, planetData.type);
+   //     planetMesh.add(ringGroup); // Attach the rings to the planet mesh
+   //     adjustShadowCameraForRings(planetData.radius, outerRadius);
+
+   // }
+
+
 }
 
+function addAtmosphereToPlanet(planetMesh, planetData, index) {
+    const atmosphereComposition = getPlanetAtmosphere(planetData.type, planetData.orbitRadius, universeData.parentStar.habitableZone);
+    const atmosphereMesh = createAtmosphere(planetData.radius, atmosphereComposition);
+    atmosphereMesh.name = `atmosphere${index}`;
+    planetMesh.add(atmosphereMesh);
+}
 
+function addRingsToPlanet(planetMesh, planetData, index) {
+    if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
+        const { group: ringGroup, outerRadius } = createSegmentedRings(planetData.radius, planetData.type);
+        planetMesh.add(ringGroup);
+        adjustShadowCameraForRings(planetData.radius, outerRadius);
+    }
+}
 
 function generatePlanets() {
     universeData.solarSystem.forEach((planetData, index) => {
@@ -338,10 +347,13 @@ function startAnimationLoop() {
     function animate() {
         requestAnimationFrame(animate);
         animatePlanets();
+        animateMoons();
     
         controls.target.lerp(desiredTargetPosition, followSpeed);
-        updateCameraPositionWithPlanet();
         updateDesiredTargetPosition(currentTargetIndex);
+       // if (isFollowingObject && currentTargetIndex >= 0 && currentTargetIndex < universeData.solarSystem.length) {
+       //     adjustCameraPosition(currentTargetIndex);
+       // }
 
     
         controls.update();
@@ -370,6 +382,27 @@ function animatePlanets() {
     });
 }
 
+function animateMoons() {
+    universeData.solarSystem.forEach((planetData, index) => {
+        // Get the planet mesh from the scene
+        const planetMesh = scene.getObjectByName(`planet${index}`);
+
+        // Check if the planet mesh exists and has moons to animate
+        if (planetMesh && planetData.moons > 0) {
+            // Animate each moon
+            planetMesh.children.forEach((moon, moonIndex) => {
+                // Assuming each moon has an orbitRadius property set when created
+                const moonOrbitRadius = 0.5 + moonIndex * 0.2; // Example orbit radius calculation
+                const orbitSpeed = 0.05; // Adjust for a suitable orbit speed
+
+                // Calculate the moon's orbit position over time
+                const angle = Date.now() * 0.001 * orbitSpeed + moonIndex; // Offset each moon's starting angle
+                moon.position.x = Math.cos(angle) * moonOrbitRadius;
+                moon.position.z = Math.sin(angle) * moonOrbitRadius;
+            });
+        }
+    });
+}
 
 
 function visualizeOrbits() {
@@ -377,7 +410,7 @@ function visualizeOrbits() {
         const orbitRadius = planetData.orbitRadius * AU_TO_SCENE_SCALE;
         // Create a geometry for the orbit. Since we're using a LineLoop, no need to remove the center vertex.
         const orbitGeometry = new THREE.RingGeometry(orbitRadius - 0.1, orbitRadius, 64);
-        const orbitMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 });
+        const orbitMaterial = new THREE.LineBasicMaterial({ color: 0xDED38D, transparent: true, opacity: 0.05 });
         
         // Create a LineLoop with the geometry and material
         const orbitPath = new THREE.LineLoop(orbitGeometry, orbitMaterial);
@@ -387,20 +420,7 @@ function visualizeOrbits() {
     });
 }
 
-function updateCameraPositionWithPlanet() {
-    if (celestialObjects[currentTargetIndex]) {
-        const planet = celestialObjects[currentTargetIndex];
-        // Calculate the current offset between the camera and the planet
-        cameraOffsetRelativeToPlanet.subVectors(camera.position, planet.position);
 
-        // When the planet moves, update the camera position to maintain the offset
-        const newCameraPosition = planet.position.clone().add(cameraOffsetRelativeToPlanet);
-        camera.position.copy(newCameraPosition);
-
-        // Ensure the camera still looks at the planet
-        camera.lookAt(planet.position);
-    }
-}
 
 
 function selectPlanet(index) {
@@ -415,7 +435,6 @@ function selectPlanet(index) {
 }
 
 //generation functions
-
 
 
 function updateStarLight() {
@@ -519,8 +538,10 @@ function adjustShadowCameraForRings(planetRadius, ringsOuterRadius) {
   function updateScene() {
     cleanUp(); // Clears the scene of existing planets and star meshes
     generatePlanets(); // Uses universeData to add new planet meshes to the scene
+    
     updateStarLight(); // Updates the lighting based on the new star
     addStarToScene(); // Adds the new star mesh to the scene
+  //  generateMoons(); // New function to generate moons for each planet
     generateSystemName();
     visualizeOrbits();
 }
@@ -537,6 +558,16 @@ function cleanUp() {
     celestialObjects = []; // Reset the celestial objects array
 }
 // star generation
+
+
+function generateMoons() {
+    universeData.solarSystem.forEach((planetData, index) => {
+        const planetMesh = scene.getObjectByName(`planet${index}`);
+        if (planetMesh && planetData.moons > 0) {
+            createMoonsForPlanet(planetMesh, planetData, index);
+        }
+    });
+}
 
 function setupStarGeneration() {
     const generateStarButton = document.getElementById('generateStarButton');
@@ -977,6 +1008,43 @@ function createSegmentedRings(planetRadius, planetType) {
         outerRadius: outerRadius  // The final outer radius of the rings
     };
 }
+
+function createMoonsForPlanet(planetMesh, planetData, planetIndex) {
+    const moons = [];
+    const adjustedIndex = planetIndex + 1;
+    // Scale the base distance with the planet's radius and adjust for the number of moons
+    const baseDistanceFromPlanet = 1.5 + (planetData.radius * 2) + (adjustedIndex * 2.5); // Example adjustment
+    const moonScaleFactor = Math.max(planetData.radius / 10, 0.05); 
+
+    for (let i = 0; i < planetData.moons; i++) {
+        const moonGeometry = new THREE.SphereGeometry(0.1 * moonScaleFactor, 32, 32); // Scale moon size based on the planet's radius
+        const moonMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+        const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
+
+        // Increment distance more significantly for each moon to ensure they are spread out, especially for planets with many moons.
+        const distanceIncrement = i * (0.5 * moonScaleFactor + 0.5); // Adjust this increment to ensure moons are spaced out.
+        const distanceFromPlanetAdjusted = baseDistanceFromPlanet + distanceIncrement;
+        const angle = Math.random() * Math.PI * 2; // Random angle for moon position around the planet
+
+        const verticalJiggle = (Math.random() - 0.5) * moonScaleFactor; // Slight vertical offset for variety
+
+        moonMesh.position.set(
+            planetMesh.position.x + distanceFromPlanetAdjusted * Math.cos(angle),
+            planetMesh.position.y + verticalJiggle, // Apply vertical jiggle here
+            planetMesh.position.z + distanceFromPlanetAdjusted * Math.sin(angle)
+        );
+
+        planetMesh.add(moonMesh);
+        moons.push(moonMesh);
+    }
+    return moons;
+}
+
+
+
+
+
+
 
 
 // helpers
