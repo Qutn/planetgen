@@ -37,7 +37,7 @@
         },
     	{
         	"name": "Aluminium",
-        	"Symbol": "Al",
+        	"symbol": "Al",
         	"atomicMass": 26.981
         },
         {

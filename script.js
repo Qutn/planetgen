@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-import { generatePlanetName } from './generators/names.js';
+// import { generatePlanetName } from './generators/names.js';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, getPlanetAtmosphere, determinePlanetType  } from './generators/orbit.js';
 
@@ -112,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Adjust the index by -1 because the first index (0) is reserved for the star
             displayTimeConversions(currentTargetIndex - 1);
         }
+        displayHabitablePlanetDetails(currentTargetIndex - 1);
 
     });
     
@@ -120,6 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateDesiredTargetPosition(currentTargetIndex);
         selectPlanet(currentTargetIndex);
         // Optionally, clear the display or skip displaying conversions for the star
+        displayHabitablePlanetDetails(currentTargetIndex - 1);
+
     });
     
     document.getElementById('nextPlanet').addEventListener('click', () => {
@@ -129,7 +132,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTargetIndex > 0) {
             // Adjust the index by -1 because the first index (0) is reserved for the star
             displayTimeConversions(currentTargetIndex - 1);
+            
         }
+        displayHabitablePlanetDetails(currentTargetIndex - 1);
 
     });
 
@@ -513,6 +518,7 @@ function adjustShadowCameraForRings(planetRadius, ringsOuterRadius) {
     generatePlanets(); // Uses universeData to add new planet meshes to the scene
     updateStarLight(); // Updates the lighting based on the new star
     addStarToScene(); // Adds the new star mesh to the scene
+    generateSystemName();
     visualizeOrbits();
 }
 
@@ -631,7 +637,7 @@ function formatAtmosphere(atmosphere) {
 
 function displaySolarSystemProperties() {
     const solarSystemPropertiesDiv = document.getElementById('solarSystemProperties');
-    let htmlContent = '<h3>Solar System Planets</h3>';
+    let htmlContent = '<h3 class="solar-system-title">Solar System Planets</h3>';
 
     universeData.solarSystem.forEach((planet, index) => {
         const moonsCount = typeof planet.moons === 'number' ? planet.moons : 'N/A';
@@ -641,23 +647,22 @@ function displaySolarSystemProperties() {
         const localDaysPerOrbitValue = localDaysPerOrbit(planet.rotationSpeed, planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
 
         const planetDetails = `
-            <div class="planet-details">
-                <strong>Planet ${index + 1}:</strong><br>
-                Type: ${planet.type}<br>
-                Orbit Radius: ${planet.orbitRadius.toFixed(2)} AU<br>
-                Size: ${planet.radius.toFixed(2)}<br>
-                Atmosphere: ${atmosphereFormatted}<br>
-                Moons: ${moonsCount}<br>
-                Sidereal Day: ${rotationPeriodHours} hours<br>
-                Sidereal Year: ${localDaysPerOrbitValue} Sidereal Days (${orbitalPeriodDays} Earth Days)
+            <div class="planet-details-container">
+                <strong>Planet ${index + 1}</strong>
+                <div class="planet-detail">Type: ${planet.type}</div>
+                <div class="planet-detail">Orbit Radius: ${planet.orbitRadius.toFixed(2)} AU</div>
+                <div class="planet-detail">Size: ${planet.radius.toFixed(2)}</div>
+                <div class="planet-detail">Atmosphere: ${atmosphereFormatted}</div>
+                <div class="planet-detail">Moons: ${moonsCount}</div>
+                <div class="planet-detail">Sidereal Day: ${rotationPeriodHours} hours</div>
+                <div class="planet-detail">Sidereal Year: ${localDaysPerOrbitValue} Sidereal Days (${orbitalPeriodDays} Earth Days)</div>
             </div>
-            <div class="planet-separator"></div>
-        `;
+            <hr class="planet-separator">`; // Changed to hr for a horizontal line
         htmlContent += planetDetails;
 
         if (planet.orbitRadius >= universeData.parentStar.habitableZone.innerBoundary &&
             planet.orbitRadius <= universeData.parentStar.habitableZone.outerBoundary) {
-            htmlContent += `<p><strong>This planet is in the habitable zone!</strong></p>`;
+            htmlContent += `<div class="habitable-zone-notice"><strong>This planet is in the habitable zone!</strong></div>`;
         }
     });
 
@@ -667,53 +672,83 @@ function displaySolarSystemProperties() {
 
 
 
-
-async function displayHabitablePlanetDetails(planetIndex) {
-    const planet = universeData.solarSystemData[planetIndex];
-    const star = universeData.starData;
-
-
+async function displayHabitablePlanetDetails(index) {
     const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
-    const atmosphereType = 'M';
-    const geologicalActivity = 'Active';
-    const moonCount = 2;
-    const planetName = generatePlanetName(systemNumber, planetIndex, atmosphereType, geologicalActivity, moonCount);
-    const planetDetails = `Name: ${planetName}<br>Type - ${planet.type}, Orbit Radius - ${planet.orbitRadius.toFixed(2)} AU, Size - ${planet.size.toFixed(2)}, Atmosphere - ${planet.atmosphere}, Moons - ${planet.moons}`;
-    const starSize = star.size;
-    const starMass = star.mass;
-    const orbitalRadius = planet.orbitRadius;
-    const planetSize = planet.size;
-    const geologicalData = generateGeologicalData(planet.size, orbitalRadius, starSize, starMass);
-    const geologicalDetails = `Core Size: ${geologicalData.core.size}, Mantle Size: ${geologicalData.mantle.size}, Crust Size: ${geologicalData.crust.size}, Geological Activity: ${geologicalData.tectonics}`;
-    let content = `<h3>Habitable Planet Details</h3><p>${planetDetails}</p><p>${geologicalDetails}</p>`;
-    const compositionData = await determinePlanetaryComposition(planet.size, planet.orbitRadius, star.size, star.mass);
-    const valuableElements = ['O', 'Si', 'Al', 'Fe', 'Na', 'Mg', 'K', 'Ti', 'H', 'Cu', 'Ag', 'Au', 'Mth']; // Iron, Copper, Silver, Gold, Mithril
-    const sortedComposition = Object.entries(compositionData)
-                                     .filter(([element]) => valuableElements.includes(element))
-                                     .sort((a, b) => b[1] - a[1]); // Sort by abundance
-    const earthVolume = (4/3) * Math.PI * Math.pow(6371, 3); // Earth's volume in km^3
-    const planetVolume = (4/3) * Math.PI * Math.pow(planet.size * 6371, 3); // Planet's volume in km^3
-    const scalingFactor = planetVolume / earthVolume; // Scaling factor based on volume
-    const planetGravityInMs2 = (planet.size * 9.8).toFixed(2); // Gravity in m/s^2
-    const planetGravityInG = (planetGravityInMs2 / 9.8).toFixed(2); // Convert to Earth's gravity
-    const gravityDetails = `<p>Gravity: ${planetGravityInMs2} m/s<sup>2</sup> (${planetGravityInG} G)</p>`;
-    content += gravityDetails;
-	let elementDetails = '';
-	sortedComposition.forEach(([element, percentage]) => {
-    	const elementVolume = planetVolume * percentage * 1000000000;
-    	let elementMass = elementVolume * getElementDensity(element);
-    	elementMass *= scalingFactor; // Apply scaling factor to element mass
-            		// console.log(`Element: ${element}, Percentage: ${percentage}, Volume: ${elementVolume}, Mass: ${elementMass}`);
-    	const formattedElementMass = elementMass.toExponential(2); // Format elementMass in scientific notation
-    	elementDetails += `<p>${element}: ${formattedElementMass} kg</p>`;
-    		// console.log(`Formatted Mass for ${element}: ${formattedElementMass}`);
-});
-    	// console.log("Element Details:", elementDetails); // Debugging log
-	content += `<div class="element-details">${elementDetails}</div>`;
-    habitablePlanetDiv.innerHTML = content;
-		// console.log("Final HTML Content:", content);
 
+    if (index < 0) {
+        habitablePlanetDiv.innerHTML = "<h3>Star Details</h3><p>Details about the star will be displayed here.</p>";
+        return;
+    }
+
+    if (index >= universeData.solarSystem.length || !universeData.solarSystem[index]) {
+        console.error("Invalid planet index or planet data missing.");
+        habitablePlanetDiv.innerHTML = "<h3>Invalid Planet Index</h3><p>The selected index does not correspond to a valid planet.</p>";
+        return; 
+    }
+
+    const planet = universeData.solarSystem[index];
+    const star = universeData.parentStar;
+    
+    const atmosphereFormatted = planet.atmosphere ? formatAtmosphere(planet.atmosphere) : 'N/A';
+    const geologicalData = generateGeologicalData(planet.radius, planet.orbitRadius, star.size, star.mass);
+    const compositionData = await determinePlanetaryComposition(planet.radius, planet.orbitRadius, star.size, star.mass);
+    const planetName = generatePlanetName(index + 1); // index + 1 because planet index is 0-based
+
+    let elementDetails = `<h3>Valuable Elements</h3><div class="element-details-container">`;
+    Object.entries(compositionData).forEach(([element, mass]) => {
+        const elementNameFormatted = formatElementName(element);
+        elementDetails += `<span class="element-detail">${elementNameFormatted}: ${mass.toExponential(2)} kg</span>`; 
+    });
+    elementDetails += "</div>";
+
+    const planetDetailsContent = `
+        <div class="planet-details-header">Planet Details</div>
+        <div class="planet-details-grid">
+            <span>Name: ${planetName}</span>
+            <span>Type: ${planet.type}</span>
+            <span>Orbit Radius: ${planet.orbitRadius.toFixed(2)} AU</span>
+            <span>Size: ${planet.radius.toFixed(2)}</span>
+            <span>Atmosphere: ${atmosphereFormatted}</span>
+            <span>Moons: ${planet.moons || 'N/A'}</span>
+        </div>
+    `;
+
+    habitablePlanetDiv.innerHTML = `${planetDetailsContent}${elementDetails}`;
 }
+
+function generateSystemName() {
+    // All possible characters in the naming scheme
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let name = 'P'; // Start with 'P' as per your requirement
+
+    // Generate the next 3 alphanumeric characters
+    for (let i = 0; i < 3; i++) {
+        name += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    // Append a hyphen before the final three digits
+    name += '-';
+
+    // Generate the final three alphanumeric characters
+    for (let i = 0; i < 3; i++) {
+        name += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    // Store the system name
+    universeData.systemName = name;
+}
+
+function generatePlanetName(planetIndex) {
+    // Use the stored system name and append the planet index
+    return `${universeData.systemName}/${planetIndex}`;
+}
+
+
+// Utility function to format element names, assuming they are in snake_case
+function formatElementName(element) {
+    return element.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
 
 function getElementDensity(element) {
     // Return density of the element, placeholder values used here, will reference a json eventually

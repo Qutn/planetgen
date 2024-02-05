@@ -160,3 +160,86 @@ button {
     margin: 0; /* Remove default paragraph margins */
     white-space: nowrap; /* Prevents the text from wrapping */
 }
+
+.planet-details-header {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.8em;
+    font-weight: bold;
+}
+
+.planet-details {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0.5em 0;
+    font-size: 2.0em;
+}
+
+.planet-details-separator {
+    margin: 0 1em;
+}
+
+.planet-details-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* 6 columns for 6 items */
+    gap: 10px;
+    text-align: center;
+    font-size: 1.4em;
+    margin-bottom: 20px;
+}
+
+.element-details-container {
+    max-height: 150px;
+    overflow-y: auto;
+    margin-top: 1em;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* Updated to fit 8 columns */
+    gap: 10px;
+}
+
+.element-details-header {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.element-detail {
+    text-align: left;
+    font-size: 0.8em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.solar-system-title {
+    text-align: center;
+    margin-bottom: 20px; /* Adjust space below the title as needed */
+}
+
+.planet-details-container {
+    margin-bottom: 20px; /* Space between each planet's details */
+}
+
+.planet-detail {
+    margin-bottom: 5px; /* Space between each detail line */
+}
+
+.planet-separator {
+    border: none;
+    height: 2px; /* Thickness of the horizontal line */
+    background-color: #ccc; /* Color of the horizontal line */
+    margin: 20px 0; /* Space above and below the horizontal line */
+}
+
+.habitable-zone-notice {
+    font-weight: bold;
+    margin-bottom: 20px; /* Space below the habitable zone notice */
+}
+
+/* Ensure the CSS for the solar system box doesn't override these styles */
+#solarSystemProperties {
+    font-size: inherit; /* Ensures the font size is not changed */
+    color: inherit; /* Ensures the text color is not changed */
+}
