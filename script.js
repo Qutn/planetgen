@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
-// import { generatePlanetName } from './generators/names.js';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, getPlanetAtmosphere, determinePlanetType  } from './generators/orbit.js';
 
@@ -371,15 +370,6 @@ function animatePlanets() {
     });
 }
 
-function updateCameraForFollow() {
-    if (!manualControlEnabled && celestialObjects[currentTargetIndex]) {
-        // Calculate desired camera position and orientation
-        const targetPlanet = celestialObjects[currentTargetIndex];
-        const desiredPosition = targetPlanet.position.clone().add(followOffset);
-        camera.position.lerp(desiredPosition, 0.05); // Smoothly interpolate to desired position
-        camera.lookAt(targetPlanet.position); // Ensure the camera looks at the planet
-    }
-}
 
 
 function visualizeOrbits() {
@@ -1172,36 +1162,3 @@ function getRotationSpeed(orbitRadius, habitableZone, AU_TO_SCENE_SCALE, systemO
 }
 
 
-// subclass for pseudo camera
-// Define your custom OrbitControlsLocal as a standalone class
-class OrbitControlsLocal extends OrbitControls {
-    constructor(realObject, domElement) {
-        let placeholderObject = realObject.isCamera ? new THREE.PerspectiveCamera() : new THREE.Object3D();
-        super(placeholderObject, domElement);
-        this.realObject = realObject;
-        this.placeholderObject = placeholderObject;
-    }
-
-    update() {
-        // Synchronize the placeholder object with the real object's position and orientation
-        this.placeholderObject.position.copy(this.realObject.position);
-        this.placeholderObject.quaternion.copy(this.realObject.quaternion);
-        this.placeholderObject.scale.copy(this.realObject.scale);
-        this.placeholderObject.up.copy(this.realObject.up);
-
-        // Call the original update method, which now updates the placeholder based on user input
-        var retval = super.update();
-
-        // Optionally, after user input has been processed, align the camera or realObject with the target
-        // This part might need adjustment based on whether the camera itself is being followed or if it's static
-        // and pointing at a moving object. For a static camera tracking a moving object, you might not need
-        // to copy the position back to the realObject.
-
-        return retval;
-    }
-}
-
-function updateControlsTarget(planetMesh) {
-    // Assuming 'planetMesh' is the mesh of the planet you want the camera to follow
-    controls.target.copy(planetMesh.position);
-}
