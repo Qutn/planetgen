@@ -19,7 +19,9 @@ let celestialObjects = [];
 let currentTargetIndex = 0; // Initialize the index for the currently targeted object globally
 let desiredTargetPosition = new THREE.Vector3();
 let followOffset = new THREE.Vector3();
-
+let isZooming = false;
+let zoomTargetPosition = new THREE.Vector3();
+let zoomTargetLookAt = new THREE.Vector3();
 
 const AU_TO_SCENE_SCALE = 200.00;
 
@@ -128,6 +130,22 @@ document.addEventListener('DOMContentLoaded', () => {
         displayHabitablePlanetDetails(currentTargetIndex - 1);
 
     });
+
+    document.getElementById('zoomToPlanetButton').addEventListener('click', function() {
+        if (currentTargetIndex >= 0 && currentTargetIndex < celestialObjects.length) {
+            const targetPlanet = celestialObjects[currentTargetIndex];
+            if (targetPlanet) {
+                // Calculate the target zoom position
+                const distance = targetPlanet.geometry.parameters.radius * 3;
+                zoomTargetPosition.set(targetPlanet.position.x, targetPlanet.position.y, targetPlanet.position.z + distance);
+                zoomTargetLookAt.copy(targetPlanet.position);
+    
+                // Start zooming
+                isZooming = true;
+            }
+        }
+    });
+    
 
 });
 
@@ -349,7 +367,21 @@ function startAnimationLoop() {
        // if (isFollowingObject && currentTargetIndex >= 0 && currentTargetIndex < universeData.solarSystem.length) {
        //     adjustCameraPosition(currentTargetIndex);
        // }
+       if (isZooming) {
+        // Move the camera towards the target position smoothly
+        camera.position.lerp(zoomTargetPosition, 0.05); // Adjust the 0.05 value for speed
 
+        // Smoothly adjust the camera to look at the target
+        const lookAtPosition = new THREE.Vector3().lerpVectors(camera.position, zoomTargetLookAt, 0.05);
+        camera.lookAt(lookAtPosition);
+
+        // Optional: Stop zooming when close enough to the target position
+        if (camera.position.distanceTo(zoomTargetPosition) < 0.1) {
+            isZooming = false;
+            camera.position.copy(zoomTargetPosition);
+            camera.lookAt(zoomTargetLookAt);
+        }
+    }
     
         controls.update();
         composer.render();
