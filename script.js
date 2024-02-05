@@ -27,7 +27,9 @@ let currentTargetIndex = 0; // Initialize the index for the currently targeted o
 let desiredTargetPosition = new THREE.Vector3();
 let isFollowingObject = true; // Initially, let's say we are following an object.
 let cameraOffsetRelativeToPlanet = new THREE.Vector3();
-
+let followOffset = new THREE.Vector3();
+let isManuallyControlling = false;
+let manualControlEnabled = true; // Track whether manual control is enabled
 
 
 const AU_TO_SCENE_SCALE = 200.00;
@@ -319,32 +321,35 @@ function setupLighting() {
 
 function setupOrbitControls() {
     controls = new OrbitControls(camera, renderer.domElement);
+    // controls = new OrbitControlsLocal(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.25;
     controls.screenSpacePanning = false;
     controls.enableZoom = true;
     // Removed min/max polar angle to allow full vertical rotation
     // Removed min/max distance to allow any distance
+     // Event listeners to detect manual control
+     controls.addEventListener('start', () => isManuallyControlling = true);
+     controls.addEventListener('end', () => isManuallyControlling = false);
 }
 
 function startAnimationLoop() {
     let followSpeed = 0.05; // Adjust for smoother or faster following
 
-function animate() {
-    requestAnimationFrame(animate);
-    animatePlanets();
+    function animate() {
+        requestAnimationFrame(animate);
+        animatePlanets();
+    
+        controls.target.lerp(desiredTargetPosition, followSpeed);
+        updateCameraPositionWithPlanet();
+        updateDesiredTargetPosition(currentTargetIndex);
 
-//    if (isFollowingObject && celestialObjects[currentTargetIndex]) {
-//        const targetObject = celestialObjects[currentTargetIndex];
-//        desiredTargetPosition.copy(targetObject.position);
-//    }
+    
+        controls.update();
+        composer.render();
+    }
 
-    controls.target.lerp(desiredTargetPosition, followSpeed);
-    updateCameraPositionWithPlanet();
 
-    controls.update();
-    composer.render();
-}
 animate()
 }
 //end setup scripts
@@ -365,6 +370,17 @@ function animatePlanets() {
         }
     });
 }
+
+function updateCameraForFollow() {
+    if (!manualControlEnabled && celestialObjects[currentTargetIndex]) {
+        // Calculate desired camera position and orientation
+        const targetPlanet = celestialObjects[currentTargetIndex];
+        const desiredPosition = targetPlanet.position.clone().add(followOffset);
+        camera.position.lerp(desiredPosition, 0.05); // Smoothly interpolate to desired position
+        camera.lookAt(targetPlanet.position); // Ensure the camera looks at the planet
+    }
+}
+
 
 function visualizeOrbits() {
     universeData.solarSystem.forEach((planetData, index) => {
@@ -401,14 +417,11 @@ function selectPlanet(index) {
     currentTargetIndex = index;
     if (celestialObjects[currentTargetIndex]) {
         const planet = celestialObjects[currentTargetIndex];
-        // Calculate the current offset between the camera and the planet
-        cameraOffsetRelativeToPlanet.subVectors(camera.position, planet.position);
-    }
+        // Calculate and store the offset between the camera and the selected planet
+        followOffset.copy(camera.position).sub(planet.position);
+        isManuallyControlling = false; // Reset manual control flag
 
-    // Optionally, you might want to adjust the camera to immediately look at the selected planet
-   // if (celestialObjects[currentTargetIndex]) {
-   //     camera.lookAt(celestialObjects[currentTargetIndex].position);
-  //  }
+    }
 }
 
 //generation functions
@@ -1159,3 +1172,36 @@ function getRotationSpeed(orbitRadius, habitableZone, AU_TO_SCENE_SCALE, systemO
 }
 
 
+// subclass for pseudo camera
+// Define your custom OrbitControlsLocal as a standalone class
+class OrbitControlsLocal extends OrbitControls {
+    constructor(realObject, domElement) {
+        let placeholderObject = realObject.isCamera ? new THREE.PerspectiveCamera() : new THREE.Object3D();
+        super(placeholderObject, domElement);
+        this.realObject = realObject;
+        this.placeholderObject = placeholderObject;
+    }
+
+    update() {
+        // Synchronize the placeholder object with the real object's position and orientation
+        this.placeholderObject.position.copy(this.realObject.position);
+        this.placeholderObject.quaternion.copy(this.realObject.quaternion);
+        this.placeholderObject.scale.copy(this.realObject.scale);
+        this.placeholderObject.up.copy(this.realObject.up);
+
+        // Call the original update method, which now updates the placeholder based on user input
+        var retval = super.update();
+
+        // Optionally, after user input has been processed, align the camera or realObject with the target
+        // This part might need adjustment based on whether the camera itself is being followed or if it's static
+        // and pointing at a moving object. For a static camera tracking a moving object, you might not need
+        // to copy the position back to the realObject.
+
+        return retval;
+    }
+}
+
+function updateControlsTarget(planetMesh) {
+    // Assuming 'planetMesh' is the mesh of the planet you want the camera to follow
+    controls.target.copy(planetMesh.position);
+}
