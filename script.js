@@ -744,6 +744,9 @@ async function displayHabitablePlanetDetails(index) {
     const geologicalData = generateGeologicalData(planet.radius, planet.orbitRadius, star.size, star.mass);
     const compositionData = await determinePlanetaryComposition(planet.radius, planet.orbitRadius, star.size, star.mass);
     const planetName = generatePlanetName(index + 1); // index + 1 because planet index is 0-based
+    const rotationPeriodHours = rotationSpeedToEarthHours(planet.rotationSpeed).toFixed(2);
+    const orbitalPeriodDays = orbitalSpeedToEarthDays(planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
+    const localDaysPerOrbitValue = localDaysPerOrbit(planet.rotationSpeed, planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
 
     let elementDetails = `<h3>Valuable Elements</h3><div class="element-details-container">`;
     Object.entries(compositionData).forEach(([element, mass]) => {
@@ -761,6 +764,8 @@ async function displayHabitablePlanetDetails(index) {
             <span>Size: ${planet.radius.toFixed(2)}</span>
             <span>Atmosphere: ${atmosphereFormatted}</span>
             <span>Moons: ${planet.moons || 'N/A'}</span>
+            <span>Day: ${rotationPeriodHours} hours || ${rotationPeriodHours} Earth days</span>
+            <span>Year: ${localDaysPerOrbitValue} days || (${orbitalPeriodDays} Earth days)</span>
         </div>
     `;
 

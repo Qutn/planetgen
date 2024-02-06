@@ -89,6 +89,9 @@ function baseProbability(element) {
         case 'K': // Potassium
             probability = 0.020;
             break;
+        case 'Al': //aluminium
+            probability = 0.082;
+            break;
         case 'Ti': // Titanium
             probability = 0.005;
             break;

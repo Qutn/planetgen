@@ -166,6 +166,8 @@ button {
     margin-bottom: 10px;
     font-size: 1.8em;
     font-weight: bold;
+    text-transform: uppercase;
+
 }
 
 .planet-details {
@@ -173,7 +175,9 @@ button {
     justify-content: space-around;
     align-items: center;
     padding: 0.5em 0;
-    font-size: 2.0em;
+    font-size: 1.8em;
+    text-transform: uppercase;
+
 }
 
 .planet-details-separator {
@@ -182,11 +186,13 @@ button {
 
 .planet-details-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr); /* 6 columns for 6 items */
+    grid-template-columns: repeat(8, 1fr); /* 6 columns for 6 items */
     gap: 10px;
     text-align: center;
     font-size: 1.4em;
     margin-bottom: 20px;
+    text-transform: uppercase;
+
 }
 
 .element-details-container {
@@ -196,6 +202,8 @@ button {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); /* Updated to fit 8 columns */
     gap: 10px;
+    text-transform: uppercase;
+
 }
 
 .element-details-header {
