@@ -125,15 +125,16 @@ function adjustForStarSize(element, starSize) {
     let adjustmentFactor = 1;
 
     // Assuming starSize is a relative measurement where 1 is similar to the Sun
-    if (starSize > 1) { // Larger than the Sun
-        // Heavier elements are more likely
-        adjustmentFactor += (element.atomicMass - 30) / 200; // Example adjustment
-    } else { // Smaller than or equal to the Sun
-        // Lighter elements are more likely
-        adjustmentFactor -= (element.atomicMass - 30) / 200; // Example adjustment
+    if (starSize > 1) {
+        // Heavier elements are more likely for stars larger than the Sun
+        adjustmentFactor += (element.atomicMass - 30) / 200;
+    } else {
+        // Lighter elements are more likely for stars smaller than or equal to the Sun
+        adjustmentFactor -= (element.atomicMass - 30) / 200;
     }
 
-    return Math.max(adjustmentFactor, 0.1); // Ensure the factor doesn't go below 0.1
+    // Ensure the adjustment factor doesn't go below 0.1
+    adjustmentFactor = Math.max(adjustmentFactor, 0.1);
 
     // Log the adjustment factor for debugging
     console.log(`Element: ${element.name}, Star Size: ${starSize}, Adjustment Factor: ${adjustmentFactor}`);
@@ -141,10 +142,39 @@ function adjustForStarSize(element, starSize) {
     return adjustmentFactor;
 }
 
-function adjustForOrbitalRadius(element, orbitalRadius) {
-    // Logic to adjust probability based on orbital radius
-    return 1; // Placeholder
+function adjustForOrbitalRadius(element, orbitalRadius, starLuminosity) {
+    let adjustmentFactor = 1;
+    const iceLineAU = calculateIceLine(starLuminosity); // Calculate the ice line based on star luminosity
+
+    // Example adjustments
+    if (orbitalRadius < iceLineAU) {
+        // Inside the ice line
+        if (element.isVolatile) {
+            adjustmentFactor *= 0.5; // Decrease probability for volatiles
+        } else {
+            adjustmentFactor *= 1.5; // Increase probability for refractories
+        }
+    } else {
+        // Outside the ice line
+        if (element.isVolatile) {
+            adjustmentFactor *= 1.5; // Increase probability for volatiles
+        } else {
+            adjustmentFactor *= 0.5; // Decrease probability for refractories
+        }
+    }
+
+    // Further adjustments can be made based on additional criteria
+    // For example, adjusting for specific elements based on their unique properties
+
+    return adjustmentFactor;
 }
+
+function calculateIceLine(starLuminosity) {
+    // Placeholder function to calculate the ice line position based on star luminosity
+    // This can be a simple linear model or a more complex calculation
+    return Math.sqrt(starLuminosity / 4); // Simple example, not scientifically accurate
+}
+
 
 function adjustForPlanetSize(element, planetSize) {
     // Logic to adjust probability based on planet size
