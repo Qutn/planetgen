@@ -1,6 +1,8 @@
 async function loadElementsData() {
     const response = await fetch('generators/elements.json');
-    return await response.json();
+    const data = await response.json();
+    console.log(data); // Check the structure is as expected
+    return data;
 }
 
 function generateGeologicalData(planetSize, orbitalRadius, starSize, starMass) {

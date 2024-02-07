@@ -106,6 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
             displayTimeConversions(currentTargetIndex - 1);
         }
         displayHabitablePlanetDetails(currentTargetIndex - 1);
+     //   displayElementalComposition(currentTargetIndex - 1); // Display composition for the newly selected planet
+
 
     });
     
@@ -115,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
         selectPlanet(currentTargetIndex);
         // Optionally, clear the display or skip displaying conversions for the star
         displayHabitablePlanetDetails(currentTargetIndex - 1);
+     //   displayElementalComposition(currentTargetIndex - 1); // Display composition for the newly selected planet
 
     });
     
@@ -128,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
         }
         displayHabitablePlanetDetails(currentTargetIndex - 1);
+      //  displayElementalComposition(currentTargetIndex - 1); // Display composition for the newly selected planet
 
     });
 
@@ -149,17 +153,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-function updateScene() {
+async function updateScene() {
     cleanUp(); // Clears the scene of existing planets and star meshes
-    generatePlanets(); // Uses universeData to add new planet meshes to the scene
+    await generatePlanets(); // Await the asynchronous generation of planets and their compositions
     generateRings();
-    updateStarLight(); // Updates the lighting based on the new star
-    addStarToScene(); // Adds the new star mesh to the scene
-    generateMoons(); // New function to generate moons for each planet
+    updateStarLight();
+    addStarToScene();
+    generateMoons();
     generateSystemName();
     visualizeOrbits();
     generateAtmospheres();
-
+    // Add any further steps that depend on planets being fully generated
 }
 
 
@@ -270,10 +274,14 @@ function addRingsToPlanet(planetMesh, planetData, index) {
     }
 }
 
-function generatePlanets() {
-    universeData.solarSystem.forEach((planetData, index) => {
-        createPlanet(planetData, index);
-    });
+async function generatePlanets() {
+    for (let i = 0; i < universeData.solarSystem.length; i++) {
+        const planetData = universeData.solarSystem[i];
+        createPlanet(planetData, i);
+        // Generate and store composition data for each planet
+        const composition = await determinePlanetaryComposition(planetData.radius, planetData.orbitRadius, universeData.parentStar.size, universeData.parentStar.mass);
+        planetData.composition = composition; // Store the composition data within the planet's data structure
+    }
 }
 
 function generateAtmospheres() {
@@ -448,6 +456,34 @@ function visualizeOrbits() {
         scene.add(orbitPath);
     });
 }
+
+function displayElementalComposition(planetIndex) {
+    // Check for valid planet index
+    if (planetIndex < 0 || planetIndex >= universeData.solarSystem.length) return;
+
+    const habitablePlanetDiv = document.getElementById('habitablePlanetDetails');
+    const planet = universeData.solarSystem[planetIndex];
+
+    // Header for Elemental Composition section
+    let headerContent = `<div class="element-details-header">Elemental Composition for ${planet.name || `Planet ${planetIndex + 1}`}</div>`;
+
+    // Start of the container that will have a max height and be scrollable
+    let gridContent = '<div class="element-details-container">';
+
+    // Generating each element detail with the specific style
+    Object.entries(planet.composition).forEach(([element, mass]) => {
+        const elementName = formatElementName(element); // Use the formatElementName function if needed
+        gridContent += `<div class="element-detail">${elementName}: ${mass.toExponential(2)} kg</div>`;
+    });
+
+    gridContent += "</div>"; // Close the container
+
+    // Combine header and grid content, then append to habitablePlanetDiv
+    habitablePlanetDiv.innerHTML += headerContent + gridContent; // Use += to append under existing planet details
+
+    // Ensure your CSS file is linked in your HTML and contains the provided styles
+}
+
 
 
 
@@ -738,22 +774,20 @@ async function displayHabitablePlanetDetails(index) {
     }
 
     const planet = universeData.solarSystem[index];
-    const star = universeData.parentStar;
-    
     const atmosphereFormatted = planet.atmosphere ? formatAtmosphere(planet.atmosphere) : 'N/A';
-    const geologicalData = generateGeologicalData(planet.radius, planet.orbitRadius, star.size, star.mass);
-    const compositionData = await determinePlanetaryComposition(planet.radius, planet.orbitRadius, star.size, star.mass);
     const planetName = generatePlanetName(index + 1); // index + 1 because planet index is 0-based
     const rotationPeriodHours = rotationSpeedToEarthHours(planet.rotationSpeed).toFixed(2);
     const orbitalPeriodDays = orbitalSpeedToEarthDays(planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
     const localDaysPerOrbitValue = localDaysPerOrbit(planet.rotationSpeed, planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
 
-    let elementDetails = `<h3>Valuable Elements</h3><div class="element-details-container">`;
-    Object.entries(compositionData).forEach(([element, mass]) => {
-        const elementNameFormatted = formatElementName(element);
-        elementDetails += `<span class="element-detail">${elementNameFormatted}: ${mass.toExponential(2)} kg</span>`; 
+    let elementDetails = `
+    <div class="element-details-header">Elemental Composition for ${planetName}</div>
+    <div class="element-details-container">
+    `;
+    Object.entries(planet.composition).forEach(([element, mass]) => {
+        elementDetails += `<div class="element-detail">${element}: ${mass.toExponential(2)} kg</div>`;
     });
-    elementDetails += "</div>";
+    elementDetails += `</div>`;
 
     const planetDetailsContent = `
         <div class="planet-details-header">Planet Details</div>
@@ -764,13 +798,14 @@ async function displayHabitablePlanetDetails(index) {
             <span>Size: ${planet.radius.toFixed(2)}</span>
             <span>Atmosphere: ${atmosphereFormatted}</span>
             <span>Moons: ${planet.moons || 'N/A'}</span>
-            <span>Day: ${rotationPeriodHours} hours || ${rotationPeriodHours} Earth days</span>
-            <span>Year: ${localDaysPerOrbitValue} days || (${orbitalPeriodDays} Earth days)</span>
+            <span>Day: ${rotationPeriodHours} hours</span>
+            <span>Year: ${localDaysPerOrbitValue} days (${orbitalPeriodDays} Earth days)</span>
         </div>
     `;
 
     habitablePlanetDiv.innerHTML = `${planetDetailsContent}${elementDetails}`;
 }
+
 
 function generateSystemName() {
     // All possible characters in the naming scheme
