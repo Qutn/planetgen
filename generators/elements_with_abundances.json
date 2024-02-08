@@ -1,0 +1,1294 @@
+{
+  "elements": [
+    {
+      "name": "Hydrogen",
+      "symbol": "H",
+      "atomicMass": 1.008,
+      "meltingPoint": -259.16,
+      "boilingPoint": -252.87,
+      "density": 0.00008988,
+      "atomicNumber": 1,
+      "abundance": 0.14
+    },
+    {
+      "name": "Helium",
+      "symbol": "He",
+      "atomicMass": 4.002602,
+      "meltingPoint": null,
+      "boilingPoint": -268.93,
+      "density": 0.0001785,
+      "atomicNumber": 2,
+      "abundance": 0.0000007
+    },
+    {
+      "name": "Lithium",
+      "symbol": "Li",
+      "atomicMass": 6.94,
+      "meltingPoint": 180.54,
+      "boilingPoint": 1342,
+      "density": 0.534,
+      "atomicNumber": 3,
+      "abundance": 0.00002
+    },
+    {
+      "name": "Beryllium",
+      "symbol": "Be",
+      "atomicMass": 9.0122,
+      "meltingPoint": 1287,
+      "boilingPoint": 2469,
+      "density": 1.85,
+      "atomicNumber": 4,
+      "abundance": 0.00000028
+    },
+    {
+      "name": "Boron",
+      "symbol": "B",
+      "atomicMass": 10.81,
+      "meltingPoint": 2075,
+      "boilingPoint": 4000,
+      "density": 2.34,
+      "atomicNumber": 5,
+      "abundance": 0.0000094
+    },
+    {
+      "name": "Carbon",
+      "symbol": "C",
+      "atomicMass": 12.011,
+      "meltingPoint": 3550,
+      "boilingPoint": 4827,
+      "density": 2.267,
+      "atomicNumber": 6,
+      "abundance": 0.00097
+    },
+    {
+      "name": "Nitrogen",
+      "symbol": "N",
+      "atomicMass": 14.007,
+      "meltingPoint": -210,
+      "boilingPoint": -195.79,
+      "density": 0.0012506,
+      "atomicNumber": 7,
+      "abundance": 0.0014
+    },
+    {
+      "name": "Oxygen",
+      "symbol": "O",
+      "atomicMass": 15.999,
+      "meltingPoint": -218.79,
+      "boilingPoint": -182.95,
+      "density": 0.001429,
+      "atomicNumber": 8,
+      "abundance": 0.461
+    },
+    {
+      "name": "Fluorine",
+      "symbol": "F",
+      "atomicMass": 18.998403163,
+      "meltingPoint": -219.67,
+      "boilingPoint": -188.11,
+      "density": 0.001696,
+      "atomicNumber": 9,
+      "abundance": 0.000585
+    },
+    {
+      "name": "Neon",
+      "symbol": "Ne",
+      "atomicMass": 20.1797,
+      "meltingPoint": -248.59,
+      "boilingPoint": -246.08,
+      "density": 0.0008999,
+      "atomicNumber": 10,
+      "abundance": 0.00000051
+    },
+    {
+      "name": "Sodium",
+      "symbol": "Na",
+      "atomicMass": 22.98976928,
+      "meltingPoint": 97.72,
+      "boilingPoint": 883,
+      "density": 0.971,
+      "atomicNumber": 11,
+      "abundance": 0.00255
+    },
+    {
+      "name": "Magnesium",
+      "symbol": "Mg",
+      "atomicMass": 24.305,
+      "meltingPoint": 650,
+      "boilingPoint": 1091,
+      "density": 1.738,
+      "atomicNumber": 12,
+      "abundance": 0.0277
+    },
+    {
+      "name": "Aluminum",
+      "symbol": "Al",
+      "atomicMass": 26.9815385,
+      "meltingPoint": 660.32,
+      "boilingPoint": 2519,
+      "density": 2.7,
+      "atomicNumber": 13,
+      "abundance": 0.0576
+    },
+    {
+      "name": "Silicon",
+      "symbol": "Si",
+      "atomicMass": 28.085,
+      "meltingPoint": 1414,
+      "boilingPoint": 2900,
+      "density": 2.33,
+      "atomicNumber": 14,
+      "abundance": 0.282
+    },
+    {
+      "name": "Phosphorus",
+      "symbol": "P",
+      "atomicMass": 30.973761998,
+      "meltingPoint": 44.2,
+      "boilingPoint": 280.5,
+      "density": 1.82,
+      "atomicNumber": 15,
+      "abundance": 0.00105
+    },
+    {
+      "name": "Sulfur",
+      "symbol": "S",
+      "atomicMass": 32.06,
+      "meltingPoint": 115.21,
+      "boilingPoint": 444.6,
+      "density": 2.067,
+      "atomicNumber": 16,
+      "abundance": 0.000693
+    },
+    {
+      "name": "Chlorine",
+      "symbol": "Cl",
+      "atomicMass": 35.45,
+      "meltingPoint": -101.5,
+      "boilingPoint": -34.04,
+      "density": 0.003214,
+      "atomicNumber": 17,
+      "abundance": 0.000145
+    },
+    {
+      "name": "Argon",
+      "symbol": "Ar",
+      "atomicMass": 39.948,
+      "meltingPoint": -189.34,
+      "boilingPoint": -185.848,
+      "density": 0.0017837,
+      "atomicNumber": 18,
+      "abundance": 0.0000035
+    },
+    {
+      "name": "Potassium",
+      "symbol": "K",
+      "atomicMass": 39.0983,
+      "meltingPoint": 63.5,
+      "boilingPoint": 759,
+      "density": 0.862,
+      "atomicNumber": 19,
+      "abundance": 0.00209
+    },
+    {
+      "name": "Calcium",
+      "symbol": "Ca",
+      "atomicMass": 40.078,
+      "meltingPoint": 842,
+      "boilingPoint": 1484,
+      "density": 1.55,
+      "atomicNumber": 20,
+      "abundance": 0.0415
+    },
+    {
+      "name": "Scandium",
+      "symbol": "Sc",
+      "atomicMass": 44.955908,
+      "meltingPoint": 1541,
+      "boilingPoint": 2836,
+      "density": 2.989,
+      "atomicNumber": 21,
+      "abundance": 0.0000022
+    },
+    {
+      "name": "Titanium",
+      "symbol": "Ti",
+      "atomicMass": 47.867,
+      "meltingPoint": 1668,
+      "boilingPoint": 3287,
+      "density": 4.54,
+      "atomicNumber": 22,
+      "abundance": 0.00565
+    },
+    {
+      "name": "Vanadium",
+      "symbol": "V",
+      "atomicMass": 50.9415,
+      "meltingPoint": 1910,
+      "boilingPoint": 3407,
+      "density": 6.11,
+      "atomicNumber": 23,
+      "abundance": 0.000076
+    },
+    {
+      "name": "Chromium",
+      "symbol": "Cr",
+      "atomicMass": 51.9961,
+      "meltingPoint": 1907,
+      "boilingPoint": 2671,
+      "density": 7.19,
+      "atomicNumber": 24,
+      "abundance": 0.026
+    },
+    {
+      "name": "Manganese",
+      "symbol": "Mn",
+      "atomicMass": 54.938044,
+      "meltingPoint": 1246,
+      "boilingPoint": 2061,
+      "density": 7.3,
+      "atomicNumber": 25,
+      "abundance": 0.00016
+    },
+    {
+      "name": "Iron",
+      "symbol": "Fe",
+      "atomicMass": 55.845,
+      "meltingPoint": 1538,
+      "boilingPoint": 2862,
+      "density": 7.874,
+      "atomicNumber": 26,
+      "abundance": 0.563
+    },
+    {
+      "name": "Cobalt",
+      "symbol": "Co",
+      "atomicMass": 58.933194,
+      "meltingPoint": 1495,
+      "boilingPoint": 2927,
+      "density": 8.86,
+      "atomicNumber": 27,
+      "abundance": 0.0000025
+    },
+    {
+      "name": "Nickel",
+      "symbol": "Ni",
+      "atomicMass": 58.6934,
+      "meltingPoint": 1455,
+      "boilingPoint": 2913,
+      "density": 8.912,
+      "atomicNumber": 28,
+      "abundance": 0.0084
+    },
+    {
+      "name": "Copper",
+      "symbol": "Cu",
+      "atomicMass": 63.546,
+      "meltingPoint": 1084.62,
+      "boilingPoint": 2562,
+      "density": 8.96,
+      "atomicNumber": 29,
+      "abundance": 0.000194
+    },
+    {
+      "name": "Zinc",
+      "symbol": "Zn",
+      "atomicMass": 65.38,
+      "meltingPoint": 419.53,
+      "boilingPoint": 907,
+      "density": 7.134,
+      "atomicNumber": 30,
+      "abundance": 0.000119
+    },
+    {
+      "name": "Gallium",
+      "symbol": "Ga",
+      "atomicMass": 69.723,
+      "meltingPoint": 29.76,
+      "boilingPoint": 2204,
+      "density": 5.907,
+      "atomicNumber": 31,
+      "abundance": 0.0000019
+    },
+    {
+      "name": "Germanium",
+      "symbol": "Ge",
+      "atomicMass": 72.63,
+      "meltingPoint": 938.25,
+      "boilingPoint": 2820,
+      "density": 5.323,
+      "atomicNumber": 32,
+      "abundance": 0.00000015
+    },
+    {
+      "name": "Arsenic",
+      "symbol": "As",
+      "atomicMass": 74.921595,
+      "meltingPoint": 817,
+      "boilingPoint": 615,
+      "density": 5.776,
+      "atomicNumber": 33,
+      "abundance": 0.00000018
+    },
+    {
+      "name": "Selenium",
+      "symbol": "Se",
+      "atomicMass": 78.971,
+      "meltingPoint": 221,
+      "boilingPoint": 685,
+      "density": 4.809,
+      "atomicNumber": 34,
+      "abundance": 0.00000005
+    },
+    {
+      "name": "Bromine",
+      "symbol": "Br",
+      "atomicMass": 79.904,
+      "meltingPoint": -7.2,
+      "boilingPoint": 58.8,
+      "density": 3.1028,
+      "atomicNumber": 35,
+      "abundance": 0.0000024
+    },
+    {
+      "name": "Krypton",
+      "symbol": "Kr",
+      "atomicMass": 83.798,
+      "meltingPoint": -157.36,
+      "boilingPoint": -153.22,
+      "density": 0.003733,
+      "atomicNumber": 36,
+      "abundance": 0.0000000001
+    },
+    {
+      "name": "Rubidium",
+      "symbol": "Rb",
+      "atomicMass": 85.4678,
+      "meltingPoint": 39.31,
+      "boilingPoint": 688,
+      "density": 1.532,
+      "atomicNumber": 37,
+      "abundance": 0.000009
+    },
+    {
+      "name": "Strontium",
+      "symbol": "Sr",
+      "atomicMass": 87.62,
+      "meltingPoint": 777,
+      "boilingPoint": 1377,
+      "density": 2.64,
+      "atomicNumber": 38,
+      "abundance": 0.00037
+    },
+    {
+      "name": "Yttrium",
+      "symbol": "Y",
+      "atomicMass": 88.90584,
+      "meltingPoint": 1526,
+      "boilingPoint": 3345,
+      "density": 4.469,
+      "atomicNumber": 39,
+      "abundance": 0.000033
+    },
+    {
+      "name": "Zirconium",
+      "symbol": "Zr",
+      "atomicMass": 91.224,
+      "meltingPoint": 1855,
+      "boilingPoint": 4409,
+      "density": 6.52,
+      "atomicNumber": 40,
+      "abundance": 0.00146
+    },
+    {
+      "name": "Niobium",
+      "symbol": "Nb",
+      "atomicMass": 92.90637,
+      "meltingPoint": 2477,
+      "boilingPoint": 4744,
+      "density": 8.57,
+      "atomicNumber": 41,
+      "abundance": 0.000064
+    },
+    {
+      "name": "Molybdenum",
+      "symbol": "Mo",
+      "atomicMass": 95.95,
+      "meltingPoint": 2623,
+      "boilingPoint": 4639,
+      "density": 10.22,
+      "atomicNumber": 42,
+      "abundance": 0.000227
+    },
+    {
+      "name": "Technetium",
+      "symbol": "Tc",
+      "atomicMass": 98,
+      "meltingPoint": 2157,
+      "boilingPoint": 4265,
+      "density": 11,
+      "atomicNumber": 43,
+      "abundance": 0.00000000015
+    },
+    {
+      "name": "Ruthenium",
+      "symbol": "Ru",
+      "atomicMass": 101.07,
+      "meltingPoint": 2334,
+      "boilingPoint": 4150,
+      "density": 12.37,
+      "atomicNumber": 44,
+      "abundance": 0.0000001
+    },
+    {
+      "name": "Rhodium",
+      "symbol": "Rh",
+      "atomicMass": 102.9055,
+      "meltingPoint": 1964,
+      "boilingPoint": 3695,
+      "density": 12.41,
+      "atomicNumber": 45,
+      "abundance": 0.0000001
+    },
+    {
+      "name": "Palladium",
+      "symbol": "Pd",
+      "atomicMass": 106.42,
+      "meltingPoint": 1554.9,
+      "boilingPoint": 2963,
+      "density": 12.02,
+      "atomicNumber": 46,
+      "abundance": 0.0000015
+    },
+    {
+      "name": "Silver",
+      "symbol": "Ag",
+      "atomicMass": 107.8682,
+      "meltingPoint": 961.78,
+      "boilingPoint": 2162,
+      "density": 10.49,
+      "atomicNumber": 47,
+      "abundance": 0.0000075
+    },
+    {
+      "name": "Cadmium",
+      "symbol": "Cd",
+      "atomicMass": 112.414,
+      "meltingPoint": 321.07,
+      "boilingPoint": 767,
+      "density": 8.65,
+      "atomicNumber": 48,
+      "abundance": 0.000015
+    },
+    {
+      "name": "Indium",
+      "symbol": "In",
+      "atomicMass": 114.818,
+      "meltingPoint": 156.6,
+      "boilingPoint": 2072,
+      "density": 7.31,
+      "atomicNumber": 49,
+      "abundance": 0.000025
+    },
+    {
+      "name": "Tin",
+      "symbol": "Sn",
+      "atomicMass": 118.71,
+      "meltingPoint": 231.93,
+      "boilingPoint": 2602,
+      "density": 7.287,
+      "atomicNumber": 50,
+      "abundance": 0.0000098
+    },
+    {
+      "name": "Antimony",
+      "symbol": "Sb",
+      "atomicMass": 121.76,
+      "meltingPoint": 630.63,
+      "boilingPoint": 1587,
+      "density": 6.685,
+      "atomicNumber": 51,
+      "abundance": 0.00002
+    },
+    {
+      "name": "Tellurium",
+      "symbol": "Te",
+      "atomicMass": 127.6,
+      "meltingPoint": 449.51,
+      "boilingPoint": 988,
+      "density": 6.232,
+      "atomicNumber": 52,
+      "abundance": 0.0000001
+    },
+    {
+      "name": "Iodine",
+      "symbol": "I",
+      "atomicMass": 126.90447,
+      "meltingPoint": 113.7,
+      "boilingPoint": 184.3,
+      "density": 4.93,
+      "atomicNumber": 53,
+      "abundance": 0.000045
+    },
+    {
+      "name": "Xenon",
+      "symbol": "Xe",
+      "atomicMass": 131.293,
+      "meltingPoint": -111.8,
+      "boilingPoint": -108,
+      "density": 0.005887,
+      "atomicNumber": 54,
+      "abundance": 0.000000003
+    },
+    {
+      "name": "Cesium",
+      "symbol": "Cs",
+      "atomicMass": 132.90545196,
+      "meltingPoint": 28.5,
+      "boilingPoint": 671,
+      "density": 1.873,
+      "atomicNumber": 55,
+      "abundance": 0.000003
+    },
+    {
+      "name": "Barium",
+      "symbol": "Ba",
+      "atomicMass": 137.327,
+      "meltingPoint": 727,
+      "boilingPoint": 1870,
+      "density": 3.62,
+      "atomicNumber": 56,
+      "abundance": 0.000425
+    },
+    {
+      "name": "Lanthanum",
+      "symbol": "La",
+      "atomicMass": 138.90547,
+      "meltingPoint": 921,
+      "boilingPoint": 3464,
+      "density": 6.145,
+      "atomicNumber": 57,
+      "abundance": 0.000039
+    },
+    {
+      "name": "Cerium",
+      "symbol": "Ce",
+      "atomicMass": 140.116,
+      "meltingPoint": 798,
+      "boilingPoint": 3360,
+      "density": 6.77,
+      "atomicNumber": 58,
+      "abundance": 0.0000665
+    },
+    {
+      "name": "Praseodymium",
+      "symbol": "Pr",
+      "atomicMass": 140.90766,
+      "meltingPoint": 931,
+      "boilingPoint": 3520,
+      "density": 6.773,
+      "atomicNumber": 59,
+      "abundance": 0.0000092
+    },
+    {
+      "name": "Neodymium",
+      "symbol": "Nd",
+      "atomicMass": 144.242,
+      "meltingPoint": 1021,
+      "boilingPoint": 3100,
+      "density": 7.007,
+      "atomicNumber": 60,
+      "abundance": 0.0000415
+    },
+    {
+      "name": "Promethium",
+      "symbol": "Pm",
+      "atomicMass": 145,
+      "meltingPoint": 1315,
+      "boilingPoint": 3273,
+      "density": 7.26,
+      "atomicNumber": 61,
+      "abundance": 0
+    },
+    {
+      "name": "Samarium",
+      "symbol": "Sm",
+      "atomicMass": 150.36,
+      "meltingPoint": 1345,
+      "boilingPoint": 2067,
+      "density": 7.52,
+      "atomicNumber": 62,
+      "abundance": 0.00000705
+    },
+    {
+      "name": "Europium",
+      "symbol": "Eu",
+      "atomicMass": 151.964,
+      "meltingPoint": 1099,
+      "boilingPoint": 1802,
+      "density": 5.243,
+      "atomicNumber": 63,
+      "abundance": 0.000002
+    },
+    {
+      "name": "Gadolinium",
+      "symbol": "Gd",
+      "atomicMass": 157.25,
+      "meltingPoint": 1585,
+      "boilingPoint": 3546,
+      "density": 7.895,
+      "atomicNumber": 64,
+      "abundance": 0.0000062
+    },
+    {
+      "name": "Terbium",
+      "symbol": "Tb",
+      "atomicMass": 158.92535,
+      "meltingPoint": 1629,
+      "boilingPoint": 3503,
+      "density": 8.229,
+      "atomicNumber": 65,
+      "abundance": 0.0000012
+    },
+    {
+      "name": "Dysprosium",
+      "symbol": "Dy",
+      "atomicMass": 162.5,
+      "meltingPoint": 1680,
+      "boilingPoint": 2840,
+      "density": 8.55,
+      "atomicNumber": 66,
+      "abundance": 0.0000052
+    },
+    {
+      "name": "Holmium",
+      "symbol": "Ho",
+      "atomicMass": 164.93033,
+      "meltingPoint": 1734,
+      "boilingPoint": 2993,
+      "density": 8.795,
+      "atomicNumber": 67,
+      "abundance": 0.0000013
+    },
+    {
+      "name": "Erbium",
+      "symbol": "Er",
+      "atomicMass": 167.259,
+      "meltingPoint": 1802,
+      "boilingPoint": 3141,
+      "density": 9.066,
+      "atomicNumber": 68,
+      "abundance": 0.0000035
+    },
+    {
+      "name": "Thulium",
+      "symbol": "Tm",
+      "atomicMass": 168.93422,
+      "meltingPoint": 1818,
+      "boilingPoint": 2223,
+      "density": 9.321,
+      "atomicNumber": 69,
+      "abundance": 0.00000052
+    },
+    {
+      "name": "Ytterbium",
+      "symbol": "Yb",
+      "atomicMass": 173.045,
+      "meltingPoint": 1097,
+      "boilingPoint": 1469,
+      "density": 6.965,
+      "atomicNumber": 70,
+      "abundance": 0.0000032
+    },
+    {
+      "name": "Lutetium",
+      "symbol": "Lu",
+      "atomicMass": 174.9668,
+      "meltingPoint": 1925,
+      "boilingPoint": 3675,
+      "density": 9.84,
+      "atomicNumber": 71,
+      "abundance": 0.00000008
+    },
+    {
+      "name": "Hafnium",
+      "symbol": "Hf",
+      "atomicMass": 178.49,
+      "meltingPoint": 2233,
+      "boilingPoint": 4603,
+      "density": 13.31,
+      "atomicNumber": 72,
+      "abundance": 0.000003
+    },
+    {
+      "name": "Tantalum",
+      "symbol": "Ta",
+      "atomicMass": 180.94788,
+      "meltingPoint": 3017,
+      "boilingPoint": 5458,
+      "density": 16.69,
+      "atomicNumber": 73,
+      "abundance": 0.000002
+    },
+    {
+      "name": "Tungsten",
+      "symbol": "W",
+      "atomicMass": 183.84,
+      "meltingPoint": 3422,
+      "boilingPoint": 5930,
+      "density": 19.25,
+      "atomicNumber": 74,
+      "abundance": 0.00000125
+    },
+    {
+      "name": "Rhenium",
+      "symbol": "Re",
+      "atomicMass": 186.207,
+      "meltingPoint": 3186,
+      "boilingPoint": 5596,
+      "density": 21.02,
+      "atomicNumber": 75,
+      "abundance": 0.00000007
+    },
+    {
+      "name": "Osmium",
+      "symbol": "Os",
+      "atomicMass": 190.23,
+      "meltingPoint": 3033,
+      "boilingPoint": 5012,
+      "density": 22.59,
+      "atomicNumber": 76,
+      "abundance": 0.00000015
+    },
+    {
+      "name": "Iridium",
+      "symbol": "Ir",
+      "atomicMass": 192.217,
+      "meltingPoint": 2446,
+      "boilingPoint": 4428,
+      "density": 22.56,
+      "atomicNumber": 77,
+      "abundance": 0.0000001
+    },
+    {
+      "name": "Platinum",
+      "symbol": "Pt",
+      "atomicMass": 195.084,
+      "meltingPoint": 1768.3,
+      "boilingPoint": 3825,
+      "density": 21.45,
+      "atomicNumber": 78,
+      "abundance": 0.0000005
+    },
+    {
+      "name": "Gold",
+      "symbol": "Au",
+      "atomicMass": 196.966569,
+      "meltingPoint": 1064.18,
+      "boilingPoint": 2856,
+      "density": 19.32,
+      "atomicNumber": 79,
+      "abundance": 0.0000004
+    },
+    {
+      "name": "Mercury",
+      "symbol": "Hg",
+      "atomicMass": 200.592,
+      "meltingPoint": -38.83,
+      "boilingPoint": 356.73,
+      "density": 13.5336,
+      "atomicNumber": 80,
+      "abundance": 0.00000085
+    },
+    {
+      "name": "Thallium",
+      "symbol": "Tl",
+      "atomicMass": 204.38,
+      "meltingPoint": 304,
+      "boilingPoint": 1473,
+      "density": 11.85,
+      "atomicNumber": 81,
+      "abundance": 0.00000085
+    },
+    {
+      "name": "Lead",
+      "symbol": "Pb",
+      "atomicMass": 207.2,
+      "meltingPoint": 327.46,
+      "boilingPoint": 1749,
+      "density": 11.34,
+      "atomicNumber": 82,
+      "abundance": 0.000014
+    },
+    {
+      "name": "Bismuth",
+      "symbol": "Bi",
+      "atomicMass": 208.9804,
+      "meltingPoint": 271.5,
+      "boilingPoint": 1564,
+      "density": 9.78,
+      "atomicNumber": 83,
+      "abundance": 0.00000085
+    },
+    {
+      "name": "Polonium",
+      "symbol": "Po",
+      "atomicMass": 209,
+      "meltingPoint": 254,
+      "boilingPoint": 962,
+      "density": 9.196,
+      "atomicNumber": 84,
+      "abundance": 0
+    },
+    {
+      "name": "Astatine",
+      "symbol": "At",
+      "atomicMass": 210,
+      "meltingPoint": 302,
+      "boilingPoint": 337,
+      "density": 7,
+      "atomicNumber": 85,
+      "abundance": 0
+    },
+    {
+      "name": "Radon",
+      "symbol": "Rn",
+      "atomicMass": 222,
+      "meltingPoint": -71,
+      "boilingPoint": -61.7,
+      "density": 0.00973,
+      "atomicNumber": 86,
+      "abundance": 0
+    },
+    {
+      "name": "Francium",
+      "symbol": "Fr",
+      "atomicMass": 223,
+      "meltingPoint": 27,
+      "boilingPoint": 677,
+      "density": 1.87,
+      "atomicNumber": 87,
+      "abundance": 0
+    },
+    {
+      "name": "Radium",
+      "symbol": "Ra",
+      "atomicMass": 226,
+      "meltingPoint": 700,
+      "boilingPoint": 1737,
+      "density": 5.5,
+      "atomicNumber": 88,
+      "abundance": 0
+    },
+    {
+      "name": "Actinium",
+      "symbol": "Ac",
+      "atomicMass": 227,
+      "meltingPoint": 1050,
+      "boilingPoint": 3200,
+      "density": 10.07,
+      "atomicNumber": 89,
+      "abundance": 0
+    },
+    {
+      "name": "Thorium",
+      "symbol": "Th",
+      "atomicMass": 232.0377,
+      "meltingPoint": 1750,
+      "boilingPoint": 4788,
+      "density": 11.72,
+      "atomicNumber": 90,
+      "abundance": 0.0000096
+    },
+    {
+      "name": "Protactinium",
+      "symbol": "Pa",
+      "atomicMass": 231.03588,
+      "meltingPoint": 1568,
+      "boilingPoint": 4027,
+      "density": 15.37,
+      "atomicNumber": 91,
+      "abundance": 0
+    },
+    {
+      "name": "Uranium",
+      "symbol": "U",
+      "atomicMass": 238.02891,
+      "meltingPoint": 1132.2,
+      "boilingPoint": 4131,
+      "density": 18.95,
+      "atomicNumber": 92,
+      "abundance": 0.0000027
+    },
+    {
+      "name": "Neptunium",
+      "symbol": "Np",
+      "atomicMass": 237,
+      "meltingPoint": 644,
+      "boilingPoint": 4000,
+      "density": 20.45,
+      "atomicNumber": 93,
+      "abundance": 0
+    },
+    {
+      "name": "Plutonium",
+      "symbol": "Pu",
+      "atomicMass": 244,
+      "meltingPoint": 640,
+      "boilingPoint": 3228,
+      "density": 19.86,
+      "atomicNumber": 94,
+      "abundance": 0
+    },
+    {
+      "name": "Americium",
+      "symbol": "Am",
+      "atomicMass": 243,
+      "meltingPoint": 1176,
+      "boilingPoint": 2607,
+      "density": 13.69,
+      "atomicNumber": 95,
+      "abundance": 0
+    },
+    {
+      "name": "Curium",
+      "symbol": "Cm",
+      "atomicMass": 247,
+      "meltingPoint": 1345,
+      "boilingPoint": 3110,
+      "density": 13.51,
+      "atomicNumber": 96,
+      "abundance": 0
+    },
+    {
+      "name": "Berkelium",
+      "symbol": "Bk",
+      "atomicMass": 247,
+      "meltingPoint": 986,
+      "boilingPoint": 2627,
+      "density": 14.79,
+      "atomicNumber": 97,
+      "abundance": 0
+    },
+    {
+      "name": "Californium",
+      "symbol": "Cf",
+      "atomicMass": 251,
+      "meltingPoint": 900,
+      "boilingPoint": 1470,
+      "density": 15.1,
+      "atomicNumber": 98,
+      "abundance": 0
+    },
+    {
+      "name": "Einsteinium",
+      "symbol": "Es",
+      "atomicMass": 252,
+      "meltingPoint": 860,
+      "boilingPoint": "Unknown",
+      "density": 8.84,
+      "atomicNumber": 99,
+      "abundance": 0
+    },
+    {
+      "name": "Fermium",
+      "symbol": "Fm",
+      "atomicMass": 257,
+      "meltingPoint": 1527,
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 100,
+      "abundance": 0
+    },
+    {
+      "name": "Mendelevium",
+      "symbol": "Md",
+      "atomicMass": 258,
+      "meltingPoint": 827,
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 101,
+      "abundance": 0
+    },
+    {
+      "name": "Nobelium",
+      "symbol": "No",
+      "atomicMass": 259,
+      "meltingPoint": 827,
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 102,
+      "abundance": 0
+    },
+    {
+      "name": "Lawrencium",
+      "symbol": "Lr",
+      "atomicMass": 266,
+      "meltingPoint": 1627,
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 103,
+      "abundance": 0
+    },
+    {
+      "name": "Rutherfordium",
+      "symbol": "Rf",
+      "atomicMass": 267,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 104,
+      "abundance": 0
+    },
+    {
+      "name": "Dubnium",
+      "symbol": "Db",
+      "atomicMass": 268,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 105,
+      "abundance": 0
+    },
+    {
+      "name": "Seaborgium",
+      "symbol": "Sg",
+      "atomicMass": 269,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 106,
+      "abundance": 0
+    },
+    {
+      "name": "Bohrium",
+      "symbol": "Bh",
+      "atomicMass": 270,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 107,
+      "abundance": 0
+    },
+    {
+      "name": "Hassium",
+      "symbol": "Hs",
+      "atomicMass": 277,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 108,
+      "abundance": 0
+    },
+    {
+      "name": "Meitnerium",
+      "symbol": "Mt",
+      "atomicMass": 278,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 109,
+      "abundance": 0
+    },
+    {
+      "name": "Darmstadtium",
+      "symbol": "Ds",
+      "atomicMass": 281,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 110,
+      "abundance": 0
+    },
+    {
+      "name": "Roentgenium",
+      "symbol": "Rg",
+      "atomicMass": 282,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 111,
+      "abundance": 0
+    },
+    {
+      "name": "Copernicium",
+      "symbol": "Cn",
+      "atomicMass": 285,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 112,
+      "abundance": 0
+    },
+    {
+      "name": "Nihonium",
+      "symbol": "Nh",
+      "atomicMass": 286,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 113,
+      "abundance": 0
+    },
+    {
+      "name": "Flerovium",
+      "symbol": "Fl",
+      "atomicMass": 289,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 114,
+      "abundance": 0
+    },
+    {
+      "name": "Moscovium",
+      "symbol": "Mc",
+      "atomicMass": 290,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 115,
+      "abundance": 0
+    },
+    {
+      "name": "Livermorium",
+      "symbol": "Lv",
+      "atomicMass": 293,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 116,
+      "abundance": 0
+    },
+    {
+      "name": "Tennessine",
+      "symbol": "Ts",
+      "atomicMass": 294,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 117,
+      "abundance": 0
+    },
+    {
+      "name": "Oganesson",
+      "symbol": "Og",
+      "atomicMass": 294,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 118,
+      "abundance": 0
+    },
+    {
+      "name": "Mithral",
+      "symbol": "Mth",
+      "atomicMass": 295,
+      "meltingPoint": 1945,
+      "boilingPoint": 4420,
+      "density": 2.34,
+      "atomicNumber": 119,
+      "abundance": 0
+    },
+    {
+      "name": "Adamantine",
+      "symbol": "Adm",
+      "atomicMass": 296,
+      "meltingPoint": 2420,
+      "boilingPoint": 4900,
+      "density": 19.5,
+      "atomicNumber": 120,
+      "abundance": 0
+    },
+    {
+      "name": "Naquadah",
+      "symbol": "Nqd",
+      "atomicMass": 297,
+      "meltingPoint": 1539,
+      "boilingPoint": 5500,
+      "density": 20.25,
+      "atomicNumber": 121,
+      "abundance": 0
+    },
+    {
+      "name": "Trinium",
+      "symbol": "Trn",
+      "atomicMass": 298,
+      "meltingPoint": 1200,
+      "boilingPoint": 3400,
+      "density": 3.52,
+      "atomicNumber": 122,
+      "abundance": 0
+    },
+    {
+      "name": "Duranium",
+      "symbol": "Drn",
+      "atomicMass": 299,
+      "meltingPoint": 2550,
+      "boilingPoint": 7200,
+      "density": 15.1,
+      "atomicNumber": 123,
+      "abundance": 0
+    },
+    {
+      "name": "Tritanium",
+      "symbol": "Ttn",
+      "atomicMass": 300,
+      "meltingPoint": 2760,
+      "boilingPoint": 7300,
+      "density": 16.65,
+      "atomicNumber": 124,
+      "abundance": 0
+    },
+    {
+      "name": "Neutronium",
+      "symbol": "Ntn",
+      "atomicMass": 301,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": 16855,
+      "atomicNumber": 125,
+      "abundance": 0
+    },
+    {
+      "name": "Trelium-D",
+      "symbol": "Tld",
+      "atomicMass": 302,
+      "meltingPoint": 1600,
+      "boilingPoint": 5000,
+      "density": 9.7,
+      "atomicNumber": 126,
+      "abundance": 0
+    },
+    {
+      "name": "Dilithium",
+      "symbol": "Dlt",
+      "atomicMass": 303,
+      "meltingPoint": "Sublimes",
+      "boilingPoint": "Unknown",
+      "density": 4.5,
+      "atomicNumber": 127,
+      "abundance": 0
+    },
+    {
+      "name": "Trilithium",
+      "symbol": "Tlt",
+      "atomicMass": 304,
+      "meltingPoint": "Unknown",
+      "boilingPoint": "Unknown",
+      "density": "Unknown",
+      "atomicNumber": 128,
+      "abundance": 0
+    },
+    {
+      "name": "Latinum",
+      "symbol": "Ltm",
+      "atomicMass": 305,
+      "meltingPoint": 1613,
+      "boilingPoint": "Unknown",
+      "density": 9.8,
+      "atomicNumber": 129,
+      "abundance": 0
+    }
+  ]
+}

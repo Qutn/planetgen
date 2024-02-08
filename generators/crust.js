@@ -1,5 +1,5 @@
 async function loadElementsData() {
-    const response = await fetch('generators/elements.json');
+    const response = await fetch('generators/elements_with_abundances.json');
     const data = await response.json();
     console.log(data); // Check the structure is as expected
     return data;
@@ -59,65 +59,60 @@ function calculateElementProbability(element, planetSize, orbitalRadius, starSiz
     return probability;
 }
 
-// probability functions
-// 
 function baseProbability(element) {
-    const atomicMass = element.atomicMass;
-    let probability;
-
-    // Custom adjustments for the most common elements in the crust
-    switch (element.symbol) {
-        case 'O': // Oxygen
-            probability = 0.461;
-            break;
-        case 'Si': // Silicon
-            probability = 0.282;
-            break;
-        case 'Al': // Aluminium
-            probability = 0.082;
-            break;
-        case 'Fe': // Iron
-            probability = 0.056;
-            break;
-        case 'Ca': // Calcium
-            probability = 0.041;
-            break;
-        case 'Na': // Sodium
-            probability = 0.023;
-            break;
-        case 'Mg': // Magnesium
-            probability = 0.023;
-            break;
-        case 'K': // Potassium
-            probability = 0.020;
-            break;
-        case 'Al': //aluminium
-            probability = 0.082;
-            break;
-        case 'Ti': // Titanium
-            probability = 0.005;
-            break;
-        case 'H': // Hydrogen
-            probability = 0.0014;
-            break;
-        default:
-            // For other elements, use the original probability calculation
-            probability = 1 / atomicMass;
-
-            // Adjust for the iron peak
-            if (atomicMass >= 55 && atomicMass <= 58) {
-                probability *= 2;
-            }
-
-            // Adjust for the rarity of heavier elements
-            if (atomicMass > 200) {
-                probability *= 0.1;
-            }
-            break;
+    if (element.abundance !== undefined && element.abundance !== null) {
+        // Return the abundance as the base probability
+        return element.abundance;
+    } else {
+        // Handle the case where the element has no abundance data
+        console.warn(`No abundance data found for element: ${element.symbol}`);
+        return 0;
     }
-
-    return probability;
 }
+
+function quadraticCurve(Z, startZ, endZ, peakVal, endVal) {
+    // Assuming the peak is at Carbon (Z=6), adjust the constants accordingly
+    const a = (endVal - peakVal) / Math.pow((startZ - endZ), 2); // Quadratic coefficient
+    const b = -2 * a * endZ; // Linear coefficient
+    const c = peakVal - (a * Math.pow(startZ, 2)) - (b * startZ); // Constant term
+
+    return (a * Math.pow(Z, 2)) + (b * Z) + c;
+}
+
+
+function linearInterpolation(Z, startZ, endZ, startVal, endVal) {
+    const slope = (endVal - startVal) / (endZ - startZ);
+    return startVal + slope * (Z - startZ);
+}
+
+function exponentialDecay(Z, startZ, startVal, endVal) {
+    const decayRate = 30; // Adjust this value to control the decay rate
+    const decay = Math.exp((Z - startZ) / decayRate) * (startVal - endVal);
+  //  console.log(`Exponential decay for Z=${Z}: ${decay}`);
+    return startVal - decay;
+}
+
+
+
+function handleFantasyElements(Z, name) {
+    // Define a basic mapping of fantasy/sci-fi elements 
+    const sciFiElementProbabilities = {
+        'Mithral': -6, // Extremely rare
+        'Adamantine': -6.5, // Even rarer
+        'Naquadah': -5.5, // Rare
+        'Trinium': -5, // Uncommon
+        'Duranium': -4, // Uncommon, but slightly more so than Trinium
+        'Tritanium': -4.5, // Rare
+        'Neutronium': -7, // Extremely rare, almost theoretical
+        'Trelium-D': -4.8, // Rare
+        'Dilithium': -6.7, // Very rare
+        'Trilithium': -6.7, // Very rare
+        'Latinum': -5.2, // Rare
+    };
+
+    return sciFiElementProbabilities[name] || -2; // Default low log probability for unspecified elements
+}
+
 
 
 
@@ -137,7 +132,7 @@ function adjustForStarSize(element, starSize) {
     adjustmentFactor = Math.max(adjustmentFactor, 0.1);
 
     // Log the adjustment factor for debugging
-    console.log(`Element: ${element.name}, Star Size: ${starSize}, Adjustment Factor: ${adjustmentFactor}`);
+    //console.log(`Element: ${element.name}, Star Size: ${starSize}, Adjustment Factor: ${adjustmentFactor}`);
 
     return adjustmentFactor;
 }
@@ -176,10 +171,35 @@ function calculateIceLine(starLuminosity) {
 }
 
 
-function adjustForPlanetSize(element, planetSize) {
-    // Logic to adjust probability based on planet size
-    return 1; // Placeholder
+function adjustForPlanetSize(elementAbundanceFraction, planetSize) {
+    // Constants
+    const earthCrustMassKg = 2.83e22; // Approximate mass of Earth's crust in kg
+    const oxygenPercentage = 0.461; // Fraction of oxygen in Earth's crust
+    
+    // Calculate mass of oxygen in Earth's crust
+    const oxygenMassInEarthCrust = earthCrustMassKg * oxygenPercentage;
+    
+    // Calculate the scaling factor from fractional abundance to kg
+    const scalingFactor = earthCrustMassKg / oxygenPercentage; // Adjusted to correct for the total crust mass
+
+    // Scale the element's abundance fraction to kilograms using the scaling factor
+    const elementMassInEarthCrustKg = elementAbundanceFraction * scalingFactor;
+    
+    // Adjust the scaled mass for planet size
+    // Assuming the mass of the planet's crust scales with the cube of its radius relative to Earth
+    const planetCrustMassAdjustmentFactor = Math.pow(planetSize, 3);
+    
+    // Calculate adjusted element mass for the given planet size
+    const adjustedElementMass = elementMassInEarthCrustKg * planetCrustMassAdjustmentFactor;
+
+    // Calculate the adjustment factor for the element based on its abundance and the planet size
+    const adjustmentFactor = adjustedElementMass / elementMassInEarthCrustKg;
+
+    return adjustmentFactor;
 }
+
+
+
 
 // Implement the estimation functions based on astrophysical and geological models
 function estimateCoreSize(planetRadius) { /* ... */ }
@@ -193,3 +213,4 @@ function assessCoreState(planetRadius, starMass, distanceFromStar) { /* ... */ }
 function assessTectonicActivity(planetMantleSize) { /* ... */ }
 
 export { generateGeologicalData, determinePlanetaryComposition };
+export const elementsData = await loadElementsData();

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, getPlanetAtmosphere, determinePlanetType  } from './generators/orbit.js';
+import { elementsData } from './generators/crust.js';
 
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -108,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         displayHabitablePlanetDetails(currentTargetIndex - 1);
      //   displayElementalComposition(currentTargetIndex - 1); // Display composition for the newly selected planet
 
-
     });
     
     document.getElementById('snapToStar').addEventListener('click', () => {
@@ -118,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Optionally, clear the display or skip displaying conversions for the star
         displayHabitablePlanetDetails(currentTargetIndex - 1);
      //   displayElementalComposition(currentTargetIndex - 1); // Display composition for the newly selected planet
-
     });
     
     document.getElementById('nextPlanet').addEventListener('click', () => {
@@ -132,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         displayHabitablePlanetDetails(currentTargetIndex - 1);
       //  displayElementalComposition(currentTargetIndex - 1); // Display composition for the newly selected planet
-
     });
 
     document.getElementById('zoomToPlanetButton').addEventListener('click', function() {
@@ -424,7 +422,7 @@ function animateMoons() {
             planetMesh.children.forEach((moon) => {
                 if (moon.name.startsWith('moon')) {
                     const orbitData = moon.userData.orbit;
-                    const angle = (Date.now() * orbitData.speed + orbitData.phase) % (Math.PI * 2);
+                    const angle = (Date.now() * orbitData.speed * 16 + orbitData.phase) % (Math.PI * 2);
 
                     // Update position based on stored orbital parameters
                     moon.position.set(
@@ -781,12 +779,16 @@ async function displayHabitablePlanetDetails(index) {
     const localDaysPerOrbitValue = localDaysPerOrbit(planet.rotationSpeed, planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
 
     let elementDetails = `
-    <div class="element-details-header">Elemental Composition for ${planetName}</div>
+    <div class="element-details-header">Elemental Composition of ${planetName}'s Crust</div>
     <div class="element-details-container">
     `;
-    Object.entries(planet.composition).forEach(([element, mass]) => {
-        elementDetails += `<div class="element-detail">${element}: ${mass.toExponential(2)} kg</div>`;
+    Object.entries(planet.composition).forEach(([elementSymbol, mass]) => {
+        // Find the element name using the symbol
+        const elementObj = elementsData.elements.find(element => element.symbol === elementSymbol);
+        const elementName = elementObj ? elementObj.name : elementSymbol; // Fallback to symbol if name not found
+        elementDetails += `<div class="element-detail">${elementName}: ${mass.toExponential(2)} kg</div>`;
     });
+
     elementDetails += `</div>`;
 
     const planetDetailsContent = `
@@ -803,14 +805,67 @@ async function displayHabitablePlanetDetails(index) {
         </div>
     `;
 
-    habitablePlanetDiv.innerHTML = `${planetDetailsContent}${elementDetails}`;
+    const graphContainer = `
+    <div class="graph-container">
+        <canvas id="elementAbundanceGraph"></canvas>
+    </div>
+`;
+
+    habitablePlanetDiv.innerHTML = `${planetDetailsContent}${elementDetails}${graphContainer}`;
+    console.log(document.getElementById('elementAbundanceGraph'));
+    plotElementProbabilityGraph(planet.composition);
+
 }
+
+function plotElementProbabilityGraph(planetComposition) {
+    // Prepare data for plotting
+    const elementSymbols = Object.keys(planetComposition);
+    const masses = elementSymbols.map(symbol => planetComposition[symbol]);
+
+    // Prepare labels (using element names if possible, fallback to symbol)
+    const labels = elementSymbols.map(symbol => {
+        const elementObj = elementsData.elements.find(element => element.symbol === symbol);
+        return elementObj ? elementObj.name : symbol; // Use element name if available
+    });
+
+    // Plot the graph
+    const ctx = document.getElementById('elementAbundanceGraph').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar', // or 'line', 'doughnut', etc.
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Elemental Composition (kg)',
+                data: masses,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: false, // Important for logarithmic scale
+                    type: 'logarithmic',
+                    position: 'left',
+                    ticks: {
+                        callback: function(value, index, values) {
+                            // Return the value as it is or format it more nicely
+                            return Number(value.toString()); // Better formatting for logarithmic scale
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 
 
 function generateSystemName() {
     // All possible characters in the naming scheme
     const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let name = 'P'; // Start with 'P' as per your requirement
+    let name = 'P'; // Start with 'P' 
 
     // Generate the next 3 alphanumeric characters
     for (let i = 0; i < 3; i++) {
