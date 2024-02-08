@@ -36,12 +36,18 @@ async function determinePlanetaryComposition(planetSize, orbitalRadius, starSize
     const elements = elementsData.elements;
 
     elements.forEach(element => {
-        let probability = calculateElementProbability(element, planetSize, orbitalRadius, starSize, starMass);
-        composition[element.symbol] = probability;
+        let baseProb = baseProbability(element);
+        let starSizeAdjustment = adjustForStarSize(element, starSize);
+        let orbitalRadiusAdjustment = adjustForOrbitalRadius(element, orbitalRadius);
+        let planetSizeAdjustment = adjustForPlanetSize(element.abundance, planetSize); // Ensure this uses final abundance value
+        let adjustedProbability = baseProb * starSizeAdjustment * orbitalRadiusAdjustment * planetSizeAdjustment;
+
+        composition[element.symbol] = adjustedProbability;
     });
 
     return composition;
 }
+
 
 function calculateElementProbability(element, planetSize, orbitalRadius, starSize, starMass) {
     // Initialize a base probability
@@ -54,7 +60,8 @@ function calculateElementProbability(element, planetSize, orbitalRadius, starSiz
     probability *= adjustForOrbitalRadius(element, orbitalRadius);
 
     // Adjust for planet size and gravitational differentiation
-    probability *= adjustForPlanetSize(element, planetSize);
+    let planetSizeAdjustment = adjustForPlanetSize(element.abundance, planetSize, element.name, element.symbol); // Assuming element.abundance is the fraction
+    probability *= planetSizeAdjustment;
 
     return probability;
 }
@@ -134,7 +141,8 @@ function adjustForStarSize(element, starSize) {
     // Log the adjustment factor for debugging
     //console.log(`Element: ${element.name}, Star Size: ${starSize}, Adjustment Factor: ${adjustmentFactor}`);
 
-    return adjustmentFactor;
+    //return adjustmentFactor;
+    return 1;
 }
 
 function adjustForOrbitalRadius(element, orbitalRadius, starLuminosity) {
@@ -161,7 +169,8 @@ function adjustForOrbitalRadius(element, orbitalRadius, starLuminosity) {
     // Further adjustments can be made based on additional criteria
     // For example, adjusting for specific elements based on their unique properties
 
-    return adjustmentFactor;
+   // return adjustmentFactor;
+   return 1;
 }
 
 function calculateIceLine(starLuminosity) {
@@ -171,32 +180,45 @@ function calculateIceLine(starLuminosity) {
 }
 
 
-function adjustForPlanetSize(elementAbundanceFraction, planetSize) {
+function adjustForPlanetSize(elementAbundanceFraction, planetSize, element) {
     // Constants
     const earthCrustMassKg = 2.83e22; // Approximate mass of Earth's crust in kg
     const oxygenPercentage = 0.461; // Fraction of oxygen in Earth's crust
-    
+    const elements = elementsData.elements
+  //  console.log(`earthCrustMassKg: ${earthCrustMassKg}, oxygenPercentage: ${oxygenPercentage}`);
+
     // Calculate mass of oxygen in Earth's crust
     const oxygenMassInEarthCrust = earthCrustMassKg * oxygenPercentage;
+  //  console.log(`oxygenMassInEarthCrust: ${oxygenMassInEarthCrust}`);
     
     // Calculate the scaling factor from fractional abundance to kg
     const scalingFactor = earthCrustMassKg / oxygenPercentage; // Adjusted to correct for the total crust mass
+    console.log(`scalingFactor: ${scalingFactor}`);
 
     // Scale the element's abundance fraction to kilograms using the scaling factor
     const elementMassInEarthCrustKg = elementAbundanceFraction * scalingFactor;
+    //console.log(`elementAbundanceFraction: ${element.name} = ${elementAbundanceFraction}, Element Mass in Kg: ${elementMassInEarthCrustKg}`);
     
     // Adjust the scaled mass for planet size
     // Assuming the mass of the planet's crust scales with the cube of its radius relative to Earth
     const planetCrustMassAdjustmentFactor = Math.pow(planetSize, 3);
+    console.log(`planetSize: ${planetSize}, planetCrustMassAdjustmentFactor: ${planetCrustMassAdjustmentFactor}`);
     
     // Calculate adjusted element mass for the given planet size
     const adjustedElementMass = elementMassInEarthCrustKg * planetCrustMassAdjustmentFactor;
+    console.log(`adjustedElementMass: ${adjustedElementMass}`);
 
     // Calculate the adjustment factor for the element based on its abundance and the planet size
-    const adjustmentFactor = adjustedElementMass / elementMassInEarthCrustKg;
+    const adjustmentFactor = adjustedElementMass // elementMassInEarthCrustKg;
+    console.log(`adjustmentFactor: ${adjustmentFactor}`);
+
+    if (isNaN(adjustmentFactor)) {
+        console.error('Adjustment factor calculation resulted in NaN. Check inputs and calculations.');
+    }
 
     return adjustmentFactor;
 }
+
 
 
 
