@@ -193,7 +193,7 @@ function adjustForPlanetSize(elementAbundanceFraction, planetSize, element) {
     
     // Calculate the scaling factor from fractional abundance to kg
     const scalingFactor = earthCrustMassKg / oxygenPercentage; // Adjusted to correct for the total crust mass
-    console.log(`scalingFactor: ${scalingFactor}`);
+    //console.log(`scalingFactor: ${scalingFactor}`);
 
     // Scale the element's abundance fraction to kilograms using the scaling factor
     const elementMassInEarthCrustKg = elementAbundanceFraction * scalingFactor;
@@ -202,18 +202,18 @@ function adjustForPlanetSize(elementAbundanceFraction, planetSize, element) {
     // Adjust the scaled mass for planet size
     // Assuming the mass of the planet's crust scales with the cube of its radius relative to Earth
     const planetCrustMassAdjustmentFactor = Math.pow(planetSize, 3);
-    console.log(`planetSize: ${planetSize}, planetCrustMassAdjustmentFactor: ${planetCrustMassAdjustmentFactor}`);
+    //console.log(`planetSize: ${planetSize}, planetCrustMassAdjustmentFactor: ${planetCrustMassAdjustmentFactor}`);
     
     // Calculate adjusted element mass for the given planet size
     const adjustedElementMass = elementMassInEarthCrustKg * planetCrustMassAdjustmentFactor;
-    console.log(`adjustedElementMass: ${adjustedElementMass}`);
+    //console.log(`adjustedElementMass: ${adjustedElementMass}`);
 
     // Calculate the adjustment factor for the element based on its abundance and the planet size
     const adjustmentFactor = adjustedElementMass // elementMassInEarthCrustKg;
-    console.log(`adjustmentFactor: ${adjustmentFactor}`);
+    //console.log(`adjustmentFactor: ${adjustmentFactor}`);
 
     if (isNaN(adjustmentFactor)) {
-        console.error('Adjustment factor calculation resulted in NaN. Check inputs and calculations.');
+    //    console.error('Adjustment factor calculation resulted in NaN. Check inputs and calculations.');
     }
 
     return adjustmentFactor;

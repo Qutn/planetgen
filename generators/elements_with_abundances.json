@@ -608,7 +608,7 @@
       "boilingPoint": 3273,
       "density": 7.26,
       "atomicNumber": 61,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Samarium",
@@ -838,7 +838,7 @@
       "boilingPoint": 962,
       "density": 9.196,
       "atomicNumber": 84,
-      "abundance": 0
+      "abundance": 0.0000000000002
     },
     {
       "name": "Astatine",
@@ -848,7 +848,7 @@
       "boilingPoint": 337,
       "density": 7,
       "atomicNumber": 85,
-      "abundance": 0
+      "abundance": 0.0000000000001
     },
     {
       "name": "Radon",
@@ -858,7 +858,7 @@
       "boilingPoint": -61.7,
       "density": 0.00973,
       "atomicNumber": 86,
-      "abundance": 0
+      "abundance": 0.00000000000215
     },
     {
       "name": "Francium",
@@ -868,7 +868,7 @@
       "boilingPoint": 677,
       "density": 1.87,
       "atomicNumber": 87,
-      "abundance": 0
+      "abundance": 0.00000000000115
     },
     {
       "name": "Radium",
@@ -878,7 +878,7 @@
       "boilingPoint": 1737,
       "density": 5.5,
       "atomicNumber": 88,
-      "abundance": 0
+      "abundance": 0.000000000001
     },
     {
       "name": "Actinium",
@@ -888,7 +888,7 @@
       "boilingPoint": 3200,
       "density": 10.07,
       "atomicNumber": 89,
-      "abundance": 0
+      "abundance": 0.0000000000006
     },
     {
       "name": "Thorium",
@@ -908,7 +908,7 @@
       "boilingPoint": 4027,
       "density": 15.37,
       "atomicNumber": 91,
-      "abundance": 0
+      "abundance": 0.000000000001
     },
     {
       "name": "Uranium",
@@ -928,7 +928,7 @@
       "boilingPoint": 4000,
       "density": 20.45,
       "atomicNumber": 93,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Plutonium",
@@ -938,7 +938,7 @@
       "boilingPoint": 3228,
       "density": 19.86,
       "atomicNumber": 94,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Americium",
@@ -948,7 +948,7 @@
       "boilingPoint": 2607,
       "density": 13.69,
       "atomicNumber": 95,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Curium",
@@ -958,7 +958,7 @@
       "boilingPoint": 3110,
       "density": 13.51,
       "atomicNumber": 96,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Berkelium",
@@ -968,7 +968,7 @@
       "boilingPoint": 2627,
       "density": 14.79,
       "atomicNumber": 97,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Californium",
@@ -978,7 +978,7 @@
       "boilingPoint": 1470,
       "density": 15.1,
       "atomicNumber": 98,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Einsteinium",
@@ -988,7 +988,7 @@
       "boilingPoint": "Unknown",
       "density": 8.84,
       "atomicNumber": 99,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Fermium",
@@ -998,7 +998,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 100,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Mendelevium",
@@ -1008,7 +1008,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 101,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Nobelium",
@@ -1018,7 +1018,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 102,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Lawrencium",
@@ -1028,7 +1028,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 103,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Rutherfordium",
@@ -1038,7 +1038,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 104,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Dubnium",
@@ -1048,7 +1048,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 105,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Seaborgium",
@@ -1058,7 +1058,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 106,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Bohrium",
@@ -1068,7 +1068,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 107,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Hassium",
@@ -1078,7 +1078,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 108,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Meitnerium",
@@ -1088,7 +1088,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 109,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Darmstadtium",
@@ -1098,7 +1098,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 110,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Roentgenium",
@@ -1108,7 +1108,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 111,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Copernicium",
@@ -1118,7 +1118,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 112,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Nihonium",
@@ -1128,7 +1128,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 113,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Flerovium",
@@ -1138,7 +1138,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 114,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Moscovium",
@@ -1148,7 +1148,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 115,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Livermorium",
@@ -1158,7 +1158,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 116,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Tennessine",
@@ -1168,7 +1168,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 117,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Oganesson",
@@ -1178,7 +1178,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 118,
-      "abundance": 0
+      "abundance": 0.000000000000001
     },
     {
       "name": "Mithral",
@@ -1188,7 +1188,7 @@
       "boilingPoint": 4420,
       "density": 2.34,
       "atomicNumber": 119,
-      "abundance": 0
+      "abundance": 0.00000004
     },
     {
       "name": "Adamantine",
@@ -1198,7 +1198,7 @@
       "boilingPoint": 4900,
       "density": 19.5,
       "atomicNumber": 120,
-      "abundance": 0
+      "abundance": 0.000000002
     },
     {
       "name": "Naquadah",
@@ -1208,7 +1208,7 @@
       "boilingPoint": 5500,
       "density": 20.25,
       "atomicNumber": 121,
-      "abundance": 0
+      "abundance": 0.0000000001
     },
     {
       "name": "Trinium",
@@ -1218,7 +1218,7 @@
       "boilingPoint": 3400,
       "density": 3.52,
       "atomicNumber": 122,
-      "abundance": 0
+      "abundance": 0.000000001
     },
     {
       "name": "Duranium",
@@ -1228,7 +1228,7 @@
       "boilingPoint": 7200,
       "density": 15.1,
       "atomicNumber": 123,
-      "abundance": 0
+      "abundance": 0.000000001
     },
     {
       "name": "Tritanium",
@@ -1238,7 +1238,7 @@
       "boilingPoint": 7300,
       "density": 16.65,
       "atomicNumber": 124,
-      "abundance": 0
+      "abundance": 0.0000000001
     },
     {
       "name": "Neutronium",
@@ -1248,7 +1248,7 @@
       "boilingPoint": "Unknown",
       "density": 16855,
       "atomicNumber": 125,
-      "abundance": 0
+      "abundance": 0.000000000001
     },
     {
       "name": "Trelium-D",
@@ -1258,7 +1258,7 @@
       "boilingPoint": 5000,
       "density": 9.7,
       "atomicNumber": 126,
-      "abundance": 0
+      "abundance": 0.000000000001
     },
     {
       "name": "Dilithium",
@@ -1268,7 +1268,7 @@
       "boilingPoint": "Unknown",
       "density": 4.5,
       "atomicNumber": 127,
-      "abundance": 0
+      "abundance": 0.00000000001
     },
     {
       "name": "Trilithium",
@@ -1278,7 +1278,7 @@
       "boilingPoint": "Unknown",
       "density": "Unknown",
       "atomicNumber": 128,
-      "abundance": 0
+      "abundance": 0.000000000002
     },
     {
       "name": "Latinum",
@@ -1288,7 +1288,7 @@
       "boilingPoint": "Unknown",
       "density": 9.8,
       "atomicNumber": 129,
-      "abundance": 0
+      "abundance": 0.000000000005
     }
   ]
 }

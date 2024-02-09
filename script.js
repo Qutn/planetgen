@@ -830,34 +830,59 @@ function plotElementProbabilityGraph(planetComposition) {
 
     // Plot the graph
     const ctx = document.getElementById('elementAbundanceGraph').getContext('2d');
-    const chart = new Chart(ctx, {
-        type: 'bar', // or 'line', 'doughnut', etc.
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Elemental Composition (kg)',
-                data: masses,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: false, // Important for logarithmic scale
-                    type: 'logarithmic',
-                    position: 'left',
-                    ticks: {
-                        callback: function(value, index, values) {
-                            // Return the value as it is or format it more nicely
-                            return Number(value.toString()); // Better formatting for logarithmic scale
-                        }
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: labels.map(label => label.toUpperCase()), // Force x-axis labels to uppercase
+        datasets: [{
+            label: 'ELEMENTAL COMPOSITION (KG)', // Force dataset label to uppercase
+            data: masses,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: '#cc77ff',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        spanGaps: false,
+        cubicInterpolationMode: "default",
+        scales: {
+            y: {
+                beginAtZero: false,
+                type: 'logarithmic',
+                position: 'left',
+                ticks: {
+                    color: '#cc77ff',
+                    callback: function(value) {
+                        // Return the value formatted as exponential
+                        return Number(value).toExponential();
+                    }
+                }
+            },
+            x: {
+                ticks: {
+                    color: '#cc77ff',
+                    font: {
+                        family: 'Antonio', // Apply the font to x-axis labels
+                        size: 12 // Adjust as needed
                     }
                 }
             }
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#cc77ff',
+                    font: {
+                        family: 'Antonio',
+                        size: 14
+                    },
+                    textTransform: 'uppercase' // Although not a native Chart.js option, this demonstrates intent. CSS may be required for full effect.
+                }
+            }
         }
-    });
+    }
+});
+
 }
 
 

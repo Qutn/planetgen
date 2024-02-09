@@ -227,6 +227,10 @@ button {
     text-overflow: ellipsis;
 }
 
+#elementAbundanceGraph {
+    text-transform: uppercase;
+}
+
 .solar-system-title {
     text-align: center;
     margin-bottom: 20px; /* Adjust space below the title as needed */
