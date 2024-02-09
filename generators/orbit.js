@@ -275,7 +275,7 @@ function getPlanetSize(planetType) {
         case "Gas Giant":
             return getRandomValue(6, 15); 
         case "Ice Giant":
-            return getRandomValue(4, 8);
+            return getRandomValue(5, 14);
         case "Dwarf Planet":
             return getRandomValue(0.1, 0.3);
         default:
@@ -285,26 +285,42 @@ function getPlanetSize(planetType) {
 
 
 function getPlanetAtmosphere(planetType, orbitRadius, habitableZone) {
-    if (planetType === "Terrestrial" && isInHabitableZone(orbitRadius, habitableZone)) {
-        return "nitrogen_oxygen";
-    }
+    const atmospheres = {
+        'trace': ['trace'],
+        'carbon_dioxide': ['carbon_dioxide_type_I', 'carbon_dioxide_type_II'],
+        'hydrogen_helium': ['hydrogen_helium_type_I', 'hydrogen_helium_type_II', 'hydrogen_helium_type_III'],
+        'ice': ['ice_type_I', 'ice_type_II'],
+        'nitrogen': ['nitrogen_type_I', 'nitrogen_type_II', 'nitrogen_type_III'],
+        'carbon': ['carbon_type_I'],
+        'ammonia': ['ammonia_type_I']
+    };
+
+    // Helper function to select a random atmosphere from a list
+    const randomAtmosphere = (types) => types[Math.floor(Math.random() * types.length)];
+
+    // Determine atmosphere based on planet type and other conditions
     switch (planetType) {
         case "Terrestrial":
-            return "nitrogen_oxygen";
+            if (isInHabitableZone(orbitRadius, habitableZone)) {
+                return randomAtmosphere([...atmospheres['carbon_dioxide'], ...atmospheres['nitrogen']]);
+            }
+            return randomAtmosphere(atmospheres['carbon_dioxide']);
         case "Ocean World":
-            return "water_vapor";
+            return randomAtmosphere([...atmospheres['carbon'], ...atmospheres['ammonia'], ...atmospheres['nitrogen']]);
         case "Gas Giant":
-            return "hydrogen_helium";
+            return randomAtmosphere([...atmospheres['hydrogen_helium'], atmospheres['carbon'][0]]);
         case "Ice Giant":
-            return "methane";
+            return randomAtmosphere([...atmospheres['ice'], atmospheres['ammonia'][0]]);
         case "Lava Planet":
-            return "carbon_dioxide";
+                return randomAtmosphere([...atmospheres['carbon_dioxide']]);
         case "Dwarf Planet":
-            return "thin"; 
+            return randomAtmosphere([...atmospheres['trace'], ...atmospheres['carbon_dioxide']]);
         default:
-            return "unknown"; // Make sure to handle the 'unknown' case in getAtmosphereColor if needed
+            return "unknown"; // Handle the 'unknown' case
     }
 }
+
+
 
 
 function getPlanetMoons(planetType) {

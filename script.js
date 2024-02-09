@@ -306,11 +306,13 @@ function generateRings() {
 function setupLighting() {
     // Access star data directly from universeData
     const starData = universeData.parentStar;
-    const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
+    let { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
 
     // Ensure a minimum intensity for visibility
     const minIntensity = 0.5; // Adjust as needed for minimum visibility
     const effectiveIntensity = Math.max(intensity, minIntensity);
+    color = new THREE.Color(color);
+    color = desaturateColor(color.getStyle(), 0.6); // Example: 0.5 as the desaturation factor
 
     if (starLight) {
         scene.remove(starLight); // Remove existing light if present
@@ -501,12 +503,15 @@ function selectPlanet(index) {
 function updateStarLight() {
     // Access star data directly from universeData
     const starData = universeData.parentStar;
-    const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
+    let { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
+    color = new THREE.Color(color);
+    color = desaturateColor(color.getStyle(), 0.6); // Example: 0.5 as the desaturation factor
 
     // Ensure a minimum intensity for visibility
     const minIntensity = 5; // Adjust as needed for minimum visibility
     const effectiveIntensity = Math.max(intensity, minIntensity);
 
+ 
     // Update the lights
     if (starLight) {
         starLight.color.set(new THREE.Color(color));
@@ -845,6 +850,7 @@ const chart = new Chart(ctx, {
     options: {
         spanGaps: false,
         cubicInterpolationMode: "default",
+        tension: 0.2,
         scales: {
             y: {
                 beginAtZero: false,
@@ -970,7 +976,12 @@ function calculateStarColorAndIntensity(starType, starLuminosity) {
     return { color, intensity };
 }
 
-
+function desaturateColor(color, factor) {
+    const white = new THREE.Color(0xffffff);
+    const originalColor = new THREE.Color(color);
+    const desaturatedColor = originalColor.lerp(white, factor);
+    return desaturatedColor.getStyle(); // Returns the CSS color string
+}
 
 // function to apply variance to the temperature
 function applyVisualTemperatureVariance(baseTemperature) {
@@ -1022,21 +1033,49 @@ function interpolateColors(color1, color2, factor) {
 
 // get color of atmosphere from generated comp, will adjust later
 function getAtmosphereColor(composition) {
-    const colors = {
-        'water_vapor': 0x0000ff,
-        'nitrogen_oxygen': 0xadd8e6,
-        'hydrogen_helium': 0xffa500,
-        'methane': 0x800080,
-        'carbon_dioxide': 0xff0000,
-        'thin': 0x808080,
-        'unknown': 0xadd8e6
+    const baseColors = {
+        'trace': '#E0E0E0',
+        'carbon_dioxide_type_I': '#E57373',
+        'carbon_dioxide_type_II': '#B71C1C',
+        'hydrogen_helium_type_I': '#FFF59D',
+        'hydrogen_helium_type_II': '#FFCC80',
+        'hydrogen_helium_type_III': '#FFE0B2',
+        'ice_type_I': '#B2EBF2',
+        'ice_type_II': '#64B5F6',
+        'nitrogen_type_I': '#81D4FA',
+        'nitrogen_type_II': '#42A5F5',
+        'nitrogen_type_III': '#4FC3F7',
+        'carbon_type_I': '#CE93D8',
+        'ammonia_type_I': '#AED581',
+        'unknown': '#add8e6' // Default color for unknown composition
     };
 
-  // Log the composition and the corresponding color
-   // console.log(`Atmosphere Composition: ${composition}`);
-   // console.log(`Atmosphere Color:`, colors[composition] ? colors[composition].toString(16) : 'unknown');
+    // Function to apply subtle random variation to the color
+    function applyRandomVariation(color) {
+        // Convert hex color to RGB
+        let rgb = parseInt(color.substring(1), 16);
 
-    return colors[composition] || colors['unknown']; // Fallback to 'unknown' if composition is not defined
+        // Apply variation to each color component
+        let r = (rgb >> 16) & 0xFF;
+        let g = (rgb >> 8) & 0xFF;
+        let b = rgb & 0xFF;
+
+        // Randomly adjust each component within a range of -5 to 5
+        r = Math.min(255, Math.max(0, r + Math.floor(Math.random() * 11) - 5));
+        g = Math.min(255, Math.max(0, g + Math.floor(Math.random() * 11) - 5));
+        b = Math.min(255, Math.max(0, b + Math.floor(Math.random() * 11) - 5));
+
+        // Convert back to hex color string
+        return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    // Check if the composition exists in the baseColors, apply random variation if so
+    if (baseColors[composition]) {
+        return applyRandomVariation(baseColors[composition]);
+    } else {
+        // Return the default 'unknown' color with random variation
+        return applyRandomVariation(baseColors['unknown']);
+    }
 }
 
 function calculateAtmosphereScale(planetRadius) {
