@@ -359,7 +359,7 @@ function adjustForHabitableZonePlanet(planets, habitableZone) {
 }
 
 
-function isInHabitableZone(orbitRadius, habitableZone) {
+export function isInHabitableZone(orbitRadius, habitableZone) {
     return orbitRadius >= habitableZone.innerBoundary && orbitRadius <= habitableZone.outerBoundary;
 }
 

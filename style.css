@@ -140,12 +140,42 @@ button {
 }
 
 .habitable-planet-container {
-    /* Add your styling here, for example: */
+    display: flex;
+    justify-content: space-between;
     margin: 20px;
     padding: 10px;
     background-color: #333; /* Or any other color that fits your theme */
     color: #cc77ff;
     border-radius: 10px;
+}
+
+
+.left-column, .right-column {
+    flex: 1; /* Both columns will take up equal space */
+    margin: 10px; /* Spacing between columns */
+}
+
+.right-column h3 {
+    text-align: center; /* Center the title */
+    text-transform: uppercase; /* Uppercase text */
+    font-size: 1.8em; /* Enlarge the font */
+    margin-top: 0px;
+    margin-bottom: 10px; /* Space below the title */
+}
+
+.right-column .composition-container {
+    display: flex;
+    justify-content: center; /* Center the composition in the container */
+    align-items: center; /* Align items vertically */
+    flex-wrap: wrap; /* Wrap items to the next line if needed */
+    gap: 10px; /* Space between items */
+    margin-top: 0em; /* Space above the composition */
+}
+
+.right-column .composition-item {
+    text-align: center; /* Center each composition item */
+    text-transform: uppercase; /* Uppercase text */
+    font-size: 1em; /* Adjust the size as needed */
 }
 
 /* New styles for the element details */
@@ -208,6 +238,11 @@ button {
 
 .graph-container {
     margin-top: 20px;
+}
+
+.graph-container canvas {
+    max-width: 100%; /* Ensures the graph is not larger than the container */
+    height: auto; /* Keeps the aspect ratio of the canvas */
 }
 
 .element-details-header {

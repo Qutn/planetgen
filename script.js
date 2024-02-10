@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
-import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, getPlanetAtmosphere, determinePlanetType  } from './generators/orbit.js';
+import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, determinePlanetType  } from './generators/orbit.js';
+import { getPlanetAtmosphere, getAtmosphereDetailsForDisplay } from './generators/atmosphere.js';
+
 import { elementsData } from './generators/crust.js';
 
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -406,7 +408,7 @@ function animatePlanets() {
         const planetMesh = scene.getObjectByName(`planet${index}`);
         if (planetMesh) {
             // Rotate the planet around its axis
-            planetMesh.rotation.y += planetData.rotationSpeed;
+            planetMesh.rotation.y += planetData.rotationSpeed * 50;
 
             // Update the planet's orbital position
             const orbitRadius = planetData.orbitRadius * AU_TO_SCENE_SCALE;
@@ -816,7 +818,33 @@ async function displayHabitablePlanetDetails(index) {
     </div>
 `;
 
-    habitablePlanetDiv.innerHTML = `${planetDetailsContent}${elementDetails}${graphContainer}`;
+
+let leftColumnContent = `
+<div class="left-column">
+    ${planetDetailsContent}
+    ${elementDetails}
+    <div class="graph-container">
+        <canvas id="elementAbundanceGraph"></canvas>
+    </div>
+</div>`;
+
+let atmosphereCompositionContent = '<div class="composition-container">';
+const atmosphereDetails = getAtmosphereDetailsForDisplay(planet.atmosphere).split(', ');
+atmosphereDetails.forEach(detail => {
+    atmosphereCompositionContent += `<div class="composition-item">${detail}</div>`;
+});
+atmosphereCompositionContent += '</div>';
+
+    let rightColumnContent = `
+    <div class="right-column">
+        <h3>Atmosphere Composition</h3>
+        ${atmosphereCompositionContent}
+    </div>`;
+
+// Set the innerHTML of habitablePlanetDiv to include both columns
+habitablePlanetDiv.innerHTML = `${leftColumnContent}${rightColumnContent}`;
+ 
+  //  habitablePlanetDiv.innerHTML = `${planetDetailsContent}${elementDetails}${graphContainer}`;
     console.log(document.getElementById('elementAbundanceGraph'));
     plotElementProbabilityGraph(planet.composition);
 
