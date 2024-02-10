@@ -235,10 +235,26 @@ function createPlanet(planetData, index) {
     const habitableZone = universeData.parentStar.habitableZone;
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
     const noiseTexture = createNoiseTexture();
+
+    let planetTexture;
+    let normalMap = null;
+    if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
+        planetTexture = new THREE.TextureLoader().load('./texture/giant_d.png'); // Load diffuse texture
+        normalMap = new THREE.TextureLoader().load('./texture/giant_n.png');
+    } else {
+        planetTexture = noiseTexture; // Use the noise texture for other planet types
+    }
+    
+    planetGeometry.rotateZ(Math.PI / 2); //rotate so texture applies properly
+
     const planetMaterial = new THREE.MeshStandardMaterial({
-        map: noiseTexture, // Apply the noise texture as the map
+        map: planetTexture, // Apply the loaded texture as the map
         color: getColorForPlanetType(planetData.type), // You might blend this color with the texture
-        // Other material properties can be adjusted as needed
+        normalMap: normalMap, // Apply the normal map if you have one
+        normalScale: new THREE.Vector2(0.75, 0.75) // Reduce the effect of the normal map
+     //   roughness: 1.0,
+
+
     });
 
     const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
@@ -408,7 +424,7 @@ function animatePlanets() {
         const planetMesh = scene.getObjectByName(`planet${index}`);
         if (planetMesh) {
             // Rotate the planet around its axis
-            planetMesh.rotation.y += planetData.rotationSpeed * 50;
+            planetMesh.rotation.y += planetData.rotationSpeed * 20;
 
             // Update the planet's orbital position
             const orbitRadius = planetData.orbitRadius * AU_TO_SCENE_SCALE;
@@ -540,8 +556,8 @@ function adjustBloomEffect() {
 
     // Adjust these values to fine-tune the appearance
     const luminosityFloor = 0.01; // Increase if too dim stars are too bright
-    const luminosityCeiling = 4.0; // Decrease if very bright stars are too bright
-    const minBloomStrength = 0.5; // Minimum bloom, increase if dim stars are too bright
+    const luminosityCeiling = 3.0; // Decrease if very bright stars are too bright
+    const minBloomStrength = 0.3; // Minimum bloom, increase if dim stars are too bright
     const maxBloomStrength = 2.0; // Maximum bloom, decrease if bright stars are too overpowering
 
     // Apply a more aggressive adjustment for stars with high luminosity
@@ -666,8 +682,10 @@ function addStarToScene() {
 
     const minEmissiveIntensity = 5.00; // Minimum visible emissive intensity
     let emissiveIntensity = Math.max(Math.log1p(intensity), minEmissiveIntensity);
+    const starTexture = new THREE.TextureLoader().load('./texture/star_d.png'); // Load diffuse texture
 
     const starMaterial = new THREE.MeshPhongMaterial({
+        map: starTexture,
         color: new THREE.Color(color),
         emissive: new THREE.Color(color),
         emissiveIntensity: emissiveIntensity
