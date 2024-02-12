@@ -213,7 +213,7 @@ function generateSolarSystem(parentStar) {
         const planetSize = getPlanetSize(planetType); 
         const planetAtmosphere = getPlanetAtmosphere(planetType, orbitRadius, parentStar.habitableZone);
         const planetMoons = getPlanetMoons(planetType); 
-
+        const axialTilt = getAxialTilt(planetType);
         if (isInHabitableZone(orbitRadius, parentStar.habitableZone)) {
             habitableZonePlanetAdded = true;
         }
@@ -225,6 +225,7 @@ function generateSolarSystem(parentStar) {
         	radius: planetSize,
             atmosphere: planetAtmosphere,
             moons: planetMoons,
+            axialTilt
         });
     }
 
@@ -242,6 +243,20 @@ function getRandomOrbitRadius(parentStar, planetIndex, totalPlanets) {
     const maxOrbit = 50;  // Maximum orbit radius in AU
     const spacingFactor = (Math.log(maxOrbit) - Math.log(minOrbit)) / totalPlanets;
     return Math.exp(Math.log(minOrbit) + spacingFactor * planetIndex);
+}
+
+function getAxialTilt(planetType){
+    const tiltRanges = {
+        'Dwarf': { min: 0, max: 30 },
+        'Terrestrial': { min: 0, max: 25 },
+        'Ocean': { min: 10, max: 30 },
+        'Lava': { min: 0, max: 40 },
+        'Gas Giant': { min: 15, max: 90 },
+        'Ice Giant': { min: 10, max: 90 },
+    };
+    const range = tiltRanges[planetType] || tiltRanges['Terrestrial']; // Default to Terrestrial if not found
+    // Generate a random tilt within the range
+    return Math.random() * (range.max - range.min) + range.min;
 }
 
 

@@ -176,9 +176,8 @@ function adjustForStarSize(element, starSize) {
 }
 
 const elementTypes = {
-    volatiles: ['H', 'He', 'C', 'N', 'O', 'Ne', 'S', 'Ar', 'Kr', 'Xe'], // Hydrogen, Helium, Carbon, Nitrogen, Oxygen, etc.
-    refractories: ['Fe', 'Mg', 'Si', 'Al', 'Ca', 'Ti', 'Cr', 'Ni'] // Iron, Magnesium, Silicon, Aluminium, etc.
-};
+    volatiles: ['H', 'He', 'C', 'N', 'O', 'Ne', 'S', 'Ar', 'Kr', 'Xe'],
+    refractories: ['Fe', 'Mg', 'Si', 'Al', 'Ca', 'Ti', 'Cr', 'Ni'] };
 
 function isElementVolatile(elementSymbol) {
     return elementTypes.volatiles.includes(elementSymbol);

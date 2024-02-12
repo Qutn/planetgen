@@ -69,6 +69,7 @@ function populateUniverseData() {
             orbitRadius: planet.orbitRadius,
             atmosphere: planet.atmosphere,
             moons: planet.moons,
+            axialTilt: planet.axialTilt,
             rotationSpeed,
             orbitalSpeed,
             isTidallyLocked: Math.random() < 0.1,
@@ -174,17 +175,22 @@ async function updateScene() {
     zoomToStar();
     // Add any further steps that depend on planets being fully generated
 }
-function zoomToStar(){
+function zoomToStar(starSize){
 currentTargetIndex = 0; // Index of the star
 updateDesiredTargetPosition(currentTargetIndex);
 selectPlanet(currentTargetIndex);
 // Optionally, clear the display or skip displaying conversions for the star
 displayHabitablePlanetDetails(currentTargetIndex - 1);
+const cameraDistance = starSize * 2.5;
+camera.position.set(0, 0, 1250); // You might want to experiment with these values
+
 }
 
 function setupThreeJS() {
     initializeThreeJSEnvironment('planetCanvas');
     setupOrbitControls();
+    const axesHelper = new THREE.AxesHelper(5); // The parameter defines the size of the axes in units.
+    scene.add(axesHelper);
     setupLighting(); // Now uses universeData
     startAnimationLoop();
 }
@@ -198,8 +204,8 @@ function initializeThreeJSEnvironment(canvasId) {
     const starFieldTexture = createStarFieldTexture(); // Assuming createStarFieldTexture is defined
     scene.background = starFieldTexture;
 
-    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 100000);
-    camera.position.set(0, 0, 20); // You might want to experiment with these values
+    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000000);
+    camera.position.set(0, 0, 500); // You might want to experiment with these values
     camera.castShadow = true;
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
     
@@ -284,10 +290,14 @@ function createPlanet(planetData, index) {
         phi, // Horizontal plane
         theta // Randomized azimuthal angle
     );
-
+    const axialTiltRadians = THREE.Math.degToRad(planetData.axialTilt);
+    planetMesh.rotation.x = axialTiltRadians; // Tilting the planet around its X-axis
     planetMesh.name = `planet${index}`;
+ //  const planetAxesHelper = new THREE.AxesHelper(15.0); // Adjust the size as needed
 
     scene.add(planetMesh);
+  // planetMesh.add(planetAxesHelper); // This makes the axes helper move and rotate with the planet
+
     celestialObjects[index + 1] = planetMesh; // We use index + 1 because index 0 is reserved for the star
     planetData.geologicalData = geologicalData;
 
@@ -304,9 +314,14 @@ function createPlanet(planetData, index) {
 
 function addRingsToPlanet(planetMesh, planetData, index) {
     if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
-        const { group: ringGroup, outerRadius } = createSegmentedRings(planetData.radius, planetData.type);
+        const { group: ringGroup, outerRadius } = createSegmentedRings(planetData.radius, planetData.type, planetData.axialTilt);
+        const axialTiltRadians = THREE.Math.degToRad(planetData.axialTilt);
+        ringGroup.rotation.y = axialTiltRadians;
+
         planetMesh.add(ringGroup);
         // adjustShadowCameraForRings(planetData.radius, outerRadius);
+        planetData.ringAxialTilt = planetData.axialTilt;
+
     }
 }
 
@@ -444,7 +459,7 @@ function animatePlanets() {
         const planetMesh = scene.getObjectByName(`planet${index}`);
         if (planetMesh) {
             // Rotate the planet around its axis
-            planetMesh.rotation.y += planetData.rotationSpeed * 20;
+            planetMesh.rotation.y += planetData.rotationSpeed * 20; // Adjust the speed as necessary
 
             // Update the planet's orbital position
             const orbitRadius = planetData.orbitRadius * AU_TO_SCENE_SCALE;
@@ -845,6 +860,7 @@ async function displayHabitablePlanetDetails(index) {
             <span>Type: ${planet.type}</span>
             <span>Orbit Radius: ${planet.orbitRadius.toFixed(2)} AU</span>
             <span>Size: ${planet.radius.toFixed(2)}</span>
+            <span>Axial Tilt: ${planet.axialTilt.toFixed(2)}°</span>
             <span>Atmosphere: ${atmosphereFormatted}</span>
             <span>Moons: ${planet.moons || 'N/A'}</span>
             <span>Day: ${rotationPeriodHours} hours</span>
@@ -1205,7 +1221,7 @@ function createAtmosphere(planetRadius, composition) {
     return new THREE.Mesh(geometry, material);
 }
 
-function createSegmentedRings(planetRadius, planetType) {
+function createSegmentedRings(planetRadius, planetType, planetData) {
     const ringSegmentsGroup = new THREE.Group(); // Group to hold all ring segments
 
     // Randomize the total number of ring segments between 5 and 20
@@ -1231,6 +1247,9 @@ function createSegmentedRings(planetRadius, planetType) {
         });
 
         const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+        const axialTiltRadians = THREE.Math.degToRad(planetData.axialTilt);
+       // ringMesh.rotation.x = axialTiltRadians;
+
         ringMesh.rotation.x = Math.PI / 2; // Adjust ring orientation to lie flat
 
         ringMesh.receiveShadow = true;
