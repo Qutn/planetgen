@@ -26,7 +26,7 @@ let isZooming = false;
 let zoomTargetPosition = new THREE.Vector3();
 let zoomTargetLookAt = new THREE.Vector3();
 
-const AU_TO_SCENE_SCALE = 200.00;
+const AU_TO_SCENE_SCALE = 21840.00;
 
 let universeData = {
     parentStar: {
@@ -57,13 +57,11 @@ function populateUniverseData() {
     let systemOuterEdge = orbitData.solarSystem[orbitData.solarSystem.length - 1].orbitRadius;
 
     universeData.solarSystem = orbitData.solarSystem.map(planet => {
-        const baseSpeed = 0.0001; // Base speed for scaling
-        const scalingFactor = 200; // Adjust this factor to control the scaling effect
+        const baseSpeed = 0.00001; // Base speed for scaling
+        const scalingFactor = 21840; // Adjust this factor to control the scaling effect
         const orbitalSpeed = baseSpeed / (planet.orbitRadius * scalingFactor);
-        let rotationSpeed = getRotationSpeed(planet.orbitRadius, {
-            innerBoundary: universeData.parentStar.habitableZone.innerBoundary, 
-            outerBoundary: universeData.parentStar.habitableZone.outerBoundary
-        }, AU_TO_SCENE_SCALE, systemOuterEdge); // Now correctly passing systemOuterEdge
+        let rotationSpeed = getRotationSpeed(planet.orbitRadius, { innerBoundary: universeData.parentStar.habitableZone.innerBoundary, outerBoundary: universeData.parentStar.habitableZone.outerBoundary }, AU_TO_SCENE_SCALE, systemOuterEdge);
+        const geologicalData = generateGeologicalData(planet.radius, planet.orbitRadius, universeData.parentStar.size, universeData.parentStar.mass);
 
         return {
             type: planet.type,
@@ -74,6 +72,7 @@ function populateUniverseData() {
             rotationSpeed,
             orbitalSpeed,
             isTidallyLocked: Math.random() < 0.1,
+            geologicalData,
         };
     });
 
@@ -110,6 +109,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         displayHabitablePlanetDetails(currentTargetIndex - 1);
      //   displayElementalComposition(currentTargetIndex - 1); // Display composition for the newly selected planet
+     const currentPlanet = universeData.solarSystem[currentTargetIndex];
+     if (currentPlanet) {
+        console.log('Geological Data for current planet:', currentPlanet.geologicalData);
+    }
 
     });
     
@@ -133,6 +136,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         displayHabitablePlanetDetails(currentTargetIndex - 1);
       //  displayElementalComposition(currentTargetIndex - 1); // Display composition for the newly selected planet
+      const currentPlanet = universeData.solarSystem[currentTargetIndex];
+      if (currentPlanet) {
+         console.log('Geological Data for current planet:', currentPlanet.geologicalData);
+     }
+
     });
 
     document.getElementById('zoomToPlanetButton').addEventListener('click', function() {
@@ -163,10 +171,16 @@ async function updateScene() {
     generateSystemName();
     visualizeOrbits();
     generateAtmospheres();
+    zoomToStar();
     // Add any further steps that depend on planets being fully generated
 }
-
-
+function zoomToStar(){
+currentTargetIndex = 0; // Index of the star
+updateDesiredTargetPosition(currentTargetIndex);
+selectPlanet(currentTargetIndex);
+// Optionally, clear the display or skip displaying conversions for the star
+displayHabitablePlanetDetails(currentTargetIndex - 1);
+}
 
 function setupThreeJS() {
     initializeThreeJSEnvironment('planetCanvas');
@@ -234,10 +248,15 @@ function createPlanet(planetData, index) {
     // Access parent star's habitable zone directly from universeData
     const habitableZone = universeData.parentStar.habitableZone;
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
-    const noiseTexture = createNoiseTexture();
+    const starSize = universeData.parentStar.size;
+    const starMass = universeData.parentStar.mass;
+    const geologicalData = generateGeologicalData(planetData.radius, planetData.orbitRadius, starSize, starMass);
 
+
+    const noiseTexture = createNoiseTexture();
     let planetTexture;
     let normalMap = null;
+
     if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
         planetTexture = new THREE.TextureLoader().load('./texture/giant_d.png'); // Load diffuse texture
         normalMap = new THREE.TextureLoader().load('./texture/giant_n.png');
@@ -270,6 +289,7 @@ function createPlanet(planetData, index) {
 
     scene.add(planetMesh);
     celestialObjects[index + 1] = planetMesh; // We use index + 1 because index 0 is reserved for the star
+    planetData.geologicalData = geologicalData;
 
    // if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
    //     const { group: ringGroup, outerRadius } = createSegmentedRings(planetData.radius, planetData.type);
@@ -675,9 +695,11 @@ function generateStar() {
 
 function addStarToScene() {
     // Access starData directly from universeData
-    const starData = universeData.parentStar; // This line needs to be corrected
-
-    const starGeometry = new THREE.SphereGeometry(starData.size, 32, 32);
+    // size of 1 for planet = 1 earth radius, scale star and system based on scaling factor
+    const starData = universeData.parentStar;
+    const solarRadiiInEarthRadii = 109.2; // how big 1 solar radii is compared to 1 earth radius
+    const starRadii = starData.size * solarRadiiInEarthRadii;
+    const starGeometry = new THREE.SphereGeometry(starRadii, 32, 32);
     const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
 
     const minEmissiveIntensity = 5.00; // Minimum visible emissive intensity
@@ -846,6 +868,20 @@ let leftColumnContent = `
     </div>
 </div>`;
 
+
+         console.log('Geological Data for current planet:', planet.geologicalData);
+const geologicalData = planet.geologicalData;
+const interiorCompositionHtml = `
+<div class="interior-composition-container">
+    <ul class="interior-composition-list">
+        <li>Core: ${geologicalData.core.size.toLocaleString()} M thick, Volume: ${geologicalData.core.volume.toLocaleString()} m&sup3;</li>
+        <li>Mantle: ${geologicalData.mantle.thickness.toLocaleString()} M thick, Volume: ${geologicalData.mantle.volume.toLocaleString()} m&sup3;</li>
+        <li>Crust: ${geologicalData.crust.thickness.toLocaleString()} M thick, Volume: ${geologicalData.crust.volume.toLocaleString()} m&sup3;</li>
+    </ul>
+</div>
+`;
+
+
 let atmosphereCompositionContent = '<div class="composition-container">';
 const atmosphereDetails = getAtmosphereDetailsForDisplay(planet.atmosphere).split(', ');
 atmosphereDetails.forEach(detail => {
@@ -853,11 +889,13 @@ atmosphereDetails.forEach(detail => {
 });
 atmosphereCompositionContent += '</div>';
 
-    let rightColumnContent = `
-    <div class="right-column">
-        <h3>Atmosphere Composition</h3>
-        ${atmosphereCompositionContent}
-    </div>`;
+let rightColumnContent = `
+<div class="right-column">
+    <h3 class="section-header">Atmosphere Composition</h3>
+    ${atmosphereCompositionContent}
+    <h3 class="section-header">Interior Composition</h3>
+    ${interiorCompositionHtml}
+</div>`;
 
 // Set the innerHTML of habitablePlanetDiv to include both columns
 habitablePlanetDiv.innerHTML = `${leftColumnContent}${rightColumnContent}`;
@@ -973,25 +1011,7 @@ function formatElementName(element) {
 }
 
 
-function getElementDensity(element) {
-    // Return density of the element, placeholder values used here, will reference a json eventually
-const densities = {
-    'O': 1.429,
-    'Si': 2330,
-    'Al': 2700,
-    'Fe': 7874,
-    'Na': 968,
-    'Mg': 1740,
-    'K': 856,
-    'Ti': 4506,
-    'H': 0.08988,
-    'Cu': 8960,
-    'Ag': 10490,
-    'Au': 19300,
-    'Mth': 12000
-};
-    return densities[element] || 5500; // Default density
-}
+
 
 // Star color generation for lighting and star object
 function calculateStarColorAndIntensity(starType, starLuminosity) {
@@ -1424,9 +1444,9 @@ function displayTimeConversions(selectedPlanetIndex) {
     const orbitalPeriodDays = orbitalSpeedToEarthDays(planet.orbitalSpeed, planet.orbitRadius);
     const localDays = localDaysPerOrbit(planet.rotationSpeed, planet.orbitalSpeed, planet.orbitRadius);
 
-    console.log(`Rotation Period for ${planet.type}: ${rotationPeriodHours.toFixed(2)} Earth hours`);
-    console.log(`Orbital Period for ${planet.type}: ${orbitalPeriodDays.toFixed(2)} Earth days`);
-    console.log(`Local Days per Orbit for ${planet.type}: ${localDays.toFixed(2)}`);
+   // console.log(`Rotation Period for ${planet.type}: ${rotationPeriodHours.toFixed(2)} Earth hours`);
+   // console.log(`Orbital Period for ${planet.type}: ${orbitalPeriodDays.toFixed(2)} Earth days`);
+   // console.log(`Local Days per Orbit for ${planet.type}: ${localDays.toFixed(2)}`);
 }
 
 

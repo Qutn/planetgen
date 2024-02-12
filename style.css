@@ -178,6 +178,25 @@ button {
     font-size: 1em; /* Adjust the size as needed */
 }
 
+.right-column .section-header {
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 1.8em;
+    color: #FFD700;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.right-column .interior-composition-list {
+    list-style: none;
+    padding: 0;
+    text-align: center;
+}
+
+.right-column .interior-composition-list li {
+    margin-bottom: 5px;
+}
+
 /* New styles for the element details */
 .habitable-planet-container .element-details {
     display: flex;
@@ -195,6 +214,7 @@ button {
     text-align: center;
     margin-bottom: 10px;
     font-size: 1.8em;
+    color: #FFD700;
     font-weight: bold;
     text-transform: uppercase;
 
@@ -249,6 +269,7 @@ button {
     text-align: center;
     margin-bottom: 10px;
     font-size: 1.2em;
+    color: #FFD700;
     font-weight: bold;
     text-transform: uppercase;
 
