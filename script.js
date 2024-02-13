@@ -267,12 +267,42 @@ function createPlanet(planetData, index) {
     const noiseTexture = createNoiseTexture();
     let planetTexture;
     let normalMap = null;
+    let roughnessAmount = 0;
+    let cloudTexture = null;
+    let isTransparent = false;
+    let cloudOpacity = 0.0;
 
     if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
-        planetTexture = new THREE.TextureLoader().load('./texture/giant_d.png'); // Load diffuse texture
+        planetTexture = new THREE.TextureLoader().load('./texture/giant_d_2.png'); 
         normalMap = new THREE.TextureLoader().load('./texture/giant_n.png');
-    } else {
+        cloudTexture = new THREE.TextureLoader().load('./texture/giant_d_2.png');
+        roughnessAmount = 1;
+        isTransparent = true;
+        cloudOpacity = 1.00;
+    } 
+    else if (planetData.type === 'Ocean World') {
+        planetTexture = new THREE.TextureLoader().load('./texture/ocean_d.png'); 
+        roughnessAmount = 0.3;
+        cloudTexture = new THREE.TextureLoader().load('./texture/water_clouds_d.png');
+        isTransparent = true; 
+        cloudOpacity = 0.6;
+
+    }
+    else if (planetData.type === 'Terrestrial') {
+       // planetTexture = new THREE.TextureLoader().load('./texture/ocean_d.png'); 
         planetTexture = noiseTexture; // Use the noise texture for other planet types
+        roughnessAmount = 0.4;
+        cloudTexture = new THREE.TextureLoader().load('./texture/water_clouds_d.png'); 
+        isTransparent - true;
+        cloudOpacity = 0.7;
+
+    }
+    else {
+        planetTexture = noiseTexture; // Use the noise texture for other planet types
+        cloudTexture = null;
+        isTransparent = false;
+        cloudOpacity = 0.0;
+
     }
     
     planetGeometry.rotateZ(Math.PI / 2); //rotate so texture applies properly
@@ -281,8 +311,8 @@ function createPlanet(planetData, index) {
         map: planetTexture, // Apply the loaded texture as the map
         color: getColorForPlanetType(planetData.type), // You might blend this color with the texture
         normalMap: normalMap, // Apply the normal map if you have one
-        normalScale: new THREE.Vector2(0.75, 0.75) // Reduce the effect of the normal map
-     //   roughness: 1.0,
+        normalScale: new THREE.Vector2(0.3, 0.3), // Reduce the effect of the normal map
+        roughness: roughnessAmount,
 
 
     });
@@ -299,8 +329,27 @@ function createPlanet(planetData, index) {
     planetMesh.rotation.x = axialTiltRadians; // Tilting the planet around its X-axis
     planetMesh.name = `planet${index}`;
  //  const planetAxesHelper = new THREE.AxesHelper(15.0); // Adjust the size as needed
+    
+ const cloudGeometry = new THREE.SphereGeometry(planetData.radius * 1.01, 32, 32); // Slightly larger than the planet
+    const cloudMaterial = new THREE.MeshPhongMaterial({
+         map: cloudTexture, // Your diffuse cloud texture
+         alphaMap: cloudTexture, // Use the same texture as alpha map for transparency
+         transparent: isTransparent,
+         depthWrite: false, // Avoid depth write issues with transparent textures
+         opacity: cloudOpacity, // Adjust for desired transparency
+
+    });
+    cloudMaterial.blending = THREE.AdditiveBlending; // Example alternative blending mode
+    cloudGeometry.rotateZ(Math.PI / 2);
+    cloudGeometry.rotateX = axialTiltRadians; // Tilting the planet around its X-axis
+
 
     scene.add(planetMesh);
+    const cloudMesh = new THREE.Mesh(cloudGeometry, cloudMaterial);
+    planetMesh.add(cloudMesh); // Assuming planetMesh is your planet
+    planetData.cloudMesh = cloudMesh;
+
+
   // planetMesh.add(planetAxesHelper); // This makes the axes helper move and rotate with the planet
 
     celestialObjects[index + 1] = planetMesh; // We use index + 1 because index 0 is reserved for the star
@@ -447,7 +496,8 @@ function startAnimationLoop() {
         requestAnimationFrame(animate);
         animatePlanets();
         animateMoons();
-    
+        animateClouds();
+
         controls.target.lerp(desiredTargetPosition, followSpeed);
         updateDesiredTargetPosition(currentTargetIndex);
        // if (isFollowingObject && currentTargetIndex >= 0 && currentTargetIndex < universeData.solarSystem.length) {
@@ -493,6 +543,25 @@ function animatePlanets() {
             planetMesh.position.z = Math.sin(theta) * orbitRadius;
         }
     });
+}
+
+function animateClouds() {
+    universeData.solarSystem.forEach((planetData, index) => {
+        const planetMesh = scene.getObjectByName(`planet${index}`);
+        if (planetMesh && planetData.cloudMesh) {
+            // Assuming each planetData has a cloudMesh reference
+            const cloudMesh = planetData.cloudMesh;
+            // Adjust the rotation speed as needed
+            cloudMesh.rotation.y += -0.002; // Example speed for cloud rotation
+        }
+    });
+}
+
+function toggleCloudVisibility(planetIndex, isVisible) {
+    const planetData = universeData.solarSystem[planetIndex];
+    if (planetData && planetData.cloudMesh) {
+        planetData.cloudMesh.visible = isVisible;
+    }
 }
 
 function animateMoons() {
@@ -593,7 +662,7 @@ function updateStarLight() {
     // Update the lights
     if (starLight) {
         starLight.color.set(new THREE.Color(color));
-        starLight.intensity = effectiveIntensity;
+        starLight.intensity = effectiveIntensity / 7.5;
     }
 
     // Update ambient light as well
@@ -615,7 +684,7 @@ function adjustBloomEffect() {
     const starLuminosity = universeData.parentStar.luminosity;
 
     // Adjust these values to fine-tune the appearance
-    const luminosityFloor = 0.01; // Increase if too dim stars are too bright
+    const luminosityFloor = 0.1; // Increase if too dim stars are too bright
     const luminosityCeiling = 3.0; // Decrease if very bright stars are too bright
     const minBloomStrength = 0.3; // Minimum bloom, increase if dim stars are too bright
     const maxBloomStrength = 2.0; // Maximum bloom, decrease if bright stars are too overpowering
