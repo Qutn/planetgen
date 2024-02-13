@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { generateGeologicalData, determinePlanetaryComposition } from './generators/crust.js';
 import { generateOrbit, generateParentStar, generateStarSizeAndMass, generateStarLuminosity, calculateHabitableZone, determinePlanetType  } from './generators/orbit.js';
-import { getPlanetAtmosphere, getAtmosphereDetailsForDisplay } from './generators/atmosphere.js';
+import { getPlanetAtmosphere, getAtmosphereDetailsForDisplay, calculateSurfaceTemperature } from './generators/atmosphere.js';
 
 import { elementsData } from './generators/crust.js';
 
@@ -62,7 +62,9 @@ function populateUniverseData() {
         const orbitalSpeed = baseSpeed / (planet.orbitRadius * scalingFactor);
         let rotationSpeed = getRotationSpeed(planet.orbitRadius, { innerBoundary: universeData.parentStar.habitableZone.innerBoundary, outerBoundary: universeData.parentStar.habitableZone.outerBoundary }, AU_TO_SCENE_SCALE, systemOuterEdge);
         const geologicalData = generateGeologicalData(planet.radius, planet.orbitRadius, universeData.parentStar.size, universeData.parentStar.mass);
-
+        const atmosphereComposition = getPlanetAtmosphere(planet.type, planet.orbitRadius, universeData.parentStar.habitableZone);
+        const surfaceTemperature = calculateSurfaceTemperature(universeData.parentStar.luminosity, calculateStarTemperature(universeData.parentStar.type), planet.orbitRadius, planet.size, atmosphereComposition // Ensure this matches expected input in calculateSurfaceTemperature
+        );
         return {
             type: planet.type,
             radius: planet.size,
@@ -74,6 +76,8 @@ function populateUniverseData() {
             orbitalSpeed,
             isTidallyLocked: Math.random() < 0.1,
             geologicalData,
+            atmosphereComposition,
+            surfaceTemperature,
         };
     });
 
@@ -139,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
       //  displayElementalComposition(currentTargetIndex - 1); // Display composition for the newly selected planet
       const currentPlanet = universeData.solarSystem[currentTargetIndex];
       if (currentPlanet) {
-         console.log('Geological Data for current planet:', currentPlanet.geologicalData);
+        // console.log('Geological Data for current planet:', currentPlanet.geologicalData);
      }
 
     });
@@ -173,8 +177,9 @@ async function updateScene() {
     visualizeOrbits();
     generateAtmospheres();
     zoomToStar();
-    // Add any further steps that depend on planets being fully generated
 }
+
+
 function zoomToStar(starSize){
 currentTargetIndex = 0; // Index of the star
 updateDesiredTargetPosition(currentTargetIndex);
@@ -352,6 +357,26 @@ function generateRings() {
         const planetMesh = scene.getObjectByName(`planet${index}`);
         if (planetMesh && (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant')) {
             addRingsToPlanet(planetMesh, planetData, index);
+        }
+    });
+}
+
+function updateSurfaceTemperatures() {
+    // Loop through each planet in the solar system
+    universeData.solarSystem.forEach((planet) => {
+        // Ensure all necessary data is present
+        if (planet.orbitRadius && planet.atmosphere && universeData.parentStar.luminosity) {
+            // Calculate the surface temperature for the current planet
+            const surfaceTemperature = calculateSurfaceTemperature(
+                universeData.parentStar.luminosity,
+                planet.orbitRadius,
+                planet.atmosphere,
+                universeData.parentStar.temperature,
+                planet.size,
+            );
+
+            // Update the planet object with the calculated surface temperature
+            planet.surfaceTemperature = surfaceTemperature;
         }
     });
 }
@@ -839,6 +864,14 @@ async function displayHabitablePlanetDetails(index) {
     const rotationPeriodHours = rotationSpeedToEarthHours(planet.rotationSpeed).toFixed(2);
     const orbitalPeriodDays = orbitalSpeedToEarthDays(planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
     const localDaysPerOrbitValue = localDaysPerOrbit(planet.rotationSpeed, planet.orbitalSpeed, planet.orbitRadius).toFixed(2);
+    const isInHabitableZone = planet.orbitRadius >= universeData.parentStar.habitableZone.innerBoundary && planet.orbitRadius <= universeData.parentStar.habitableZone.outerBoundary;
+    const habitableZoneStatus = isInHabitableZone ? "Yes" : "No";
+    const isAtmosphereHospitable = planet.atmosphere === 'nitrogen_type_III';
+    const surfaceTemperature = planet.surfaceTemperature; // Assuming this is already in Celsius
+    const isTemperatureHospitable = surfaceTemperature >= -80 && surfaceTemperature <= 80;
+    const isHospitable = isInHabitableZone && isAtmosphereHospitable && isTemperatureHospitable;
+    const hospitableStatus = isHospitable ? "Yes" : "No";
+
 
     let elementDetails = `
     <div class="element-details-header">Elemental Composition of ${planetName}'s Crust</div>
@@ -860,11 +893,16 @@ async function displayHabitablePlanetDetails(index) {
             <span>Type: ${planet.type}</span>
             <span>Orbit Radius: ${planet.orbitRadius.toFixed(2)} AU</span>
             <span>Size: ${planet.radius.toFixed(2)}</span>
-            <span>Axial Tilt: ${planet.axialTilt.toFixed(2)}°</span>
-            <span>Atmosphere: ${atmosphereFormatted}</span>
             <span>Moons: ${planet.moons || 'N/A'}</span>
+            <span>Axial Tilt: ${planet.axialTilt.toFixed(2)}°</span>
+
+            <span>Atmosphere: ${atmosphereFormatted}</span>
+            <span>Surface Temperature: ${planet.surfaceTemperature.toFixed(2)}°C</span>
             <span>Day: ${rotationPeriodHours} hours</span>
             <span>Year: ${localDaysPerOrbitValue} days (${orbitalPeriodDays} Earth days)</span>
+            <span>In Habitable Zone: ${habitableZoneStatus}</span>
+            <span>Hospitable: ${hospitableStatus}</span>
+
         </div>
     `;
 
@@ -885,7 +923,7 @@ let leftColumnContent = `
 </div>`;
 
 
-         console.log('Geological Data for current planet:', planet.geologicalData);
+       //  console.log('Geological Data for current planet:', planet.geologicalData);
 const geologicalData = planet.geologicalData;
 const interiorCompositionHtml = `
 <div class="interior-composition-container">
@@ -1056,6 +1094,20 @@ function calculateStarColorAndIntensity(starType, starLuminosity) {
     let intensity = Math.min(baseIntensity * starLuminosity, 5);
 
     return { color, intensity };
+}
+
+function calculateStarTemperature(starType) {
+    // Simplified example based on stellar classification
+    switch(starType) {
+        case 'M': return 3250; // Example values
+        case 'K': return 4250;
+        case 'G': return 5750; // Sun-like
+        case 'F': return 6750;
+        case 'A': return 8750;
+        case 'B': return 20000;
+        case 'O': return 35000;
+        default: return 5500; // Default to Sun-like temperature
+    }
 }
 
 function desaturateColor(color, factor) {
@@ -1429,7 +1481,7 @@ function ringColor(planetType) {
 
 // Constants for scaling factors - these can be adjusted to "look right"
 const ROTATION_SPEED_SCALE = 0.001; // Scale factor for rotation speed to Earth hours
-const ORBITAL_SPEED_SCALE = 0.00001; // Scale factor for orbital speed to Earth days
+const ORBITAL_SPEED_SCALE = 0.000000048; // Scale factor for orbital speed to Earth days
 const LOCAL_DAY_SCALE = 1.00; // Scale factor for calculating local days per orbit
 
 // Convert rotation speed to equivalent Earth hours for display

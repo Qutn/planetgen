@@ -236,7 +236,7 @@ button {
 
 .planet-details-grid {
     display: grid;
-    grid-template-columns: repeat(9, 1fr); /* 6 columns for 6 items */
+    grid-template-columns: repeat(6, 2fr); /* 6 columns for 6 items */
     gap: 10px;
     text-align: center;
     font-size: 1.4em;

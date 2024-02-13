@@ -161,48 +161,86 @@ function applyAdjustments(baseComposition) {
     return displayData;
   }
   
-  function calculateSurfaceTemperature(starLuminosity, orbitRadiusAU, atmosphereComposition) {
+  export function calculateSurfaceTemperature(starLuminosity, starTemperature, orbitRadiusAU, planetRadius, atmosphereType) {
     const STEFAN_BOLTZMANN_CONSTANT = 5.67e-8;
-    const SOLAR_LUMINOSITY = 3.828e26; // Watts
+    const SOLAR_LUMINOSITY_IN_WATTS = 3.828e26; // Watts
     const AU_IN_METERS = 1.496e11;
-    const EARTH_ALBEDO = 0.3; // This can be adjusted or made dynamic based on planet characteristics
-    const GREENHOUSE_EFFECT_FACTOR = 1.1; // This is a simplification and can be refined
+    const EARTH_RADIUS_IN_METERS = 6371e3; // Earth radius in meters for scale
+    const SOLAR_TEMPERATURE = 5778; // Kelvin, for the Sun
 
-    // Convert AU to meters for the formula
-    let distanceInMeters = orbitRadiusAU * AU_IN_METERS;
 
-    // Assuming the atmosphereComposition affects the greenhouse factor
-    let greenhouseFactor = calculateGreenhouseFactor(atmosphereComposition);
+    let adjustedStarLuminosity = starLuminosity * SOLAR_LUMINOSITY_IN_WATTS;
 
-    // Calculate effective temperature without atmosphere
+    let temperatureEffectFactor = Math.pow(starTemperature / SOLAR_TEMPERATURE, 4);
+
+    let distanceFromStarInMeters = orbitRadiusAU * AU_IN_METERS;
+
     let effectiveTemperature = Math.pow(
-        (starLuminosity * SOLAR_LUMINOSITY * (1 - EARTH_ALBEDO)) /
-        (16 * Math.PI * Math.pow(distanceInMeters, 2) * STEFAN_BOLTZMANN_CONSTANT),
+        (adjustedStarLuminosity * temperatureEffectFactor * (1 - getPlanetAlbedo(atmosphereType))) /
+        (16 * Math.PI * Math.pow(distanceFromStarInMeters, 2) * STEFAN_BOLTZMANN_CONSTANT),
         0.25
     );
 
-    // Adjust temperature for greenhouse effect
+    let greenhouseFactor = calculateGreenhouseFactor(atmosphereType);
     let surfaceTemperature = effectiveTemperature * greenhouseFactor;
 
-    return surfaceTemperature - 273.15; // Convert Kelvin to Celsius
-}
+    let sizeEffect = calculateSizeEffect(planetRadius);
+    surfaceTemperature *= sizeEffect;
 
-function calculateGreenhouseFactor(atmosphereComposition) {
-    // This is a very rough estimate and would depend on the specific gases and their proportions
-    // For example, a higher proportion of greenhouse gases like CO2 or methane would increase the factor
-    let greenhouseFactor = GREENHOUSE_EFFECT_FACTOR;
-
-    if (atmosphereComposition.includes('CO2')) {
-        greenhouseFactor *= 1.1;
-    }
-    if (atmosphereComposition.includes('CH4')) {
-        greenhouseFactor *= 1.2;
-    }
-    // ... other conditions based on atmosphereComposition ...
-
-    return greenhouseFactor;
+    return surfaceTemperature - 273.15; // Convert from Kelvin to Celsius for readability
 }
 
 
+function getPlanetAlbedo(atmosphereType) {
+    // Adjust albedo based on atmosphere type; different atmospheres reflect sunlight differently
+    const albedoAdjustments = {
+        'trace': 0.11,
+        'carbon_dioxide_type_I': 0.25,
+        'carbon_dioxide_type_II': 0.29,
+        'hydrogen_helium_type_I': 0.20,
+        'hydrogen_helium_type_II': 0.20,
+        'hydrogen_helium_type_III': 0.25,
+        'ice_type_I': 0.50,
+        'ice_type_II': 0.50,
+        'nitrogen_type_I': 0.30,
+        'nitrogen_type_II': 0.30,
+        'nitrogen_type_III': 0.20,
+        'carbon_type_1': 0.30,
+        'ammonia_type_1': 0.30,
+        // Add more types as needed
+    };
+    return albedoAdjustments[atmosphereType] || 0.3; // Default to Earth-like albedo if unknown
+}
+
+function calculateGreenhouseFactor(atmosphereType) {
+    // Refine greenhouse factor based on atmosphere composition
+    const greenhouseAdjustments = {
+        'trace': 1.0,
+        'carbon_dioxide_type_I': 1.25,
+        'carbon_dioxide_type_II': 1.30,
+        'hydrogen_helium_type_I': 1.10,
+        'hydrogen_helium_type_II': 1.10,
+        'hydrogen_helium_type_III': 1.40,
+        'ice_type_I': 1.20,
+        'ice_type_II': 1.17,
+        'nitrogen_type_I': 1.10,
+        'nitrogen_type_II': 1.10,
+        'nitrogen_type_III': 1.20,
+        'carbon_type_1': 1.50,
+        'ammonia_type_1': 1.40,
+    };
+    return greenhouseAdjustments[atmosphereType] || 1.1; // Default factor if unknown
+}
+
+function calculateSizeEffect(planetRadiusEarthUnits) {
+    // Larger planets might have thicker atmospheres and retain heat more effectively
+    if (planetRadiusEarthUnits < 1) {
+        return 0.95; // Smaller planets lose heat more easily
+    } else if (planetRadiusEarthUnits > 1 && planetRadiusEarthUnits < 2) {
+        return 1.05; // Moderate increase for slightly larger planets
+    } else {
+        return 1.1; // Significant heat retention for much larger planets
+    }
+}
 
   export { getAtmosphereDetailsForDisplay };

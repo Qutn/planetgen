@@ -1,7 +1,7 @@
 async function loadElementsData() {
     const response = await fetch('generators/elements_with_abundances.json');
     const data = await response.json();
-    console.log(data); // Check the structure is as expected
+   // console.log(data); // Check the structure is as expected
     return data;
 }
 
