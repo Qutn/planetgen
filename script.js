@@ -286,11 +286,10 @@ function createPlanet(planetData, index) {
             vertexShader: musgraveVertexShader,
             fragmentShader: musgraveFragmentShader,
             uniforms: {
-                layers: { value: 55.0 },
-                amplitude: { value: 0.75 },
-                lacunarity: { value: 5.25 },
-                gain: { value: 0.35 },
-                objectWorldPosition: {value: new THREE.Vector3()},
+                layers: { value: 25.0 },
+                amplitude: { value: 0.65 },
+                lacunarity: { value: 2.4 },
+                gain: { value: 0.45 },
             },
         });
 }
@@ -580,8 +579,10 @@ function animatePlanets() {
             planetMesh.position.z = Math.sin(theta) * orbitRadius;
 
             // If the planet mesh has a ShaderMaterial and a uniform for world position, update it
-            if (planetMesh.material && planetMesh.material.isShaderMaterial && planetMesh.material.uniforms.objectWorldPosition) {
+            if (planetMesh.material && planetMesh.material.isShaderMaterial && planetMesh.material.uniforms.objectWorldPosition && planetMesh.material.uniforms.rotationMatrix) {
                 planetMesh.material.uniforms.objectWorldPosition.value.copy(planetMesh.position);
+                planetMesh.material.uniforms.rotationMatrix.value = new THREE.Matrix4().makeRotationFromEuler(planetMesh.rotation);
+
             }
 
             // Update the cloud mesh position if it has one
@@ -753,7 +754,7 @@ function adjustBloomEffect() {
 
     // Apply the calculated bloom strength to the bloomPass
     bloomPass.strength = bloomStrength;
-    console.log("Star Luminosity:", starLuminosity, "Adjusted Bloom Strength:", bloomStrength);
+  //  console.log("Star Luminosity:", starLuminosity, "Adjusted Bloom Strength:", bloomStrength);
 }
 
 
@@ -773,7 +774,7 @@ function adjustLightPosition() {
     starLight.position.x += randomX;
     starLight.position.y += Math.abs(randomY);
 
-    console.log("New Light Position:", starLight.position.x, starLight.position.y, starLight.position.z);
+  //  console.log("New Light Position:", starLight.position.x, starLight.position.y, starLight.position.z);
 }
 
 
@@ -1071,7 +1072,7 @@ let rightColumnContent = `
 habitablePlanetDiv.innerHTML = `${leftColumnContent}${rightColumnContent}`;
  
   //  habitablePlanetDiv.innerHTML = `${planetDetailsContent}${elementDetails}${graphContainer}`;
-    console.log(document.getElementById('elementAbundanceGraph'));
+   // console.log(document.getElementById('elementAbundanceGraph'));
     plotElementProbabilityGraph(planet.composition);
 
 }

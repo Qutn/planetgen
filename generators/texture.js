@@ -1,25 +1,27 @@
 // musgrave shader, for noise based planet texturing
 
+// Vertex Shader
 export const musgraveVertexShader = `
-varying vec3 vPosition;
-varying vec3 vNormal;
+varying vec2 vUv;
 
 void main() {
-  vPosition = position;
-  vNormal = normal;
+  // Generate spherical UVs based on the vertex position
+  vec3 normalizedPosition = normalize(position);
+  float u = 0.5 + atan(normalizedPosition.z, normalizedPosition.x) / (2.0 * 3.14159265358979323846);
+  float v = 0.5 - asin(normalizedPosition.y) / 3.14159265358979323846;
+  vUv = vec2(u, v);
+
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `;
 
+// Fragment Shader
 export const musgraveFragmentShader = `
-varying vec3 vPosition;
-varying vec3 vNormal;
-
+varying vec2 vUv;
 uniform float layers;
 uniform float amplitude;
 uniform float lacunarity;
 uniform float gain;
-uniform mat4 modelMatrix;
 
 float interpolate(float a, float b, float t) {
   return mix(a, b, t * t * (3.0 - 2.0 * t));
@@ -78,39 +80,12 @@ vec3 mapToTerrainColor(float noiseValue) {
     }
   }
   
-  uniform vec3 objectWorldPosition; // You need to set this uniform in your JavaScript code
 
   void main() {
-    // Transform vertex position to world space
-    vec3 worldPosition = vec3(modelMatrix * vec4(vPosition, 1.0));
-    vec3 relativePosition = worldPosition - objectWorldPosition;
+    float n = fbm(vUv * 2.5); // The multiplier here controls the scale of the noise
+    vec3 color = mapToTerrainColor(n);
+    gl_FragColor = vec4(color, 1.0);
 
-    // Calculate blend weights based on the normal vector
-    vec3 blendWeights = abs(vNormal);
-    blendWeights = blendWeights / dot(blendWeights, vec3(1.0));
-  
-    // Scale worldPosition by some value to avoid stretching on larger planets
-    vec3 scaledPosition = worldPosition * 0.1; // Tune this scale factor as needed
-  
-    // Sample noise for each axis
-    float nX = fbm((scaledPosition.yz + 1.0) * 5.0) * blendWeights.x;
-    float nY = fbm((scaledPosition.xz + 1.0) * 5.0) * blendWeights.y;
-    float nZ = fbm((scaledPosition.xy + 1.0) * 5.0) * blendWeights.z;
-  
-    // Combine the noise values based on the blend weights
-    float combinedNoise = nX + nY + nZ;
-    combinedNoise = clamp(combinedNoise / (blendWeights.x + blendWeights.y + blendWeights.z), 0.0, 1.0);
-  
-    // Map the noise value to terrain colors
-    vec3 color = mapToTerrainColor(combinedNoise);
-
-   // Visualize the UVs by mapping position to color
-   vec3 uvColor = relativePosition - floor(relativePosition);
-   uvColor = uvColor * blendWeights; // Apply blend weights to visualize the triplanar blending
- 
-  // gl_FragColor = vec4(uvColor, 1.0);
-
-   gl_FragColor = vec4(color, 1.0);
   }
 `;
 

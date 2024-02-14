@@ -1,2 +1,4 @@
-fix camera tracking with orbital movement
-correct time calculations with scale factor to get correct day and year length
+fix shadows on terrestrial shader material
+fix UVs moving with planet movement
+
+make noise look better
