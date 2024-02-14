@@ -13,6 +13,8 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { CopyShader } from 'three/addons/shaders/CopyShader.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
+import { musgraveFragmentShader, musgraveVertexShader } from './generators/texture.js';
+
 // Global variables for the three.js objects
 let sphere, scene, camera, renderer, controls, canvas;
 let starLight, ambientLight;
@@ -156,7 +158,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const distance = targetPlanet.geometry.parameters.radius * 3;
                 zoomTargetPosition.set(targetPlanet.position.x, targetPlanet.position.y, targetPlanet.position.z + distance);
                 zoomTargetLookAt.copy(targetPlanet.position);
-    
+                updateDesiredTargetPosition(currentTargetIndex);
+
                 // Start zooming
                 isZooming = true;
             }
@@ -268,56 +271,87 @@ function createPlanet(planetData, index) {
     let planetTexture;
     let normalMap = null;
     let roughnessAmount = 0;
-    let cloudTexture = null;
+    let cloudTexture = new THREE.TextureLoader().load('./texture/water_clouds_d.png');
     let isTransparent = false;
     let cloudOpacity = 0.0;
+    let planetEmissiveTexture = null;
+    let emissiveColor = 0x000000;
+    let emissiveIntensityValue = 0;
+    let normalMapIntensity =  new THREE.Vector2(0.0, 0.0);
+    let material;
 
-    if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
-        planetTexture = new THREE.TextureLoader().load('./texture/giant_d_2.png'); 
-        normalMap = new THREE.TextureLoader().load('./texture/giant_n.png');
-        cloudTexture = new THREE.TextureLoader().load('./texture/giant_d_2.png');
-        roughnessAmount = 1;
-        isTransparent = true;
-        cloudOpacity = 1.00;
-    } 
-    else if (planetData.type === 'Ocean World') {
-        planetTexture = new THREE.TextureLoader().load('./texture/ocean_d.png'); 
-        roughnessAmount = 0.3;
-        cloudTexture = new THREE.TextureLoader().load('./texture/water_clouds_d.png');
-        isTransparent = true; 
-        cloudOpacity = 0.6;
+    if (planetData.type === 'Terrestrial') {
+        // For terrestrial planets, use the musgrave shader
+        material = new THREE.ShaderMaterial({
+            vertexShader: musgraveVertexShader,
+            fragmentShader: musgraveFragmentShader,
+            uniforms: {
+                layers: { value: 5.0 },
+                amplitude: { value: 1.0 },
+                lacunarity: { value: 2.0 },
+                gain: { value: 0.5 }
+            },
+        });
+}
+else if (planetData.type === 'Lava Planet') {
+    material = new THREE.MeshStandardMaterial({
+        map: new THREE.TextureLoader().load('./texture/lava_d.png'),
+        emissiveMap: new THREE.TextureLoader().load('./texture/lava_e.png'),
+        emissive: 0xffffff,
+        emissiveIntensity: 1.25,
+        roughness: 0.8,
+        normalMap: new THREE.TextureLoader().load('./texture/lava_n.png'),
 
-    }
-    else if (planetData.type === 'Terrestrial') {
-       // planetTexture = new THREE.TextureLoader().load('./texture/ocean_d.png'); 
-        planetTexture = noiseTexture; // Use the noise texture for other planet types
-        roughnessAmount = 0.4;
-        cloudTexture = new THREE.TextureLoader().load('./texture/water_clouds_d.png'); 
-        isTransparent - true;
-        cloudOpacity = 0.7;
 
-    }
-    else {
-        planetTexture = noiseTexture; // Use the noise texture for other planet types
-        cloudTexture = null;
-        isTransparent = false;
-        cloudOpacity = 0.0;
+    })
 
-    }
-    
+}
+else if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
+    material = new THREE.MeshStandardMaterial({
+        map: new THREE.TextureLoader().load('./texture/giant_d_2.png'),
+        roughness: 0.8,
+        normalMap: new THREE.TextureLoader().load('./texture/giant_n.png'),
+
+
+    })
+
+}
+else if (planetData.type === 'Ocean World') {
+    material = new THREE.MeshStandardMaterial({
+        map: new THREE.TextureLoader().load('./texture/ocean_d.png'),
+        roughness: 0.6,
+        color: getColorForPlanetType(planetData.type),
+
+    })
+}
+else {
+    // For other planet types, use the standard material
+    material = new THREE.MeshStandardMaterial({
+        map: noiseTexture,
+        color: getColorForPlanetType(planetData.type),
+        normalMap: normalMap,
+        normalScale: normalMapIntensity,
+        roughness: roughnessAmount,
+        emissiveMap: planetEmissiveTexture,
+        emissive: emissiveColor,
+        emissiveIntensity: emissiveIntensityValue,
+    });
+}
     planetGeometry.rotateZ(Math.PI / 2); //rotate so texture applies properly
 
-    const planetMaterial = new THREE.MeshStandardMaterial({
-        map: planetTexture, // Apply the loaded texture as the map
-        color: getColorForPlanetType(planetData.type), // You might blend this color with the texture
-        normalMap: normalMap, // Apply the normal map if you have one
-        normalScale: new THREE.Vector2(0.3, 0.3), // Reduce the effect of the normal map
-        roughness: roughnessAmount,
+   // material = new THREE.MeshStandardMaterial({
+   //     map: planetTexture, // Apply the loaded texture as the map
+    //    color: getColorForPlanetType(planetData.type), // You might blend this color with the texture
+    //    normalMap: normalMap, // Apply the normal map if you have one
+    //    normalScale: normalMapIntensity,
+    //    roughness: roughnessAmount,
+    //    emissiveMap: planetEmissiveTexture,
+    //    emissive: emissiveColor,
+    //    emissiveIntensity: emissiveIntensityValue,
 
+    // });
 
-    });
-
-    const planetMesh = new THREE.Mesh(planetGeometry, planetMaterial);
+    const planetMesh = new THREE.Mesh(planetGeometry, material);
     const phi = Math.PI / 2; // Horizontal plane
     const theta = Math.random() * Math.PI * 2; // Randomize starting position on orbit
     planetMesh.position.setFromSphericalCoords(
@@ -325,29 +359,32 @@ function createPlanet(planetData, index) {
         phi, // Horizontal plane
         theta // Randomized azimuthal angle
     );
+
     const axialTiltRadians = THREE.Math.degToRad(planetData.axialTilt);
     planetMesh.rotation.x = axialTiltRadians; // Tilting the planet around its X-axis
     planetMesh.name = `planet${index}`;
  //  const planetAxesHelper = new THREE.AxesHelper(15.0); // Adjust the size as needed
-    
- const cloudGeometry = new THREE.SphereGeometry(planetData.radius * 1.01, 32, 32); // Slightly larger than the planet
-    const cloudMaterial = new THREE.MeshPhongMaterial({
-         map: cloudTexture, // Your diffuse cloud texture
-         alphaMap: cloudTexture, // Use the same texture as alpha map for transparency
-         transparent: isTransparent,
-         depthWrite: false, // Avoid depth write issues with transparent textures
-         opacity: cloudOpacity, // Adjust for desired transparency
 
+ if (planetData.type === 'Ocean World' || planetData.type === 'Terrestrial') {
+    const cloudGeometry = new THREE.SphereGeometry(planetData.radius * 1.01, 32, 32);
+    const cloudMaterial = new THREE.MeshPhongMaterial({
+        map: new THREE.TextureLoader().load('./texture/water_clouds_d.png'), // Make sure this is the correct path
+        alphaMap: new THREE.TextureLoader().load('./texture/water_clouds_d.png'),
+        transparent: true,
+        depthWrite: false,
+        opacity: 0.6,
     });
     cloudMaterial.blending = THREE.AdditiveBlending; // Example alternative blending mode
+    const cloudMesh = new THREE.Mesh(cloudGeometry, cloudMaterial);
     cloudGeometry.rotateZ(Math.PI / 2);
     cloudGeometry.rotateX = axialTiltRadians; // Tilting the planet around its X-axis
+    planetData.cloudMesh = cloudMesh;
+    planetMesh.add(cloudMesh); // Assuming planetMesh is your planet
 
+}
 
     scene.add(planetMesh);
-    const cloudMesh = new THREE.Mesh(cloudGeometry, cloudMaterial);
-    planetMesh.add(cloudMesh); // Assuming planetMesh is your planet
-    planetData.cloudMesh = cloudMesh;
+ 
 
 
   // planetMesh.add(planetAxesHelper); // This makes the axes helper move and rotate with the planet
@@ -466,9 +503,9 @@ function setupLighting() {
     // Update ambient light as well
     if (ambientLight) {
         ambientLight.color.set(color);
-        ambientLight.intensity = intensity / 5;
+        ambientLight.intensity = intensity / 10;
     } else {
-        ambientLight = new THREE.AmbientLight(color, intensity / 5);
+        ambientLight = new THREE.AmbientLight(color, intensity / 10);
         scene.add(ambientLight);
     }
 
@@ -662,15 +699,15 @@ function updateStarLight() {
     // Update the lights
     if (starLight) {
         starLight.color.set(new THREE.Color(color));
-        starLight.intensity = effectiveIntensity / 7.5;
+        starLight.intensity = effectiveIntensity / 2;
     }
 
     // Update ambient light as well
     if (ambientLight) {
         ambientLight.color.set(new THREE.Color(color));
-        ambientLight.intensity = intensity / 10;
+        ambientLight.intensity = intensity / 100;
     } else {
-        ambientLight = new THREE.AmbientLight(new THREE.Color(color), intensity / 10);
+        ambientLight = new THREE.AmbientLight(new THREE.Color(color), intensity / 100);
         scene.add(ambientLight);
     }
 
@@ -685,7 +722,7 @@ function adjustBloomEffect() {
 
     // Adjust these values to fine-tune the appearance
     const luminosityFloor = 0.1; // Increase if too dim stars are too bright
-    const luminosityCeiling = 3.0; // Decrease if very bright stars are too bright
+    const luminosityCeiling = 2.0; // Decrease if very bright stars are too bright
     const minBloomStrength = 0.3; // Minimum bloom, increase if dim stars are too bright
     const maxBloomStrength = 2.0; // Maximum bloom, decrease if bright stars are too overpowering
 
@@ -1623,4 +1660,6 @@ function getRotationSpeed(orbitRadius, habitableZone, AU_TO_SCENE_SCALE, systemO
     return finalRotationSpeed;
 }
 
+
+// terrestrial planet texture generation
 
