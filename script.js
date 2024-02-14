@@ -286,10 +286,11 @@ function createPlanet(planetData, index) {
             vertexShader: musgraveVertexShader,
             fragmentShader: musgraveFragmentShader,
             uniforms: {
-                layers: { value: 5.0 },
-                amplitude: { value: 1.0 },
-                lacunarity: { value: 2.0 },
-                gain: { value: 0.5 }
+                layers: { value: 55.0 },
+                amplitude: { value: 0.75 },
+                lacunarity: { value: 5.25 },
+                gain: { value: 0.35 },
+                objectWorldPosition: {value: new THREE.Vector3()},
             },
         });
 }
@@ -537,25 +538,24 @@ function startAnimationLoop() {
 
         controls.target.lerp(desiredTargetPosition, followSpeed);
         updateDesiredTargetPosition(currentTargetIndex);
-       // if (isFollowingObject && currentTargetIndex >= 0 && currentTargetIndex < universeData.solarSystem.length) {
-       //     adjustCameraPosition(currentTargetIndex);
-       // }
-       if (isZooming) {
-        // Move the camera towards the target position smoothly
-        camera.position.lerp(zoomTargetPosition, 0.05); // Adjust the 0.05 value for speed
 
-        // Smoothly adjust the camera to look at the target
+       if (isZooming) {
+        camera.position.lerp(zoomTargetPosition, 0.05); // Adjust the 0.05 value for speed
         const lookAtPosition = new THREE.Vector3().lerpVectors(camera.position, zoomTargetLookAt, 0.05);
         camera.lookAt(lookAtPosition);
 
-        // Optional: Stop zooming when close enough to the target position
         if (camera.position.distanceTo(zoomTargetPosition) < 0.1) {
             isZooming = false;
             camera.position.copy(zoomTargetPosition);
             camera.lookAt(zoomTargetLookAt);
+            }
         }
-    }
-    
+
+ //       const planetMesh = scene.getObjectByName(`planet${index}`);
+   //     if (planetMesh && planetMesh.material && planetMesh.material.isShaderMaterial) {
+        // Update the uniform with the current world position of the planet
+   //         planetMesh.material.uniforms.objectWorldPosition.value.copy(planetMesh.position);
+  //      }
         controls.update();
         composer.render();
     }
@@ -578,6 +578,16 @@ function animatePlanets() {
             const theta = (Date.now() * planetData.orbitalSpeed) % (Math.PI * 2);
             planetMesh.position.x = Math.cos(theta) * orbitRadius;
             planetMesh.position.z = Math.sin(theta) * orbitRadius;
+
+            // If the planet mesh has a ShaderMaterial and a uniform for world position, update it
+            if (planetMesh.material && planetMesh.material.isShaderMaterial && planetMesh.material.uniforms.objectWorldPosition) {
+                planetMesh.material.uniforms.objectWorldPosition.value.copy(planetMesh.position);
+            }
+
+            // Update the cloud mesh position if it has one
+            if (planetData.cloudMesh && planetData.cloudMesh.material && planetData.cloudMesh.material.isShaderMaterial && planetData.cloudMesh.material.uniforms.objectWorldPosition) {
+                planetData.cloudMesh.material.uniforms.objectWorldPosition.value.copy(planetMesh.position);
+            }
         }
     });
 }

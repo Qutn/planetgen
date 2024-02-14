@@ -63,9 +63,9 @@ vec3 mapToTerrainColor(float noiseValue) {
     vec3 grass = vec3(0.0, 0.5, 0.0); // Green
     vec3 rock = vec3(0.5, 0.5, 0.5); // Gray
     
-    float waterLevel = 0.2;
-    float sandLevel = 0.3;
-    float grassLevel = 0.6;
+    float waterLevel = 0.7;
+    float sandLevel = 0.8;
+    float grassLevel = 0.95;
     
     if(noiseValue < waterLevel) {
       return water;
@@ -77,11 +77,14 @@ vec3 mapToTerrainColor(float noiseValue) {
       return rock;
     }
   }
+  
+  uniform vec3 objectWorldPosition; // You need to set this uniform in your JavaScript code
 
   void main() {
     // Transform vertex position to world space
     vec3 worldPosition = vec3(modelMatrix * vec4(vPosition, 1.0));
-  
+    vec3 relativePosition = worldPosition - objectWorldPosition;
+
     // Calculate blend weights based on the normal vector
     vec3 blendWeights = abs(vNormal);
     blendWeights = blendWeights / dot(blendWeights, vec3(1.0));
@@ -102,12 +105,12 @@ vec3 mapToTerrainColor(float noiseValue) {
     vec3 color = mapToTerrainColor(combinedNoise);
 
    // Visualize the UVs by mapping position to color
-   vec3 uvColor = worldPosition - floor(worldPosition);
+   vec3 uvColor = relativePosition - floor(relativePosition);
    uvColor = uvColor * blendWeights; // Apply blend weights to visualize the triplanar blending
  
-   gl_FragColor = vec4(uvColor, 1.0);
+  // gl_FragColor = vec4(uvColor, 1.0);
 
-   // gl_FragColor = vec4(color, 1.0);
+   gl_FragColor = vec4(color, 1.0);
   }
 `;
 
