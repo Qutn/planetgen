@@ -300,6 +300,8 @@ function createPlanet(planetData, index) {
         material = new THREE.MeshStandardMaterial({
             map: textures.colorMap,
             roughnessMap: textures.roughnessMap,
+            bumpMap: textures.colorMap,
+            bumpScale: 0.001,
             // ... other material properties
         });
       }
@@ -715,10 +717,10 @@ function adjustBloomEffect() {
     const starLuminosity = universeData.parentStar.luminosity;
 
     // Adjust these values to fine-tune the appearance
-    const luminosityFloor = 0.1; // Increase if too dim stars are too bright
-    const luminosityCeiling = 2.0; // Decrease if very bright stars are too bright
+    const luminosityFloor = 0.5; // Increase if too dim stars are too bright
+    const luminosityCeiling = 1.5; // Decrease if very bright stars are too bright
     const minBloomStrength = 0.3; // Minimum bloom, increase if dim stars are too bright
-    const maxBloomStrength = 2.0; // Maximum bloom, decrease if bright stars are too overpowering
+    const maxBloomStrength = 1.5; // Maximum bloom, decrease if bright stars are too overpowering
 
     // Apply a more aggressive adjustment for stars with high luminosity
     let bloomStrength;
