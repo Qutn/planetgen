@@ -258,7 +258,7 @@ function updateDesiredTargetPosition(index) {
 
 function createPlanet(planetData, index) {
     // Access parent star's habitable zone directly from universeData
-    const habitableZone = universeData.parentStar.habitableZone;
+    // const habitableZone = universeData.parentStar.habitableZone;
     const planetGeometry = new THREE.SphereGeometry(planetData.radius, 32, 32);
     const starSize = universeData.parentStar.size;
     const starMass = universeData.parentStar.mass;
@@ -266,12 +266,12 @@ function createPlanet(planetData, index) {
 
     const noiseTexture = createNoiseTexture();
     // let musgraveTexture = generateFBMNoiseTexture(1024, 1024, 0.01, 0.5, 8, 2.0);
-    let planetTexture;
+    // let planetTexture;
     let normalMap = null;
     let roughnessAmount = 0;
-    let cloudTexture = new THREE.TextureLoader().load('./texture/water_clouds_d.png');
-    let isTransparent = false;
-    let cloudOpacity = 0.0;
+    // let cloudTexture = new THREE.TextureLoader().load('./texture/water_clouds_d.png');
+    // let isTransparent = false;
+    // let cloudOpacity = 0.0;
     let planetEmissiveTexture = null;
     let emissiveColor = 0x000000;
     let emissiveIntensityValue = 0;
@@ -279,31 +279,14 @@ function createPlanet(planetData, index) {
     let material;
 
     if (planetData.type === 'Terrestrial') {
-        // Define the parameters for the texture generation based on the planet type
-        const scale = 0.25; // Smaller value for more detail
-        const detail = 0.69; // Detail level (gain)
-        const dimension = 25; // Number of noise layers (octaves)
-        const lacunarity = 2.8; // Frequency multiplier between successive octaves
-        const amplitudeScale = 1.25;
-        // Generate the texture with the specified parameters
-        const textures = generateTextures(
-          2048, // width of the texture
-          2048, // height of the texture
-          scale,
-          detail,
-          dimension,
-          lacunarity,
-          amplitudeScale,
-        );
-    
-        // Create the material and assign the generated texture as a map
         material = new THREE.MeshStandardMaterial({
-            map: textures.colorMap,
-            roughnessMap: textures.roughnessMap,
-            bumpMap: textures.colorMap,
-            bumpScale: 0.001,
-            // ... other material properties
-        });
+            map: new THREE.TextureLoader().load('./texture/terr_d.png'),
+            roughness: 0.6,
+           // color: getColorForPlanetType(planetData.type),
+    
+        })
+        planetGeometry.rotateZ(Math.PI / 2); //rotate so texture applies properly
+
       }
 
 
@@ -324,11 +307,12 @@ else if (planetData.type === 'Lava Planet') {
 else if (planetData.type === 'Gas Giant' || planetData.type === 'Ice Giant') {
     material = new THREE.MeshStandardMaterial({
         map: new THREE.TextureLoader().load('./texture/giant_d_2.png'),
-        roughness: 0.8,
+        roughness: 0.95,
         normalMap: new THREE.TextureLoader().load('./texture/giant_n.png'),
 
 
     })
+    planetGeometry.rotateZ(Math.PI / 2); //rotate so texture applies properly
 
 }
 else if (planetData.type === 'Ocean World') {
@@ -679,7 +663,7 @@ function updateStarLight() {
     const starData = universeData.parentStar;
     let { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
     color = new THREE.Color(color);
-    color = desaturateColor(color.getStyle(), 0.6); // Example: 0.5 as the desaturation factor
+    color = desaturateColor(color.getStyle(), 0.45); // Example: 0.5 as the desaturation factor
 
     // Ensure a minimum intensity for visibility
     const minIntensity = 5; // Adjust as needed for minimum visibility
@@ -695,9 +679,9 @@ function updateStarLight() {
     // Update ambient light as well
     if (ambientLight) {
         ambientLight.color.set(new THREE.Color(color));
-        ambientLight.intensity = intensity / 100;
+        ambientLight.intensity = intensity / 1000;
     } else {
-        ambientLight = new THREE.AmbientLight(new THREE.Color(color), intensity / 100);
+        ambientLight = new THREE.AmbientLight(new THREE.Color(color), intensity / 1000);
         scene.add(ambientLight);
     }
 
@@ -717,10 +701,10 @@ function adjustBloomEffect() {
     const starLuminosity = universeData.parentStar.luminosity;
 
     // Adjust these values to fine-tune the appearance
-    const luminosityFloor = 0.5; // Increase if too dim stars are too bright
-    const luminosityCeiling = 1.5; // Decrease if very bright stars are too bright
+    const luminosityFloor = 0.75; // Increase if too dim stars are too bright
+    const luminosityCeiling = 1.25; // Decrease if very bright stars are too bright
     const minBloomStrength = 0.3; // Minimum bloom, increase if dim stars are too bright
-    const maxBloomStrength = 1.5; // Maximum bloom, decrease if bright stars are too overpowering
+    const maxBloomStrength = 1.25; // Maximum bloom, decrease if bright stars are too overpowering
 
     // Apply a more aggressive adjustment for stars with high luminosity
     let bloomStrength;
@@ -731,7 +715,7 @@ function adjustBloomEffect() {
         bloomStrength = maxBloomStrength - normalizedLuminosity * (maxBloomStrength - minBloomStrength);
     } else {
         // For luminosities above the ceiling, reduce bloom strength more aggressively
-        bloomStrength = maxBloomStrength / (Math.log(starLuminosity - luminosityCeiling + 2));
+        bloomStrength = maxBloomStrength / (Math.log(starLuminosity - luminosityCeiling + 5));
     }
 
     // Ensure bloom strength does not fall below the minimum
@@ -835,13 +819,14 @@ function addStarToScene() {
     const starGeometry = new THREE.SphereGeometry(starRadii, 32, 32);
     const { color, intensity } = calculateStarColorAndIntensity(starData.type, starData.luminosity);
 
-    const minEmissiveIntensity = 5.00; // Minimum visible emissive intensity
+    const minEmissiveIntensity = 4.00; // Minimum visible emissive intensity
     let emissiveIntensity = Math.max(Math.log1p(intensity), minEmissiveIntensity);
     const starTexture = new THREE.TextureLoader().load('./texture/star_d.png'); // Load diffuse texture
 
-    const starMaterial = new THREE.MeshPhongMaterial({
+    const starMaterial = new THREE.MeshStandardMaterial({
         map: starTexture,
         color: new THREE.Color(color),
+        emissiveMap: new THREE.TextureLoader().load('./texture/star_e.png'),
         emissive: new THREE.Color(color),
         emissiveIntensity: emissiveIntensity
     });
@@ -1169,7 +1154,7 @@ function calculateStarColorAndIntensity(starType, starLuminosity) {
     // Base intensity to start with, ensuring no star is invisible
     const baseIntensity = 1;
     // Adjusting intensity based on the star's luminosity with a cap
-    let intensity = Math.min(baseIntensity * starLuminosity, 5);
+    let intensity = Math.min(baseIntensity * starLuminosity, 300);
 
     return { color, intensity };
 }
