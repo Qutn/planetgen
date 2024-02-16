@@ -212,7 +212,7 @@ function initializeThreeJSEnvironment(canvasId) {
     const starFieldTexture = createStarFieldTexture(); // Assuming createStarFieldTexture is defined
     scene.background = starFieldTexture;
 
-    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000000);
+    camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.01, 1000000);
     camera.position.set(0, 0, 500); // You might want to experiment with these values
     camera.castShadow = true;
     renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
@@ -227,9 +227,9 @@ function initializeThreeJSEnvironment(canvasId) {
     bloomPass = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight), // resolution
 
-        1.0, // strength
-        0.4, // radius
-        0.85 // threshold
+        0.5, // strength
+        0.5, // radius
+        0.95 // threshold
     );
     composer.addPass(bloomPass);
     
@@ -702,9 +702,9 @@ function adjustBloomEffect() {
 
     // Adjust these values to fine-tune the appearance
     const luminosityFloor = 0.75; // Increase if too dim stars are too bright
-    const luminosityCeiling = 1.25; // Decrease if very bright stars are too bright
-    const minBloomStrength = 0.3; // Minimum bloom, increase if dim stars are too bright
-    const maxBloomStrength = 1.25; // Maximum bloom, decrease if bright stars are too overpowering
+    const luminosityCeiling = 1.00; // Decrease if very bright stars are too bright
+    const minBloomStrength = 0.75; // Minimum bloom, increase if dim stars are too bright
+    const maxBloomStrength = 1.00; // Maximum bloom, decrease if bright stars are too overpowering
 
     // Apply a more aggressive adjustment for stars with high luminosity
     let bloomStrength;
@@ -1286,11 +1286,12 @@ function calculateAtmosphereScale(planetRadius) {
 
 }
 
-function createAtmosphere(planetRadius, composition) {
+function createAtmosphere(planetRadius, composition, planetType) {
   const atmosphereScaleFactor = calculateAtmosphereScale(planetRadius); // Use the new scale factor
   const atmosphereRadius = planetRadius * atmosphereScaleFactor;
   const geometry = new THREE.SphereGeometry(atmosphereRadius, 32, 32);
   const color = getAtmosphereColor(composition);
+  const planetColor = getColorForPlanetType(planetType);
     
     // Log the atmosphere information
    // console.log("Planet Radius:", planetRadius, "Atmosphere Radius:", atmosphereRadius);
@@ -1299,7 +1300,7 @@ function createAtmosphere(planetRadius, composition) {
     const material = new THREE.ShaderMaterial({
         uniforms: {
             atmosphereColor: { value: new THREE.Color(color) },
-            surfaceColor: { value: new THREE.Color(0xffffff) }, // Assuming the surface is white for simplicity
+            surfaceColor: { value: new THREE.Color(planetColor) }, // Assuming the surface is white for simplicity
         },
         vertexShader: /* glsl */`
             varying vec3 vertexNormal;
@@ -1466,7 +1467,7 @@ function getColorForPlanetType(planetType) {
         'Gas Giant': 0xffa07a,   // Light Salmon (for an orange/tan look)
         'Lava Planet': 0xff4500, // OrangeRed
         'Ocean World': 0x1e90ff, // DodgerBlue
-        'Dwarf Planet': 0x808080, // Gray
+        'Dwarf Planet': 0x404040, // Gray
         // Add more types as needed
     };
 

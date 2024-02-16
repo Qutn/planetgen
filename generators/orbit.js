@@ -63,8 +63,8 @@ function generateParentStar() {
 function calculateHabitableZone(luminosity) {
     // Constants for inner and outer boundaries in AU based on luminosity
     // These are simplified estimates; actual calculations can be more complex
-    const innerBoundary = 0.95 * Math.sqrt(luminosity);
-    const outerBoundary = 1.37 * Math.sqrt(luminosity);
+    const innerBoundary = Math.sqrt(luminosity / 1.1);
+    const outerBoundary = Math.sqrt(luminosity) / 0.53;
 
     return {
         innerBoundary: innerBoundary,
@@ -203,7 +203,7 @@ console.log("orbit.js loaded");
 // 
 // solar system generator
 function generateSolarSystem(parentStar) {
-    const numberOfPlanets = getRandomInt(3, 10);
+    const numberOfPlanets = getRandomInt(3, 18);
     let solarSystemPlanets = [];
     let habitableZonePlanetAdded = false;
 
@@ -238,9 +238,15 @@ function generateSolarSystem(parentStar) {
 }
 
 function getRandomOrbitRadius(parentStar, planetIndex, totalPlanets) {
-    // simple logarithmic spacing for orbits
-    const minOrbit = 0.2; // Minimum orbit radius in AU
-    const maxOrbit = 50;  // Maximum orbit radius in AU
+    const luminosity = parentStar.luminosity; // Assuming this is relative to the Sun
+    // Calculate the habitable zone based on luminosity
+    const innerHabitable = Math.sqrt(luminosity / 1.1);
+    const outerHabitable = Math.sqrt(luminosity / 0.53);
+
+    // Adjust min and max orbit to ensure it includes the habitable zone
+    const minOrbit = 0.2; 
+    const maxOrbit = Math.max(50, outerHabitable + 20); // Ensure outer bound includes the habitable zone
+
     const spacingFactor = (Math.log(maxOrbit) - Math.log(minOrbit)) / totalPlanets;
     return Math.exp(Math.log(minOrbit) + spacingFactor * planetIndex);
 }
@@ -261,16 +267,20 @@ function getAxialTilt(planetType){
 
 
 function determinePlanetType(parentStar, orbitRadius) {
-    // simple model based on orbit radius
-    if (orbitRadius < 0.5) {
+    const luminosity = parentStar.luminosity;
+    // Recalculate the habitable zone
+    const innerHabitable = Math.sqrt(luminosity / 1.1);
+    const outerHabitable = Math.sqrt(luminosity / 0.53);
+
+    // Decision logic based on the habitable zone
+    if (orbitRadius < innerHabitable) {
         return "Lava Planet";
-    } else if (orbitRadius < 1.5) {
-        return "Terrestrial";
-    } else if (orbitRadius < 5) {
-        return "Ocean World";
-    } else if (orbitRadius < 10) {
+    } else if (orbitRadius >= innerHabitable && orbitRadius <= outerHabitable) {
+        // Terrestrial or Ocean World based on additional factors or randomness
+        return Math.random() > 0.5 ? "Terrestrial" : "Ocean World";
+    } else if (orbitRadius > outerHabitable && orbitRadius < outerHabitable + 15) {
         return "Gas Giant";
-    } else if (orbitRadius < 30) {
+    } else if (orbitRadius >= outerHabitable + 5 && orbitRadius < 30) {
         return "Ice Giant";
     } else {
         return "Dwarf Planet";
