@@ -28,7 +28,9 @@ let followOffset = new THREE.Vector3();
 let isZooming = false;
 let zoomTargetPosition = new THREE.Vector3();
 let zoomTargetLookAt = new THREE.Vector3();
-
+let bloomStrength = 0.3;
+let bloomRadius = 0.9;
+let bloomThreshold = 0.75;
 const AU_TO_SCENE_SCALE = 21840.00;
 
 let universeData = {
@@ -48,6 +50,33 @@ let universeData = {
     systemOuterEdge: null,
     // Additional properties and methods can be added as needed
 };
+
+// Function to export universeData as a base64 string
+function exportUniverseData() {
+    const dataString = JSON.stringify(universeData);
+    const base64Data = btoa(dataString); // Encode to base64
+    console.log('Exported Data:', base64Data);
+    // Example: Copy to clipboard or display in a user interface
+    navigator.clipboard.writeText(base64Data).then(() => {
+        alert('System data exported and copied to clipboard.');
+    });
+}
+
+// Function to import universeData from a base64 string
+function importUniverseData(base64Data) {
+    try {
+        const dataString = atob(base64Data); // Decode from base64
+        const dataObject = JSON.parse(dataString);
+        // Validate or sanitize dataObject as necessary
+        universeData = dataObject; // Update universeData
+        console.log('Imported Data:', universeData);
+        // Trigger any necessary updates or rerendering here
+        updateScene(); // Assuming updateScene() will use the updated universeData
+    } catch (error) {
+        console.error('Failed to import data:', error);
+        alert('Invalid data format. Please ensure you are using a valid exported string.');
+    }
+}
 
 function populateUniverseData() {
     const orbitData = generateOrbit();
@@ -88,7 +117,33 @@ function populateUniverseData() {
     universeData.systemOuterEdge = systemOuterEdge;
 }
 
+function filterVitalDataForExport(universeData) {
+    const filteredData = {
+        parentStar: {
+            type: universeData.parentStar.type,
+            size: universeData.parentStar.size,
+            mass: universeData.parentStar.mass,
+            luminosity: universeData.parentStar.luminosity
+        },
+        solarSystem: universeData.solarSystem.map(planet => ({
+            type: planet.type,
+            orbitRadius: planet.orbitRadius,
+            size: planet.radius, // Assuming 'radius' is the size property
+            axialTilt: planet.axialTilt,
+            moons: planet.moons,
+            isTidallyLocked: planet.isTidallyLocked
+        }))
+    };
+    return filteredData;
+}
+
+function encodeDataToBase64(dataObject) {
+    const jsonString = JSON.stringify(dataObject);
+    return btoa(jsonString); // Use btoa for base64 encoding
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    
     // Initialize default star and planet data directly into universeData
     universeData.parentStar = {
         type: 'G',
@@ -166,8 +221,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-    
 
+    document.getElementById('exportSystem').addEventListener('click', function() {
+        // Call the filterVitalDataForExport function to get the filtered data
+        const filteredData = filterVitalDataForExport(universeData);
+        const dataStr = JSON.stringify(filteredData);
+        const base64Str = btoa(unescape(encodeURIComponent(dataStr)));
+        document.getElementById('base64Output').value = base64Str;
+    });
+
+    document.getElementById('importSystem').addEventListener('click', function() {
+        try {
+            const inputStr = decodeURIComponent(escape(window.atob(document.getElementById('base64Input').value)));
+            universeData = JSON.parse(inputStr);
+            // Here you would add any necessary calls to update the UI based on the imported data
+            alert('System data imported successfully!');
+            // After importing, you might need to regenerate any dependent properties or UI elements
+            // For example, if you have functions to update the visuals based on universeData
+            updateScene();
+        } catch (e) {
+            alert('Failed to import data. Please ensure the base64 string is correct.');
+        }
+    });
 });
 
 async function updateScene() {
@@ -227,9 +302,9 @@ function initializeThreeJSEnvironment(canvasId) {
     bloomPass = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight), // resolution
 
-        0.5, // strength
-        0.5, // radius
-        0.95 // threshold
+        bloomStrength, // strength
+        bloomRadius, // radius
+        bloomThreshold, // threshold
     );
     composer.addPass(bloomPass);
     
@@ -522,7 +597,7 @@ function startAnimationLoop() {
             camera.lookAt(zoomTargetLookAt);
             }
         }
-
+       // updateBloomEffect(camera, currentTargetIndex);
  //       const planetMesh = scene.getObjectByName(`planet${index}`);
    //     if (planetMesh && planetMesh.material && planetMesh.material.isShaderMaterial) {
         // Update the uniform with the current world position of the planet
@@ -593,7 +668,7 @@ function animateMoons() {
             planetMesh.children.forEach((moon) => {
                 if (moon.name.startsWith('moon')) {
                     const orbitData = moon.userData.orbit;
-                    const angle = (Date.now() * orbitData.speed * 16 + orbitData.phase) % (Math.PI * 2);
+                    const angle = (Date.now() * orbitData.speed * 4 + orbitData.phase) % (Math.PI * 2);
 
                     // Update position based on stored orbital parameters
                     moon.position.set(
@@ -605,6 +680,32 @@ function animateMoons() {
             });
         }
     });
+}
+
+function updateBloomEffect(camera, currentTargetIndex) {
+    // Example calculation - you'll need to replace this with actual logic
+    const target = currentTargetIndex;
+    const distance = camera.position.distanceTo(currentTargetIndex);
+    
+    // Placeholder logic for adjusting bloom based on distance or target type
+    let newBloomStrength, newBloomRadius, newBloomThreshold;
+    if (distance < 50) { // Assuming distance units are consistent with your scene
+        newBloomStrength = 0.0; // Stronger bloom for closer targets
+        newBloomRadius = 0.5;
+        newBloomThreshold = 0.85;
+    } else {
+        newBloomStrength = 0.5; // Weaker bloom for distant targets
+        newBloomRadius = 0.1;
+        newBloomThreshold = 0.95;
+    }
+
+    // Apply the new bloom parameters
+    bloomStrength = newBloomStrength;
+    bloomRadius = newBloomRadius;
+    bloomThreshold = newBloomThreshold;
+
+    // You might need to directly update your bloom effect object here,
+    // depending on how it's implemented.
 }
 
 function visualizeOrbits() {
@@ -1386,11 +1487,12 @@ function createSegmentedRings(planetRadius, planetType, planetData) {
 
 function createMoonsForPlanet(planetMesh, planetData, planetIndex) {
     const moons = [];
-    const baseDistanceFromPlanet = planetData.radius * 2.0; // Base distance from the planet's surface
+    const baseDistanceFromPlanet = planetData.radius * 10.0; // Base distance from the planet's surface
 
     for (let i = 0; i < planetData.moons; i++) {
-        const moonScaleFactor = Math.max(planetData.radius / 10, 0.05);
-        const moonGeometry = new THREE.SphereGeometry(0.1 * moonScaleFactor, 32, 32);
+        const moonScaleFactor = Math.max(planetData.radius / 5, 0.05);
+        const moonRandomSize = Math.random();
+        const moonGeometry = new THREE.SphereGeometry(moonRandomSize * moonScaleFactor, 32, 32);
         const moonMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
         const moonMesh = new THREE.Mesh(moonGeometry, moonMaterial);
 

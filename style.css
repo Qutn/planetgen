@@ -245,6 +245,21 @@ button {
 
 }
 
+textarea#base64Output, input#base64Input {
+    background-color: #222222;
+    color: #cc77ff;
+    border: 2px solid #000000;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px 0;
+    width: calc(100% - 24px); /* Adjust based on padding and border */
+}
+
+textarea#base64Output {
+    height: 100px; /* Adjustable based on preference */
+    resize: vertical; /* Allows vertical resizing */
+}
+
 .element-details-container {
     max-height: 150px;
     overflow-y: auto;

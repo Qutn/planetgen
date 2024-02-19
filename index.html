@@ -85,10 +85,7 @@
 
         <aside class="statistics">
             <div class="fixed-button-container">
-                <input _="
-                    on change or keyup
-                    call set_random_seed(my value)
-                " type="number">
+                <input _="on change or keyup call set_random_seed(my value)" type="number">
                 <button id="generateSystemButton">Generate Solar System</button>
             </div>
             <div class="scrollable-content">
@@ -96,6 +93,10 @@
                     <!-- Solar system properties will be displayed here -->
                 </div>
             </div>
+            <button id="exportSystem">Export System</button>
+            <textarea id="base64Output" placeholder="Base64 will appear here..." readonly></textarea>
+            <input id="base64Input" type="text" placeholder="Paste Base64 here...">
+            <button id="importSystem">Import System</button>
         </aside>
     </div>
 
