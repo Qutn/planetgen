@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://0ohxtaca3rn4"]
+
+[ext_resource type="Script" path="res://bodies/celestial.gd" id="1_j0r4u"]
+
+[node name="Celestial" type="Node3D"]
+script = ExtResource("1_j0r4u")

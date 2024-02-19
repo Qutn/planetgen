@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://bln433nl3fkn"]
+
+[ext_resource type="Script" path="res://bodies/planet.gd" id="1_qbr5c"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_smnsl"]
+
+[node name="Planet" type="Node3D"]
+script = ExtResource("1_qbr5c")
+
+[node name="mesh" type="MeshInstance3D" parent="."]
+mesh = SubResource("SphereMesh_smnsl")
