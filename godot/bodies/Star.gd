@@ -37,9 +37,9 @@ var luminosity : float :
 
 @export_category("Random Generation")
 @export
-var seed : String:
+var rng_seed : String:
 	set(value):
-		true_seed = seed.hash()
+		true_seed = rng_seed.hash()
 		random.seed = true_seed
 
 var true_seed
@@ -64,6 +64,13 @@ func generate_star():
 	habitable_zone = HabitableZone.new(luminosity)
 	
 	nb_of_planets = random.randi_range(3, 18)
+	var planet_scene = preload("res://bodies/planet.tscn")
+	for i in range(0, nb_of_planets):
+		var planet = planet_scene.instantiate()
+		add_child(planet)
+		
+		planet.init(self, random, i)
+		
 	
 
 

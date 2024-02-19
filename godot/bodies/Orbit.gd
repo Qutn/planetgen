@@ -4,7 +4,7 @@ var parent_star : Star = null
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	pass # Replace with function body.
+	init()
 	
 func init(seed = null):
 	parent_star = preload("res://bodies/Star.tscn").instantiate()

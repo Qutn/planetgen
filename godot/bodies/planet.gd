@@ -5,22 +5,42 @@ class_name Planet
 const MIN_ORBIT = 0.2
 const MAX_ORBIT = 50
 
+const atmospheres = {
+	'trace': ['trace'],
+	'carbon_dioxide': ['carbon_dioxide_type_I', 'carbon_dioxide_type_II'],
+	'hydrogen_helium': ['hydrogen_helium_type_I', 'hydrogen_helium_type_II', 'hydrogen_helium_type_III'],
+	'ice': ['ice_type_I', 'ice_type_II'],
+	'nitrogen': ['nitrogen_type_I', 'nitrogen_type_II', 'nitrogen_type_III'],
+	'carbon': ['carbon_type_I'],
+	'ammonia': ['ammonia_type_I']
+	}
+	
+
 enum PLANET_TYPE {LAVA, GAS, ICE, DWARF, TERRESTRIAL, OCEAN}
+
+const tilt_ranges = {
+		PLANET_TYPE.DWARF: { 'min': 0, 'max': 30 },
+		PLANET_TYPE.TERRESTRIAL: { 'min': 0, 'max': 25 },
+		PLANET_TYPE.OCEAN: { 'min': 10, 'max': 30 },
+		PLANET_TYPE.LAVA: { 'min': 0, 'max': 40 },
+		PLANET_TYPE.GAS: { 'min': 15, 'max': 90 },
+		PLANET_TYPE.ICE: { 'min': 10, 'max': 90 },
+	}
 
 var rng: RandomNumberGenerator
 
 @export
 var parent_star : Star
 
-var orbit_radius: float
+var orbit_radius: float # in AU
 
-var planet_type: float
+var planet_type: PLANET_TYPE
 
-var size: float
+var size: float # in KM
 
-var atmosphere: float
+var atmosphere: String
 
-var moons: Array
+var moons: int
 
 var axial_tilt: float
 
@@ -30,12 +50,26 @@ var planet_index: int
 func _ready():
 	pass # Replace with function body.
 	
-func init(star: Star, rng: RandomNumberGenerator, index: int = 0):
+func init(star: Star, random: RandomNumberGenerator, index: int = 0):
 	parent_star = star
 	planet_index = index
 	
+	rng = random
+	
 	orbit_radius = get_random_orbit_radius()
 	planet_type = determine_planet_type()
+	
+	size = get_planet_size()
+	atmosphere = get_planet_atmosphere()
+	
+	moons = get_moons()
+	axial_tilt = get_axial_tilt()
+	
+	# Display stuff
+	
+	position.x = Distances.convert_au_to_fake_metres(orbit_radius)
+	$mesh.mesh.radius = size
+	$mesh.mesh.height = size
 	
 func get_random_orbit_radius():
 	var luminosity = parent_star.luminosity
@@ -91,16 +125,72 @@ func get_planet_size():
 			return rng.randf_range(0.1, 0.3)
 		_:
 			return 1
+			
+func get_random_atmosphere(arrays: Array):
+	var list = []
+	for array in arrays:
+		if typeof(array) == TYPE_STRING:
+			if array in atmospheres:
+				array = atmospheres[array]
+			else:
+				array = [array]
+		elif not typeof(array) == TYPE_ARRAY:
+			array = [array]
+		list.append_array(array)
+	
+	var index = rng.randi_range(0, len(list) - 1)
+	return list[index]
 	
 func get_planet_atmosphere():
-	pass
-
+	var random_atmosphere = func(x): return floor(rng.randf() * len(x))
+	
+	match planet_type:
+		PLANET_TYPE.TERRESTRIAL:
+			if is_in_habitable_zone():
+				return get_random_atmosphere(['carbon_dioxide', 'nitrogen'])
+			else:
+				return get_random_atmosphere(['carbon_dioxide'])
+		PLANET_TYPE.OCEAN:
+			return get_random_atmosphere(['carbon', 'ammonia', 'nitrogen'])
+		
+		PLANET_TYPE.ICE:
+			return get_random_atmosphere(['ice', atmospheres['ammonia'][0]])
+			
+		PLANET_TYPE.GAS:
+			return get_random_atmosphere(['hydrogen_helium', atmospheres['carbon'][0]])
+		PLANET_TYPE.LAVA:
+			return get_random_atmosphere(['carbon_dioxide'])
+		PLANET_TYPE.DWARF:
+			return get_random_atmosphere(['trace', 'carbon_dioxide'])
+		_:
+			return 'unknown'
+	
 func get_moons():
-	pass
+	match planet_type:
+		PLANET_TYPE.TERRESTRIAL:
+			return rng.randi_range(0,3)
+		PLANET_TYPE.OCEAN:
+			return rng.randi_range(0,2)
+		PLANET_TYPE.GAS:
+			return rng.randi_range(1,80)
+		PLANET_TYPE.ICE:
+			return rng.randi_range(1,50)
+		PLANET_TYPE.LAVA:
+			return rng.randi_range(0,2)
+		PLANET_TYPE.DWARF:
+			return rng.randi_range(0,5)
+		_:
+			return 0
 	
 func get_axial_tilt():
-	pass
+	var axial_range = tilt_ranges[planet_type]
+	return rng.randf() * (axial_range['max'] - axial_range['min']) + axial_range['min']
 
+func is_in_habitable_zone():
+	var habitable_zone = parent_star.habitable_zone
+	
+	return orbit_radius >= habitable_zone.inner_boundary \
+		and orbit_radius <= habitable_zone.outer_boundary
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
