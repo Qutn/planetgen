@@ -19,8 +19,5 @@ class StarType:
 		
 		age_min = min_age
 		age_max = max_age
-		
-	func get_random_age():
-		
 
 var M = StarType.new(0.1, 0.7, 0.08, 0.45, 1, 5000)

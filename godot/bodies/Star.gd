@@ -24,6 +24,8 @@ var habitable_zone : HabitableZone = HabitableZone.new(luminosity)
 @onready
 var star_light = get_node("star_light")
 
+var nb_of_planets
+
 @export
 var luminosity : float :
 	set(value):
@@ -46,6 +48,7 @@ var true_seed
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	random.randomize()
 	luminosity = luminosity # Force set call
 	generate_star()
 	
@@ -57,6 +60,10 @@ func generate_star():
 	generate_star_age()
 	generate_size_and_mass()
 	generate_star_luminosity()
+	
+	habitable_zone = HabitableZone.new(luminosity)
+	
+	nb_of_planets = random.randi_range(3, 18)
 	
 
 
@@ -131,14 +138,24 @@ func generate_star_luminosity():
 			luminosity = 0
 
 class HabitableZone:
-	const INNER_BOUNDARY = 0.95
-	const OUTER_BOUNDARY = 1.37
+	const INNER_BOUNDARY = 1.1
+	const OUTER_BOUNDARY = 0.53
 	var inner_boundary : float
 	var outer_boundary : float
 	
 	func set_luminosity(lumi: float):
-		inner_boundary = INNER_BOUNDARY * sqrt(lumi)
-		outer_boundary = OUTER_BOUNDARY * sqrt(lumi)
+		inner_boundary = sqrt(lumi / INNER_BOUNDARY)
+		outer_boundary = sqrt(lumi / OUTER_BOUNDARY)
 	
 	func _init(lumi: float):
 		set_luminosity(lumi)
+
+func debug():
+	var ret = ''
+	
+	ret += 'Star:\n'
+	ret += 'type: ' + str(star_type) + ' age: ' + str(age) + '\n'
+	ret += 'size: ' + str(size) + ' mass: ' + str(mass) 
+	ret += ' luminosity: ' + str(luminosity)
+	
+	return ret
